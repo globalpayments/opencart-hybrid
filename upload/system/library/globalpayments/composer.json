@@ -1,0 +1,23 @@
+{
+  "name": "globalpayments/php-integrations-opencart",
+  "description": "PHP Integrations for processing payments with Global Payments",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Global Payments"
+    }
+  ],
+  "require": {
+    "globalpayments/php-sdk": "6.0.0",
+    "psr/log": "^1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "GlobalPayments\\PaymentGatewayProvider\\": "globalpayments/php-integrations/src/GlobalPayments/"
+    }
+  },
+  "config": {
+    "vendor-dir": "./"
+  }
+}

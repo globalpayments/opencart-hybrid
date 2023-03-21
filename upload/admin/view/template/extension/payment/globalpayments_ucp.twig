@@ -1,0 +1,199 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}"
+          class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+      {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+  {% for alert in alerts %}
+    <div class="alert alert-{{ alert.type }} alert-dismissible">
+      <i class="fa fa-exclamation-circle"></i> {{ alert.message }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  {% endfor %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+          <ul class="nav nav-tabs" id="tabs">
+            {% for tab in tabs %}
+              <li{% if active_tab == tab.id %} class="active"{% endif %}><a href="#tab-{{ tab.id }}" data-toggle="tab">{{ tab.name }}</a></li>
+            {% endfor %}
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane{% if active_tab == 'ucp' %} active{% endif %}" id="tab-ucp">
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-enabled">{{ label_enabled }}</label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-enabled" type="checkbox" name="payment_globalpayments_ucp_enabled"
+                           value="{{ payment_globalpayments_ucp_enabled }}"{% if (payment_globalpayments_ucp_enabled==1) %} checked{% endif %} /> {{ entry_enabled }}
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-title"><span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span></label>
+                <div class="col-sm-10">
+                  <input id="input-title" type="text" name="payment_globalpayments_ucp_title"
+                         value="{{ payment_globalpayments_ucp_title }}" placeholder="{{ placeholder_title }}" class="form-control"/>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-is_production">{{ label_is_production }}</label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-is_production" type="checkbox" name="payment_globalpayments_ucp_is_production"
+                           value="{{ payment_globalpayments_ucp_is_production }}"{% if (payment_globalpayments_ucp_is_production==1) %} checked{% endif %}/> {{ entry_is_production }}
+                  </label>
+                  <br/><br/>
+                  <p>{{ help_is_production }}</p>
+                </div>
+              </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-app_id">{{ label_app_id }}</label>
+                <div class="col-sm-10">
+                  <input id="input-app_id" type="text" name="payment_globalpayments_ucp_app_id"
+                         value="{{ payment_globalpayments_ucp_app_id }}" class="form-control"/>
+                {% if error_live_credentials_app_id %}
+                  <div class="text-danger">{{ error_live_credentials_app_id }}</div>
+                {% endif %}
+                </div>
+              </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-app_key">{{ label_app_key }}</label>
+                <div class="col-sm-10">
+                  <input id="input-app_key" type="password" name="payment_globalpayments_ucp_app_key"
+                         value="{{ payment_globalpayments_ucp_app_key }}" class="form-control"/>
+                {% if error_live_credentials_app_key %}
+                  <div class="text-danger">{{ error_live_credentials_app_key }}</div>
+                {% endif %}
+                </div>
+              </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-sandbox_app_id">{{ label_sandbox_app_id }}</label>
+                <div class="col-sm-10">
+                  <input id="input-sandbox_app_id" type="text" name="payment_globalpayments_ucp_sandbox_app_id"
+                         value="{{ payment_globalpayments_ucp_sandbox_app_id }}" class="form-control"/>
+                {% if error_sandbox_credentials_app_id %}
+                  <div class="text-danger">{{ error_sandbox_credentials_app_id }}</div>
+                {% endif %}
+                </div>
+              </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-sandbox_app_key">{{ label_sandbox_app_key }}</label>
+                <div class="col-sm-10">
+                    <input id="input-sandbox_app_key" type="password" name="payment_globalpayments_ucp_sandbox_app_key"
+                           value="{{ payment_globalpayments_ucp_sandbox_app_key }}" class="form-control"/>
+                  {% if error_sandbox_credentials_app_key %}
+                    <div class="text-danger">{{ error_sandbox_credentials_app_key }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-debug"><span data-toggle="tooltip" title="{{ help_debug }}">{{ label_debug }}</span></label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-debug" type="checkbox" name="payment_globalpayments_ucp_debug"
+                           value="{{ payment_globalpayments_ucp_debug }}"{% if (payment_globalpayments_ucp_debug==1) %} checked{% endif %} /> {{ entry_debug }}
+                  </label>
+                </div>
+              </div>
+              <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-contact_url"><span data-toggle="tooltip" title="{{ help_contact_url }}">{{ label_contact_url }}</span></label>
+                <div class="col-sm-10">
+                  <input id="input-contact_url" type="text" name="payment_globalpayments_ucp_contact_url"
+                         value="{{ payment_globalpayments_ucp_contact_url }}" class="form-control" maxlength="256"/>
+                {% if error_contact_url %}
+                  <div class="text-danger">{{ error_contact_url }}</div>
+                {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-payment">
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-payment_action">
+                  <span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+                </label>
+                <div class="col-sm-10">
+                  <select name="payment_globalpayments_ucp_payment_action" id="input-payment_action" class="form-control">
+                    <option value="charge" {{ payment_globalpayments_ucp_payment_action == 'charge' ? 'selected' : '' }}>{{ entry_payment_action_charge }}</option>
+                    <option value="authorize" {{ payment_globalpayments_ucp_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-allow_card_saving">{{ label_allow_card_saving }}</label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-allow_card_saving" type="checkbox" name="payment_globalpayments_ucp_allow_card_saving"
+                           value="{{ payment_globalpayments_ucp_allow_card_saving }}"{% if (payment_globalpayments_ucp_allow_card_saving==1) %} checked{% endif %} /> {{ entry_allow_card_saving }}
+                  </label>
+                  <br/><br/>
+                  <p>{{ help_allow_card_saving }}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-txn_descriptor"><span data-toggle="tooltip" title="{{ help_txn_descriptor }}">{{ label_txn_descriptor }}</span></label>
+                <div class="col-sm-10">
+                  <input id="input-txn_descriptor" type="text" name="payment_globalpayments_ucp_txn_descriptor" value="{{ payment_globalpayments_ucp_txn_descriptor }}" class="form-control" maxlength="25"/><br/>
+                  <p>{{ help_txn_descriptor_note }}</p>
+                  {% if error_txn_descriptor %}
+                    <div class="text-danger">{{ error_txn_descriptor }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {{ display_googlepay_tab }}
+            {{ display_applepay_tab }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+	function toggleCredentialsSettings (event) {
+		var isProduction = $(event.target).is(':checked');
+		if (isProduction) {
+			$('#input-sandbox_app_id').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_app_key').parents('.form-group').addClass('hidden');
+			$('#input-app_id').parents('.form-group').removeClass('hidden');
+			$('#input-app_key').parents('.form-group').removeClass('hidden');
+		} else {
+			$('#input-app_id').parents('.form-group').addClass('hidden');
+			$('#input-app_key').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_app_id').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_app_key').parents('.form-group').removeClass('hidden');
+		}
+	}
+
+	function toggleCheckboxValue (event) {
+		if ($(event.target).is(':checked')) {
+			$(event.target).val(1);
+		} else {
+			$(event.target).val(0);
+		}
+	}
+
+	$('#input-enabled').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-is_production').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-is_production').on('change', this.toggleCredentialsSettings.bind(this));
+	$('#input-debug').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-allow_card_saving').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-googlepay_enabled').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-applepay_enabled').on('change', this.toggleCheckboxValue.bind(this));
+</script>
+{{ footer }}

@@ -1,0 +1,562 @@
+{{ header }}
+<div class="container">
+  <ul class="breadcrumb">
+  {% for breadcrumb in breadcrumbs %}
+    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+  {% endfor %}
+  </ul>
+{% if success %}
+  <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}</div>
+{% endif %}
+{% if error_warning %}
+  <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}</div>
+{% endif %}
+  <div class="row">
+    {{ column_left }}
+    {% if column_left and column_right %}
+      {% set class = 'col-sm-6' %}
+    {% elseif column_left or column_right %}
+      {% set class = 'col-sm-9' %}
+    {% else %}
+      {% set class = 'col-sm-12' %}
+    {% endif %}
+    <div id="content" class="{{ class }}">
+      {{ content_top }}
+      <h1>{{ heading_title }}</h1>
+      <form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+        <div class="globalpayments" style="width: 300px; margin: auto">
+        {% if not gateway.isProduction %}
+          {{ environment_indicator }}
+        {% endif %}
+          <fieldset id="{{ gateway.gatewayId }}-card">
+            <!-- Target for the credit card form -->
+          {% for field in secure_payment_fields %}
+            {{ field }}
+          {% endfor %}
+          </fieldset>
+        </div>
+        <div class="buttons clearfix">
+          <div class="pull-left"><a href="{{ back }}" class="btn btn-default">{{ button_back }}</a></div>
+          <div class="pull-right"><input type="button" value="{{ button_new_card }}" id="button-confirm" class="btn btn-primary" /></div>
+        </div>
+      </form>
+      {{ content_bottom }}
+    </div>
+    {{ column_right }}
+  </div>
+</div>
+<style>
+  .globalpayments iframe {
+    min-height: 3.6rem;
+    width: 100%;
+  }
+
+  div[id^="GlobalPayments-overlay-"] {
+    z-index: 1001 !important;
+  }
+
+  .globalpayments-validation-error, .globalpayments-sandbox-warning {
+    list-style:none outside;
+  }
+</style>
+<script type="text/javascript">
+	var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
+	$.getScript(
+		'https://js.globalpay.com/v1/globalpayments.js', function () {
+			$.getScript('https://malsup.github.io/jquery.blockUI.js');
+
+			/**
+			 * Frontend code for Global Payments
+			 *
+			 * @param {object} options
+			 */
+			function GlobalPaymentsGatewayProvider (options) {
+				/**
+				 * Card form instance
+				 *
+				 * @type {any}
+				 */
+				this.cardForm = {};
+
+				/**
+				 * Payment gateway id
+				 *
+				 * @type {string}
+				 */
+				this.id = options.id;
+
+				/**
+				 * Payment field options
+				 *
+				 * @type {object}
+				 */
+				this.fieldOptions = options.fieldOptions;
+
+				/**
+				 * Payment field styles
+				 */
+				this.fieldStyles = options.fieldStyles;
+
+				/**
+				 * Payment gateway options
+				 *
+				 * @type {object}
+				 */
+				this.gatewayOptions = options.gatewayOptions;
+
+				/**
+				 *
+				 * @type {null}
+				 */
+				this.paymentTokenResponse = null;
+
+				this.attachEventHandlers();
+			};
+
+			GlobalPaymentsGatewayProvider.prototype = {
+				/**
+				 * Add important event handlers for controlling the payment experience during checkout
+				 *
+				 * @returns
+				 */
+				attachEventHandlers: function () {
+					var self = this;
+
+					// General
+					$(document).ready(function () {
+						self.renderPaymentFields();
+					});
+				},
+
+				/**
+				 * Renders the payment fields using GlobalPayments.js. Each field is securely hosted on
+				 * Global Payments' production servers.
+				 *
+				 * @returns
+				 */
+				renderPaymentFields: function () {
+					if ($('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0) {
+						console.log('Warning! Payment fields cannot be loaded.');
+						return;
+					}
+					if (!(window).GlobalPayments.configure) {
+						console.log('Warning! Payment fields cannot be loaded (JS).');
+						return;
+					}
+
+					if (this.gatewayOptions.error) {
+						this.showPaymentError(this.gatewayOptions.message);
+					}
+
+					// ensure the submit button's parent is on the page as this is added
+					// only after the initial page load
+					if ($(this.getSubmitButtonTargetSelector(this.id)).length === 0) {
+						this.createSubmitButtonTarget(this.id);
+					}
+
+					(window).GlobalPayments.configure(this.gatewayOptions);
+					this.cardForm = (window).GlobalPayments.ui.form(
+						{
+							fields: this.getFieldConfiguration(),
+							styles: this.getStyleConfiguration()
+						}
+					);
+					this.cardForm.on('submit', 'click', this.blockOnSubmit.bind(this));
+					this.cardForm.on('token-success', this.handleResponse.bind(this));
+					this.cardForm.on('token-error', this.handleErrors.bind(this));
+					this.cardForm.on('error', this.handleErrors.bind(this));
+					(window).GlobalPayments.on('error', this.handleErrors.bind(this));
+
+					// match the visibility of our payment form
+					this.cardForm.ready(function () {
+						this.toggleSubmitButtons();
+					});
+				},
+
+				/**
+				 * Gets payment field config
+				 *
+				 * @returns {object}
+				 */
+				getFieldConfiguration: function () {
+					return {
+						'card-number': {
+							placeholder: this.fieldOptions['card-number-field'].placeholder,
+							target: '#' + this.id + '-' + this.fieldOptions['card-number-field'].class
+						},
+						'card-expiration': {
+							placeholder: this.fieldOptions['card-expiry-field'].placeholder,
+							target: '#' + this.id + '-' + this.fieldOptions['card-expiry-field'].class
+						},
+						'card-cvv': {
+							placeholder: this.fieldOptions['card-cvv-field'].placeholder,
+							target: '#' + this.id + '-' + this.fieldOptions['card-cvv-field'].class
+						},
+						'card-holder-name': {
+							placeholder: this.fieldOptions['card-holder-field'].placeholder,
+							target: '#' + this.id + '-' + this.fieldOptions['card-holder-field'].class
+						},
+						'submit': {
+							text: this.getSubmitButtonText(),
+							target: this.getSubmitButtonTargetSelector(this.id)
+						}
+					};
+				},
+
+				/**
+				 * Gets payment field styles
+				 *
+				 * @returns {object}
+				 */
+				getStyleConfiguration: function () {
+					return JSON.parse(this.fieldStyles);
+				},
+
+				/**
+				 * Creates the parent for the submit button
+				 *
+				 * @returns
+				 */
+				createSubmitButtonTarget: function (id) {
+					var el = document.createElement('div');
+					el.id = this.getSubmitButtonTargetSelector(id).replace('#', '');
+					el.className = 'globalpayments ' + id + ' card-submit';
+					$(this.getPlaceOrderButtonSelector()).after(el);
+					// match the visibility of our payment form
+					this.toggleSubmitButtons();
+				},
+
+				/**
+				 * Swaps the default Platform 'Place Order' button for our iframe-d button
+				 * or digital wallet buttons when one of our gateways is selected.
+				 *
+				 * @returns
+				 */
+				toggleSubmitButtons: function () {
+					$(this.getSubmitButtonTargetSelector(this.id)).show();
+					$(this.getPlaceOrderButtonSelector()).addClass('globalpayments-hidden').hide();
+				},
+
+				/**
+				 * Gets the current checkout form
+				 *
+				 * @returns {Element}
+				 */
+				getForm: function () {
+					var checkoutForms = [
+						// Checkout
+						'form#globalpayments-payment-form',
+					];
+					var forms = document.querySelectorAll(checkoutForms.join(','));
+
+					return forms.item(0);
+				},
+
+				/**
+				 * Submits form to Platform
+				 *
+				 * @returns
+				 */
+				placeOrder: function () {
+					$(this.getForm()).submit();
+				},
+
+				/**
+				 * Handles the tokenization response
+				 *
+				 * On valid payment fields, the tokenization response is added to the current
+				 * state, and the order is placed.
+				 *
+				 * @param {object} response tokenization response
+				 *
+				 * @returns
+				 */
+				handleResponse: function (response) {
+					if (!this.validateTokenResponse(response)) {
+						return;
+					}
+
+					var responseDetails = {
+						details: {
+							cardType: response.details.cardType,
+							cardLast4: response.details.cardLast4,
+							expiryMonth: response.details.expiryMonth,
+							expiryYear: response.details.expiryYear,
+							cardholderName: response.details.cardholderName,
+						},
+						paymentReference: response.paymentReference
+					};
+
+					this.paymentTokenResponse = JSON.stringify(responseDetails);
+
+					var self = this;
+
+					this.cardForm.frames["card-cvv"].getCvv()
+						.then(function (c) {
+
+							/**
+							 * CVV; needed for TransIT gateway processing only
+							 *
+							 * @type {string}
+							 */
+							var cvvVal = c;
+
+							var tokenResponseElement =
+									/**
+									 * Get hidden
+									 *
+									 * @type {HTMLInputElement}
+									 */
+									(document.getElementById(self.id + '-token-response'));
+							if (!tokenResponseElement) {
+								tokenResponseElement = document.createElement('input');
+								tokenResponseElement.id = self.id + '-token-response';
+								tokenResponseElement.name = self.id + '[paymentTokenResponse]';
+								tokenResponseElement.type = 'hidden';
+								self.getForm().appendChild(tokenResponseElement);
+							}
+							response.details.cardSecurityCode = cvvVal;
+							tokenResponseElement.value = self.paymentTokenResponse;
+							self.placeOrder();
+						});
+				},
+
+				/**
+				 * Validates the tokenization response
+				 *
+				 * @param {object} response tokenization response
+				 *
+				 * @returns {boolean} status of validations
+				 */
+				validateTokenResponse: function (response) {
+					this.resetValidationErrors();
+
+					var result = true;
+
+					if (response.details) {
+						var expirationDate = new Date(response.details.expiryYear, response.details.expiryMonth - 1);
+						var now = new Date();
+						var thisMonth = new Date(now.getFullYear(), now.getMonth());
+
+						if (!response.details.expiryYear || !response.details.expiryMonth || expirationDate < thisMonth) {
+							this.showValidationError('card-expiration');
+							result = false;
+						}
+					}
+
+					if (response.details && !response.details.cardSecurityCode) {
+						this.showValidationError('card-cvv');
+						result = false;
+					}
+
+					return result;
+				},
+
+				/**
+				 * Hides all validation error messages
+				 *
+				 * @returns
+				 */
+				resetValidationErrors: function () {
+					$('.' + this.id + ' .globalpayments-validation-error').hide();
+					$('.globalpayments-checkout-error').hide();
+				},
+
+				/**
+				 * Shows the validation error for a specific payment field
+				 *
+				 * @param {string} fieldType Field type to show its validation error
+				 *
+				 * @returns
+				 */
+				showValidationError: function (fieldType) {
+					$('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').addClass('alert alert-danger');
+					$('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').show();
+					this.unblockOnError();
+				},
+
+				/**
+				 * Shows payment error and scrolls to it
+				 *
+				 * @param {string} message Error message
+				 *
+				 * @returns
+				 */
+				showPaymentError: function (message) {
+					var $form = $(this.getForm());
+
+					// Remove notices from all sources
+					$('.globalpayments-checkout-error').remove();
+
+					$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + message + '</div>');
+
+					$('html, body').animate({
+						scrollTop: ($form.offset().top - 100)
+					}, 1000);
+
+					this.unblockOnError();
+				},
+
+				/**
+				 * Handles errors from the payment field iframes
+				 *
+				 * @param {object} error Details about the error
+				 *
+				 * @returns
+				 */
+				handleErrors: function (error) {
+					this.resetValidationErrors();
+					console.error(error);
+					if (!error.reasons) {
+						this.showPaymentError('Something went wrong. Please contact us to get assistance.');
+						return;
+					}
+
+					var numberOfReasons = error.reasons.length;
+					for (var i = 0; i < numberOfReasons; i++) {
+						var reason = error.reasons[i];
+						switch (reason.code) {
+							case 'INVALID_CARD_NUMBER':
+								this.showValidationError('card-number');
+								break;
+							case 'INVALID_CARD_EXPIRATION':
+								this.showValidationError('card-expiration');
+								break;
+							case 'INVALID_CARD_SECURITY_CODE':
+								this.showValidationError('card-cvv');
+								break;
+							case 'INVALID_CARD_HOLDER_NAME':
+							case 'TOO_LONG_DATA':
+								this.showValidationError('card-holder');
+								break;
+							case 'MANDATORY_DATA_MISSING':
+								var n = reason.message.search("card type");
+								if (n >= 0) {
+									this.showValidationError('card-number');
+									break;
+								}
+								var n = reason.message.search("expiry_year");
+								if (n >= 0) {
+									this.showValidationError('card-expiration');
+									break;
+								}
+								var n = reason.message.search("expiry_month");
+								if (n >= 0) {
+									this.showValidationError('card-expiration');
+									break;
+								}
+								var n = reason.message.search("card.cvn.number");
+								if (n >= 0) {
+									this.showValidationError('card-cvv');
+									break;
+								}
+							case 'INVALID_REQUEST_DATA':
+								var n = reason.message.search("card.number");
+								if (n >= 0) {
+									this.showValidationError('card-number');
+									break;
+								}
+								var n = reason.message.search("number contains unexpected data");
+								if (n >= 0) {
+									this.showValidationError('card-number');
+									break;
+								}
+								var n = reason.message.search("Luhn Check");
+								if (n >= 0) {
+									this.showValidationError('card-number');
+									break;
+								}
+								var n = reason.message.search("cvv contains unexpected data");
+								if (n >= 0) {
+									this.showValidationError('card-cvv');
+									break;
+								}
+								var n = reason.message.search("expiry_year");
+								if (n >= 0) {
+									this.showValidationError('card-expiration');
+									break;
+								}
+							case 'SYSTEM_ERROR_DOWNSTREAM':
+								var n = reason.message.search("card expdate");
+								if (n >= 0) {
+									this.showValidationError('card-expiration');
+									break;
+								}
+							case 'ERROR':
+								if (reason.message == "IframeField: target cannot be found with given selector")
+									break;
+								this.showPaymentError(reason.message);
+								break;
+							default:
+								this.showPaymentError(reason.message);
+						}
+					}
+				},
+
+				/**
+				 * Gets submit button text
+				 *
+				 * @returns {string}
+				 */
+				getSubmitButtonText: function () {
+					return ($(this.getPlaceOrderButtonSelector()).data('value') || $(this.getPlaceOrderButtonSelector()).attr('value'));
+				},
+
+				/**
+				 * Blocks checkout UI
+				 *
+				 * Implementation pulled from `woocommerce/assets/js/frontend/checkout.js`
+				 *
+				 * @returns
+				 */
+				blockOnSubmit: function () {
+					var $form = $( this.getForm() );
+					var form_data = $form.data();
+					if ( 1 !== form_data['blockUI.isBlocked'] ) {
+						$form.block(
+								{
+									message: null,
+									overlayCSS: {
+										background: '#fff',
+										opacity: 0.6
+									}
+								}
+						);
+					}
+				},
+
+				/**
+				 * Unblocks checkout UI
+				 *
+				 * @returns
+				 */
+				unblockOnError: function () {
+					var $form = $( this.getForm() );
+					$form.unblock();
+				},
+
+				/**
+				 * Convenience function to get CSS selector for the built-in 'Place Order' button
+				 *
+				 * @returns {string}
+				 */
+				getPlaceOrderButtonSelector: function () {
+					return '#button-confirm';
+				},
+
+				/**
+				 * Convenience function to get CSS selector for the custom 'Place Order' button's parent element
+				 *
+				 * @param {string} id
+				 * @returns {string}
+				 */
+				getSubmitButtonTargetSelector: function (id) {
+					return '#' + id + '-card-submit';
+				},
+			};
+
+			new GlobalPaymentsGatewayProvider(globalpayments_secure_payment_fields_params);
+		}
+	);
+</script>
+{{ footer }}

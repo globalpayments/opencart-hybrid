@@ -1,0 +1,375 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+  <div id="globalpayments-alert" class="alert alert-danger" style="display:none;">
+    {{ text_applepay_not_supported }}
+  </div>
+  <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+  <div class="globalpayments" style="width: 300px; margin: auto">
+    <fieldset id="{{ gateway.gatewayId }}-digitalwallet">
+      <!-- Target for digital wallet -->
+      <div id="{{ gateway.gatewayId }}-digitalwallet-submit'"></div>
+    </fieldset>
+  </div>
+  <div class="buttons clearfix">
+    <div class="pull-right">
+      <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+    </div>
+  </div>
+</form>
+<style>
+  .globalpayments-validation-error, .globalpayments-sandbox-warning {
+    list-style:none outside;
+  }
+  @supports (-webkit-appearance: -apple-pay-button) {
+    .apple-pay-button {
+      cursor: pointer;
+      display: inline-block;
+      -webkit-appearance: -apple-pay-button;
+    }
+    .apple-pay-button-black {
+      -apple-pay-button-style: black;
+    }
+    .apple-pay-button-white {
+      -apple-pay-button-style: white;
+    }
+    .apple-pay-button-white-with-line {
+      -apple-pay-button-style: white-outline;
+    }
+  }
+
+  @supports not (-webkit-appearance: -apple-pay-button) {
+    .apple-pay-button {
+      cursor: pointer;
+      display: inline-block;
+      background-size: 100% 60%;
+      background-repeat: no-repeat;
+      background-position: 50% 50%;
+      border-radius: 5px;
+      padding: 0px;
+      box-sizing: border-box;
+      min-width: 200px;
+      min-height: 32px;
+      max-height: 64px;
+    }
+    .apple-pay-button-black {
+      background-image: -webkit-named-image(apple-pay-logo-white);
+      background-color: black;
+    }
+    .apple-pay-button-white {
+      background-image: -webkit-named-image(apple-pay-logo-black);
+      background-color: whitpple;
+    }
+    .apple-pay-button-white-with-line {
+      background-image: -webkit-named-image(apple-pay-logo-black);
+      background-color: white;
+      border: .5px solid black;
+    }
+  }
+</style>
+<script type="text/javascript">
+	$('#globalpayments-loading').hide();
+
+	var globalpayments_applepay_params = {{ globalpayments_applepay_params }};
+	var globalpayments_order = {{ globalpayments_order }};
+	$.getScript('https://malsup.github.io/jquery.blockUI.js', function () {
+		/**
+		 * Frontend code for Global Payments
+		 *
+		 * @param {object} options
+		 */
+		function GlobalPaymentsGatewayProvider (options, order) {
+			/**
+			 * Payment gateway id
+			 *
+			 * @type {string}
+			 */
+			this.id = options.id;
+
+			/**
+			 * The current order
+			 *
+			 * @type {object}
+			 */
+			this.order = order;
+
+			/**
+			 * Payment gateway options
+			 *
+			 * @type {object}
+			 */
+			this.gatewayOptions = options.gatewayOptions;
+
+			this.attachEventHandlers();
+		};
+
+		GlobalPaymentsGatewayProvider.prototype = {
+			/**
+			 * Add important event handlers for controlling the payment experience during checkout
+			 *
+			 * @returns
+			 */
+			attachEventHandlers: function () {
+				var self = this;
+
+				// General
+				$(document).ready(function () {
+					self.initialize();
+				});
+			},
+
+			initialize: function () {
+				if (false === this.deviceSupported()) {
+					$('#globalpayments-alert').show();
+					$(this.getPlaceOrderButtonSelector()).addClass('globalpayments-hidden').hide();
+					return;
+				}
+
+				this.addApplePayButton();
+			},
+
+			/**
+			 * Add the apple pay button to the DOM
+			 */
+			addApplePayButton: function () {
+				this.createSubmitButtonTarget(this.id);
+
+				var self = this;
+				var paymentButton = document.createElement('div');
+				paymentButton.className = "apple-pay-button apple-pay-button-" + this.gatewayOptions.buttonColor;
+				paymentButton.title = "Pay with Apple Pay";
+				paymentButton.alt = "Pay with Apple Pay";
+				paymentButton.id = this.id;
+
+				paymentButton.addEventListener('click', function (e) {
+					e.preventDefault();
+					self.blockOnSubmit();
+
+					var applePaySession = self.createApplePaySession();
+					if (applePaySession) {
+						applePaySession.begin();
+					}
+				});
+
+				$(this.getSubmitButtonTargetSelector()).append(paymentButton);
+			},
+
+			createApplePaySession: function () {
+				var self = this;
+				try {
+					var applePaySession = new ApplePaySession(1, self.getPaymentRequest());
+				} catch (err) {
+					console.error('Unable to create ApplePaySession', err);
+					alert("We're unable to take your payment through Apple Pay. Please try again or use an alternative payment method.");
+					this.unblockOnError();
+					return false;
+				}
+
+				// Handle validate merchant event
+				applePaySession.onvalidatemerchant = function (event) {
+					self.onApplePayValidateMerchant(event, applePaySession);
+				}
+
+				// Attach payment auth event
+				applePaySession.onpaymentauthorized = function (event) {
+					self.onApplePayPaymentAuthorize(event, applePaySession);
+				}
+
+				applePaySession.oncancel = function (event) {
+					alert("We're unable to take your payment through Apple Pay. Please try again or use an alternative payment method.")
+					this.unblockOnError();
+				}.bind(this);
+
+				return applePaySession;
+			},
+
+			onApplePayValidateMerchant: function (event, session) {
+				var self = this;
+
+				$.ajax({
+					type: "POST",
+					cache: false,
+					url: this.gatewayOptions.validateMerchantUrl,
+					data: JSON.stringify({ 'applePayValidationUrl': event.validationURL }),
+					dataType: "json",
+					contentType: "application/json",
+				}).done(function (response) {
+					if (response.error) {
+						console.log(response.message);
+						session.abort();
+						alert("We're unable to take your payment through Apple Pay. Please try again or use an alternative payment method.");
+						self.unblockOnError();
+					} else {
+						session.completeMerchantValidation(JSON.parse(response.message));
+					}
+				}).fail(function (response) {
+					console.log(response);
+					session.abort();
+					alert("We're unable to take your payment through Apple Pay. Please try again or use an alternative payment method.");
+					self.unblockOnError();
+				});
+			},
+
+			onApplePayPaymentAuthorize: function (event, session) {
+				var paymentToken = JSON.stringify(event.payment.token.paymentData);
+				this.createInputElement(
+					'digitalWalletTokenResponse',
+					 paymentToken
+				);
+
+				try {
+					this.blockOnSubmit();
+					$(this.getForm()).submit();
+					session.completePayment(ApplePaySession.STATUS_SUCCESS);
+				} catch (e) {
+					this.unblockOnError();
+					session.completePayment(ApplePaySession.STATUS_FAILURE);
+				}
+			},
+
+			getPaymentRequest: function () {
+				return {
+					countryCode: this.gatewayOptions.country,
+					currencyCode: this.order.currency,
+					merchantCapabilities: [
+						"supports3DS"
+					],
+					supportedNetworks: this.gatewayOptions.ccTypes,
+					total: {
+						label: this.gatewayOptions.appleMerchantDisplayName,
+						amount: this.order.amount.toString()
+					},
+				}
+			},
+
+			deviceSupported: function () {
+				if (location.protocol != 'https:') {
+					console.warn("Apple Pay requires your checkout be served over HTTPS");
+					return false;
+				}
+
+				if ((window.ApplePaySession && ApplePaySession.canMakePayments()) !== true) {
+					console.warn("Apple Pay is not supported on this device/browser");
+					return false;
+				}
+
+				return true;
+			},
+
+			/**
+			 * Swaps the default Platform 'Confirm Order' button for our
+			 * digital wallet buttons when one of our gateways is selected.
+			 *
+			 * @returns
+			 */
+			toggleSubmitButtons: function () {
+				// our gateway was selected
+				$(this.getSubmitButtonTargetSelector()).show();
+				$(this.getPlaceOrderButtonSelector()).addClass('globalpayments-hidden').hide();
+			},
+
+			/**
+			 * Gets the current checkout form
+			 *
+			 * @returns {Element}
+			 */
+			getForm: function () {
+				var checkoutForms = [
+				// Checkout
+					'form#globalpayments-payment-form',
+				];
+				var forms = document.querySelectorAll(checkoutForms.join(','));
+
+				return forms.item(0);
+			},
+
+			/**
+			 * Places/submits the order to Platform
+			 *
+			 * @returns
+			 */
+			placeOrder: function () {
+				$(this.getForm()).submit();
+			},
+
+			createInputElement: function (name, value) {
+				var inputElement = (document.getElementById(this.id + '-' + name));
+
+				if (!inputElement) {
+					inputElement = document.createElement('input');
+					inputElement.id = this.id + '-' + name;
+					inputElement.name = this.id + '[' + name + ']';
+					inputElement.type = 'hidden';
+					this.getForm().appendChild(inputElement);
+				}
+
+				inputElement.value = value;
+			},
+
+			/**
+			 * Creates the parent for the submit button
+			 *
+			 * @returns
+			 */
+			createSubmitButtonTarget: function () {
+				var el = document.createElement('div')
+				el.id = this.getSubmitButtonTargetSelector().replace('#', '');
+				el.className = 'globalpayments ' + this.id + ' digitalwallet-submit';
+				$(this.getPlaceOrderButtonSelector()).after(el);
+				// match the visibility of our payment form
+				this.toggleSubmitButtons();
+			},
+
+			/**
+			 * Convenience function to get CSS selector for the built-in 'Place Order' button
+			 *
+			 * @returns {string}
+			 */
+			getPlaceOrderButtonSelector: function () {
+				return '#button-confirm';
+			},
+
+			/**
+			 * Convenience function to get CSS selector for the custom 'Place Order' button's parent element
+			 *
+			 * @param {string} id
+			 * @returns {string}
+			 */
+			getSubmitButtonTargetSelector: function () {
+				return '#' + this.id + '-digitalwallet-submit';
+			},
+
+			/**
+			 * Blocks checkout UI
+			 *
+			 * @returns
+			 */
+			blockOnSubmit: function () {
+				var $form = $( this.getForm() );
+				var form_data = $form.data();
+				if ( 1 !== form_data['blockUI.isBlocked'] ) {
+					$form.block({
+						message: null,
+						overlayCSS: {
+							background: '#fff',
+							opacity: 0.6
+						}
+					});
+				}
+			},
+
+			/**
+			 * Unblocks checkout UI
+			 *
+			 * @returns
+			 */
+			unblockOnError: function () {
+				var $form = $(this.getForm());
+				var form_data = $form.data();
+				if (1 == form_data['blockUI.isBlocked']) {
+					$form.unblock();
+				}
+			},
+		};
+
+		new GlobalPaymentsGatewayProvider(globalpayments_applepay_params, globalpayments_order);
+	});
+</script>

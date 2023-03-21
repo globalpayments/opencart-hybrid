@@ -1,0 +1,103 @@
+<div class="tab-pane{% if active_tab == 'applepay' %} active{% endif %}" id="tab-applepay">
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-applepay_enabled">{{ label_enabled }}</label>
+    <div class="col-sm-10 checkbox">
+      <label>
+        <input id="input-applepay_enabled" type="checkbox" name="payment_globalpayments_applepay_enabled"
+               value="{{ payment_globalpayments_applepay_enabled }}"{% if (payment_globalpayments_applepay_enabled==1) %} checked{% endif %} /> {{ entry_enabled }}
+      </label>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-applepay_title"><span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span></label>
+    <div class="col-sm-10">
+      <input id="input-applepay_title" type="text" name="payment_globalpayments_applepay_title"
+             value="{{ payment_globalpayments_applepay_title }}" placeholder="{{ placeholder_applepay_title }}" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_id">{{ label_apple_merchant_id }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_id" type="text" name="payment_globalpayments_applepay_apple_merchant_id" value="{{ payment_globalpayments_applepay_apple_merchant_id }}" class="form-control"/><br/>
+      {% if error_apple_merchant_id %}
+        <div class="text-danger">{{ error_apple_merchant_id }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_cert_path">{{ label_apple_merchant_cert_path }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_cert_path" type="text" name="payment_globalpayments_applepay_apple_merchant_cert_path" value="{{ payment_globalpayments_applepay_apple_merchant_cert_path }}" class="form-control"/><br/>
+      {% if error_apple_merchant_cert_path %}
+        <div class="text-danger">{{ error_apple_merchant_cert_path }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_key_path">{{ label_apple_merchant_key_path }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_key_path" type="text" name="payment_globalpayments_applepay_apple_merchant_key_path" value="{{ payment_globalpayments_applepay_apple_merchant_key_path }}" class="form-control"/><br/>
+      {% if error_apple_merchant_key_path %}
+        <div class="text-danger">{{ error_apple_merchant_key_path }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_key_passphrase">{{ label_apple_merchant_key_passphrase }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_key_passphrase" type="password" name="payment_globalpayments_applepay_apple_merchant_key_passphrase" value="{{ payment_globalpayments_applepay_apple_merchant_key_passphrase }}" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_domain">{{ label_apple_merchant_domain }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_domain" type="text" name="payment_globalpayments_applepay_apple_merchant_domain" value="{{ payment_globalpayments_applepay_apple_merchant_domain }}" class="form-control"/><br/>
+      {% if error_apple_merchant_domain %}
+        <div class="text-danger">{{ error_apple_merchant_domain }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-apple_merchant_display_name">{{ label_apple_merchant_display_name }}</label>
+    <div class="col-sm-10">
+      <input id="input-apple_merchant_display_name" type="text" name="payment_globalpayments_applepay_apple_merchant_display_name" value="{{ payment_globalpayments_applepay_apple_merchant_display_name }}" class="form-control"/><br/>
+      {% if error_apple_merchant_display_name %}
+        <div class="text-danger">{{ error_apple_merchant_display_name }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-applepay_accepted_cards">{{ label_accepted_cards }}</label>
+    <div class="col-sm-10">
+      <p><input id="input-applepay_accepted_cards_visa" type="checkbox" name="payment_globalpayments_applepay_accepted_cards[]"
+                value="VISA"{% if 'VISA' in payment_globalpayments_applepay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_visa }}</p>
+      <p><input id="input-applepay_accepted_cards_mastercard" type="checkbox" name="payment_globalpayments_applepay_accepted_cards[]"
+                value="MASTERCARD"{% if 'MASTERCARD' in payment_globalpayments_applepay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_mastercard }}</p>
+      <p><input id="input-applepay_accepted_cards_amex" type="checkbox" name="payment_globalpayments_applepay_accepted_cards[]"
+                value="AMEX"{% if 'AMEX' in payment_globalpayments_applepay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_amex }}</p>
+      <p><input id="input-applepay_accepted_cards_discover" type="checkbox" name="payment_globalpayments_applepay_accepted_cards[]"
+                value="DISCOVER"{% if 'DISCOVER' in payment_globalpayments_applepay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_discover }}</p>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-applepay_button_color">{{ label_applepay_button_color }}</label>
+    <div class="col-sm-10">
+      <select name="payment_globalpayments_applepay_button_color" id="input-applepay_button_color" class="form-control">
+        <option value="white" {{ payment_globalpayments_applepay_button_color == "white" ? 'selected' : '' }}>{{ entry_applepay_button_color_white }}</option>
+        <option value="white-with-line" {{ payment_globalpayments_applepay_button_color == "white-with-line" ? 'selected' : '' }}>{{ entry_applepay_button_color_white_outline }}</option>
+        <option value="black" {{ payment_globalpayments_applepay_button_color == "black" ? 'selected' : '' }}>{{ entry_applepay_button_color_black }}</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-applepay_payment_action">
+      <span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+    </label>
+    <div class="col-sm-10">
+      <select name="payment_globalpayments_applepay_payment_action" id="input-applepay_payment_action" class="form-control">
+        <option value="charge" {{ payment_globalpayments_applepay_payment_action == 'charge' ? 'selected' : '' }}>{{ entry_payment_action_charge }}</option>
+        <option value="authorize" {{ payment_globalpayments_applepay_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+      </select>
+    </div>
+  </div>
+</div>

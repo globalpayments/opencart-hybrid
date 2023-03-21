@@ -1,0 +1,114 @@
+<table class="table table-bordered">
+  <thead>
+  <tr>
+    <td class="text-left">{{ text_column_txn_payment_action }}</td>
+    <td class="text-left">{{ text_column_txn_id }}</td>
+    <td class="text-left">{{ text_column_txn_status }}</td>
+    <td class="text-left">{{ text_column_txn_amount }}</td>
+    <td class="text-left">{{ text_column_txn_created }}</td>
+    <td class="text-left">{{ text_column_action }}</td>
+  </tr>
+  </thead>
+  <tbody>
+  {% if error_payment_information %}
+    <tr>
+      <td class="text-left" colspan="8" style="text-align: center">{{ error_payment_information }}</td>
+    </tr>
+  {% endif %}
+  {% if not transactions %}
+    <tr>
+      <td class="text-left" colspan="8" style="text-align: center">{{ text_no_payment_info }}</td>
+    </tr>
+  {% endif %}
+  {% for transaction in transactions %}
+    <tr>
+      <td class="text-left">{{ transaction.payment_action }}</td>
+      <td class="text-left">{{ transaction.gateway_transaction_id }}</td>
+      <td class="text-left">{{ transaction.response_code }}</td>
+      <td class="text-left">{{ transaction.amount }} {{ transaction.currency }}</td>
+      <td class="text-left">{{ transaction.time_created }}</td>
+      <td class="text-left">
+      {% for transaction_action in transaction.transaction_actions %}
+        {% if transaction_action.action == 'refund' %}
+        <input type="text" id="refund-amount" name="amount" value="">
+        {% endif %}
+        <a class="btn btn-primary button-command"
+           data-gatewayId="{{ transaction.gateway_id }}"
+           data-type="{{ transaction_action.action }}"
+           data-id="{{ transaction.gateway_transaction_id }}"
+           data-amount="{{ transaction.amount }}"
+           data-currency="{{ transaction.currency }}" id="transaction-command-{{ transaction_action.action }}">{{ transaction_action.button }}</a>
+      {% endfor %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<script type="text/javascript"><!--
+    $('#refund-amount').on('input', function() {
+      var amount = $(this).val();
+      if (amount.length > 0) {
+        $('#transaction-command-refund').text('{{ button_refund }}' + ' ' + amount + ' ' + $('.button-command').attr('data-currency'));
+      } else {
+        $('#transaction-command-refund').text('{{ button_refund }}');
+      }
+
+    });
+	$('.button-command').on('click', function () {
+		var gateway_id = $(this).attr('data-gatewayId');
+		var transaction_type = $(this).attr('data-type');
+		var gateway_transaction_id = $(this).attr('data-id');
+		var transaction_amount = $(this).attr('data-amount');
+		var amount = $('#refund-amount').val();
+		var currency = $(this).attr('data-currency');
+		var confirm_text = '';
+		var clicked_button = $(this);
+
+		switch (transaction_type) {
+			case 'capture':
+				confirm_text = '{{ text_confirm_capture }}';
+				break
+			case 'reverse':
+				confirm_text = '{{ text_confirm_reverse }}';
+				break
+			case 'refund':
+				confirm_text = '{{ text_confirm_refund }}';
+		}
+
+		if (confirm(confirm_text)) {
+			$.ajax({
+				url: 'index.php?route=extension/payment/globalpayments_ucp/transactionCommand&user_token={{ user_token }}',
+				type: 'post',
+				data: {
+					order_id: '{{ order_id }}',
+					gateway_id: gateway_id,
+					transaction_id: gateway_transaction_id,
+					transaction_type: transaction_type,
+					transaction_amount: transaction_amount,
+					amount: amount,
+					currency: currency,
+				},
+				dataType: 'json',
+				beforeSend: function () {
+					clicked_button.button('loading');
+
+					$('.alert').hide().removeClass('alert-success alert-danger');
+				},
+				complete: function () {
+					clicked_button.button('reset');
+				},
+				success: function (json) {
+					if (json['error']) {
+						$('#table-alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '</div>');
+					}
+
+					if (json['success']) {
+						$('#table-alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> ' + json['success'] + '</div>');
+					}
+
+					getTransaction('{{ transaction_id }}');
+				}
+			})
+		}
+	})
+//--></script>
