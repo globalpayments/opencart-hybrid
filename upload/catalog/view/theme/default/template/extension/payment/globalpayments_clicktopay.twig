@@ -1,0 +1,231 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+  <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
+  <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+  <div class="globalpayments" style="width: 350px; margin: auto">
+    <fieldset id="{{ paymentMethod.paymentMethodId }}-digitalwallet">
+      <!-- Target for digital wallet -->
+      <div id="{{ paymentMethod.paymentMethodId }}-digitalwallet-submit"></div>
+    </fieldset>
+  </div>
+</form>
+<style>
+  .globalpayments-validation-error, .globalpayments-sandbox-warning {
+    list-style:none outside;
+  }
+</style>
+<script type="text/javascript">
+	$('#globalpayments-loading').hide();
+	var globalpayments_clicktopay_params = {{ globalpayments_clicktopay_params }};
+	var globalpayments_order = {{ globalpayments_order }};
+	$.getScript(
+		'https://js.globalpay.com/v1/globalpayments.js', function () {
+			$.getScript('https://malsup.github.io/jquery.blockUI.js');
+			/**
+			 * Frontend code for Global Payments
+			 *
+			 * @param {object} options
+			 */
+			function GlobalPaymentsGatewayProvider (options, order) {
+				/**
+				 * Click To Pay form instance
+				 *
+				 * @type {any}
+				 */
+				this.ctpForm = {};
+				/**
+				 * Payment method id
+				 *
+				 * @type {string}
+				 */
+				this.id = options.id;
+				/**
+				 * The current order
+				 *
+				 * @type {object}
+				 */
+				this.order = order;
+				/**
+				 * Payment method options
+				 *
+				 * @type {object}
+				 */
+				this.paymentMethodOptions = options.paymentMethodOptions;
+				/**
+				 *
+				 * @type {null}
+				 */
+				this.paymentTokenResponse = null;
+				this.attachEventHandlers();
+			};
+			GlobalPaymentsGatewayProvider.prototype = {
+				/**
+				 * Add important event handlers for controlling the payment experience during checkout
+				 *
+				 * @returns
+				 */
+				attachEventHandlers: function () {
+					var self = this;
+					// General
+					$(document).ready(function () {
+						self.renderClickToPay();
+					});
+				},
+				/**
+				 * Renders the payment fields using GlobalPayments.js. Each field is securely hosted on
+				 * Global Payments' production servers.
+				 *
+				 * @returns
+				 */
+				renderClickToPay: function () {
+					this.clearContent();
+					if (!(window).GlobalPayments.configure) {
+						console.log('Warning! Payment fields cannot be loaded (JS).');
+						return;
+					}
+					var gatewayConfig = this.paymentMethodOptions;
+					if (gatewayConfig.error) {
+						console.error(gatewayConfig.message);
+						return;
+					}
+					gatewayConfig.apms.currencyCode = this.order.currency;
+					(window).GlobalPayments.configure(gatewayConfig);
+					(window).GlobalPayments.on('error', this.handleErrors.bind(this));
+					this.ctpForm = (window).GlobalPayments.apm.form(this.getSubmitButtonTargetSelector(), {
+						amount: this.order.amount.toString(),
+						style: "gp-default",
+						apms: [(window).GlobalPayments.enums.Apm.ClickToPay]
+					});
+					this.ctpForm.on('token-success', this.handleResponse.bind(this));
+					this.ctpForm.on('token-error', this.handleErrors.bind(this));
+					this.ctpForm.on('error', this.handleErrors.bind(this));
+					$("#collapse-payment-method").on("click", function() {
+					    window.location.reload();
+					});
+				},
+				/**
+				 * If the CTP element already has some previous content, clear it.
+				 */
+				clearContent: function() {
+					var ctpElement = $(this.getSubmitButtonTargetSelector());
+					if (ctpElement.children().length > 0) {
+						ctpElement.empty();
+						$('#' + this.id + '-dwToken').remove();
+					}
+				},
+				/**
+				 * Gets the current checkout form
+				 *
+				 * @returns {Element}
+				 */
+				getForm: function () {
+					var checkoutForms = [
+						// Checkout
+						'form#globalpayments-payment-form',
+					]
+				  var forms = document.querySelectorAll(checkoutForms.join(','));
+				  return forms.item(0);
+				},
+				/**
+				 * Places/submits the order to Platform
+				 *
+				 * @returns
+				 */
+				placeOrder: function () {
+					$(this.getForm()).submit();
+				},
+				/**
+				 * Shows payment error and scrolls to it
+				 *
+				 * @param {string} message Error message
+				 *
+				 * @returns
+				 */
+				showPaymentError: function (message) {
+					var $form = $(this.getForm());
+					// Remove notices from all sources
+					$('.globalpayments-checkout-error').remove();
+					$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + message + '</div>');
+					$('html, body').animate({
+					scrollTop: ($form.offset().top - 100)
+					}, 1000);
+					this.unblockOnError();
+				},
+				/**
+				 * Blocks checkout UI
+				 *
+				 * @returns
+				 */
+				blockOnSubmit: function () {
+					var $form = $(this.getForm());
+					var form_data = $form.data();
+					if (1 !== form_data['blockUI.isBlocked']) {
+						$form.block({
+							message: null,
+							overlayCSS: {
+							background: '#fff',
+							opacity: 0.6
+						}
+					});
+					}
+				},
+				createInputElement: function (name, value) {
+					var inputElement = (document.getElementById(this.id + '-' + name));
+					if (!inputElement) {
+						inputElement = document.createElement('input');
+						inputElement.id = this.id + '-' + name;
+						inputElement.name = this.id + '[' + name + ']';
+						inputElement.type = 'hidden';
+						this.getForm().appendChild(inputElement);
+					}
+					inputElement.value = value;
+				},
+				/**
+				 * Unblocks checkout UI
+				 *
+				 * @returns
+				 */
+				unblockOnError: function () {
+					var $form = $(this.getForm());
+					var form_data = $form.data();
+					if (1 == form_data['blockUI.isBlocked']) {
+						$form.unblock();
+					}
+				},
+				/**
+				 * Convenience function to get CSS selector for the custom 'Place Order' button's parent element
+				 *
+				 * @param {string} id
+				 * @returns {string}
+				 */
+				getSubmitButtonTargetSelector: function () {
+					return '#' + this.id + '-digitalwallet-submit';
+				},
+				/**
+				 * Handles the tokenization response
+				 *
+				 * On valid payment fields, the tokenization response is added to the current
+				 * state, and the order is placed.
+				 *
+				 * @param {object} response tokenization response
+				 *
+				 * @returns
+				 */
+				handleResponse: function (response) {
+					this.createInputElement('dwToken', response.paymentReference);
+					return this.placeOrder();
+				},
+				/**
+				 * Handles errors from the payment field
+				 *
+				 * @param {object} error Details about the error
+				 *
+				 * @returns
+				 */
+				handleErrors: function (error) {
+					console.error(error);
+				},
+			};
+			new GlobalPaymentsGatewayProvider(globalpayments_clicktopay_params, globalpayments_order);
+		}
+	);
+</script>

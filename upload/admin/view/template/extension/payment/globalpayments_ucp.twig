@@ -1,4 +1,14 @@
-{{ header }}{{ column_left }}
+{{ header }}
+<script type="text/javascript">
+	function toggleCheckboxValue (event) {
+		if ($(event.target).is(':checked')) {
+			$(event.target).val(1);
+		} else {
+			$(event.target).val(0);
+		}
+	}
+</script>
+{{ column_left }}
 <div id="content">
   <div class="page-header">
     <div class="container-fluid">
@@ -158,6 +168,7 @@
             </div>
             {{ display_googlepay_tab }}
             {{ display_applepay_tab }}
+            {{ display_clicktopay_tab }}
           </div>
         </form>
       </div>
@@ -179,21 +190,10 @@
 			$('#input-sandbox_app_key').parents('.form-group').removeClass('hidden');
 		}
 	}
-
-	function toggleCheckboxValue (event) {
-		if ($(event.target).is(':checked')) {
-			$(event.target).val(1);
-		} else {
-			$(event.target).val(0);
-		}
-	}
-
 	$('#input-enabled').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCredentialsSettings.bind(this));
 	$('#input-debug').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-allow_card_saving').on('change', this.toggleCheckboxValue.bind(this));
-	$('#input-googlepay_enabled').on('change', this.toggleCheckboxValue.bind(this));
-	$('#input-applepay_enabled').on('change', this.toggleCheckboxValue.bind(this));
 </script>
 {{ footer }}

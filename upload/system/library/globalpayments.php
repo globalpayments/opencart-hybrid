@@ -11,21 +11,24 @@ if (is_readable($autoloader)) {
 	include_once $autoloader;
 }
 
-use GlobalPayments\PaymentGatewayProvider\Gateways\ApplePayGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
-use GlobalPayments\PaymentGatewayProvider\Gateways\GooglePayGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ApplePay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePay;
 
 class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.2.0';
+	const VERSION = '1.3.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
 	 */
 	public $gateway;
+
+	public $paymentMethod;
 
 	protected $registry;
 
@@ -42,14 +45,24 @@ class GlobalPayments {
 			case GatewayId::GP_API:
 				$this->setGpApiGateway();
 				break;
-			case GatewayId::GOOGLE_PAY:
-				$this->setGooglePayGateway();
+		}
+	}
+
+	public function setPaymentMethod($paymentMethodId) {
+		$this->setGpApiGateway(true);
+		switch($paymentMethodId) {
+			case ClickToPay::PAYMENT_METHOD_ID:
+				$this->setClickToPayPaymentMethod();
 				break;
-			case GatewayId::APPLE_PAY:
-				$this->setApplePayGateway();
+			case ApplePay::PAYMENT_METHOD_ID:
+				$this->setApplePayPaymentMethod();
+				break;
+			case GooglePay::PAYMENT_METHOD_ID:
+				$this->setGooglePayPaymentMethod();
 				break;
 		}
 	}
+
 
 	public function setGpApiGateway($config_only = false) {
 		$this->gateway = new GpApiGateway();
@@ -105,41 +118,48 @@ class GlobalPayments {
 		$this->gateway->errorVerifyNotVerified            = $this->language->get('error_txn_not_verified');
 	}
 
-	public function setGooglePayGateway() {
-		$this->setGpApiGateway(true);
-		$this->gateway = new GooglePayGateway($this->gateway);
-		/**
-		 * All these settings should be provided through the Admin Dashboard.
-		 */
-		$this->gateway->paymentAction            = $this->config->get('payment_globalpayments_googlepay_payment_action');
-		$this->gateway->ccTypes                  = explode(',', $this->config->get('payment_globalpayments_googlepay_accepted_cards'));
-		$this->gateway->globalPaymentsMerchantId = $this->config->get('payment_globalpayments_googlepay_gp_merchant_id');
-		$this->gateway->googleMerchantId         = $this->config->get('payment_globalpayments_googlepay_merchant_id');
-		$this->gateway->googleMerchantName       = $this->config->get('payment_globalpayments_googlepay_merchant_name');
-		$this->gateway->buttonColor              = $this->config->get('payment_globalpayments_googlepay_button_color');
+	public function setGooglePayPaymentMethod() {
+		$this->paymentMethod                           = new GooglePay($this->gateway);
+		$this->paymentMethod->enabled                  = $this->config->get('payment_globalpayments_googlepay_enabled');
+		$this->paymentMethod->title                    = $this->config->get('payment_globalpayments_googlepay_title');
+		$this->paymentMethod->paymentAction            = $this->config->get('payment_globalpayments_googlepay_payment_action');
+		$this->paymentMethod->ccTypes                  = explode(',', $this->config->get('payment_globalpayments_googlepay_accepted_cards'));
+		$this->paymentMethod->globalPaymentsMerchantId = $this->config->get('payment_globalpayments_googlepay_gp_merchant_id');
+		$this->paymentMethod->googleMerchantId         = $this->config->get('payment_globalpayments_googlepay_merchant_id');
+		$this->paymentMethod->googleMerchantName       = $this->config->get('payment_globalpayments_googlepay_merchant_name');
+		$this->paymentMethod->buttonColor              = $this->config->get('payment_globalpayments_googlepay_button_color');
 	}
 
-	public function setApplePayGateway() {
-		$this->setGpApiGateway(true);
-		$country = $this->gateway->country;
-		$this->gateway = new ApplePayGateway($this->gateway);
-		/**
-		 * All these settings should be provided through the Admin Dashboard.
-		 */
-		$this->gateway->appleMerchantId            = $this->config->get('payment_globalpayments_applepay_apple_merchant_id');
-		$this->gateway->appleMerchantCertPath      = DIR_STORAGE . $this->config->get('payment_globalpayments_applepay_apple_merchant_cert_path');
-		$this->gateway->appleMerchantKeyPath       = DIR_STORAGE . $this->config->get('payment_globalpayments_applepay_apple_merchant_key_path');
-		$this->gateway->appleMerchantKeyPassphrase = $this->config->get('payment_globalpayments_applepay_apple_merchant_key_passphrase');
-		$this->gateway->appleMerchantDomain        = $this->config->get('payment_globalpayments_applepay_apple_merchant_domain');
-		$this->gateway->appleMerchantDisplayName   = $this->config->get('payment_globalpayments_applepay_apple_merchant_display_name');
-		$this->gateway->ccTypes                    = explode(',', $this->config->get('payment_globalpayments_applepay_accepted_cards'));
-		$this->gateway->buttonColor                = $this->config->get('payment_globalpayments_applepay_button_color');
-		$this->gateway->paymentAction              = $this->config->get('payment_globalpayments_applepay_payment_action');
+	public function setApplePayPaymentMethod() {
+		$this->paymentMethod                             = new ApplePay($this->gateway);
+		$this->paymentMethod->enabled                    = $this->config->get('payment_globalpayments_applepay_enabled');
+		$this->paymentMethod->title                      = $this->config->get('payment_globalpayments_applepay_title');
+		$this->paymentMethod->paymentAction              = $this->config->get('payment_globalpayments_applepay_payment_action');
+		$this->paymentMethod->appleMerchantId            = $this->config->get('payment_globalpayments_applepay_apple_merchant_id');
+		$this->paymentMethod->appleMerchantCertPath      = DIR_STORAGE . $this->config->get('payment_globalpayments_applepay_apple_merchant_cert_path');
+		$this->paymentMethod->appleMerchantKeyPath       = DIR_STORAGE . $this->config->get('payment_globalpayments_applepay_apple_merchant_key_path');
+		$this->paymentMethod->appleMerchantKeyPassphrase = $this->config->get('payment_globalpayments_applepay_apple_merchant_key_passphrase');
+		$this->paymentMethod->appleMerchantDomain        = $this->config->get('payment_globalpayments_applepay_apple_merchant_domain');
+		$this->paymentMethod->appleMerchantDisplayName   = $this->config->get('payment_globalpayments_applepay_apple_merchant_display_name');
+		$this->paymentMethod->ccTypes                    = explode(',', $this->config->get('payment_globalpayments_applepay_accepted_cards'));
+		$this->paymentMethod->buttonColor                = $this->config->get('payment_globalpayments_applepay_button_color');
 		/**
 		 * All these settings should be platform specific.
 		 */
-		$this->gateway->validateMerchantUrl = $this->url->link('extension/payment/globalpayments_applepay/validateMerchant', '', true);
-		$this->gateway->country             = $country;
+		$this->paymentMethod->validateMerchantUrl = $this->url->link('extension/payment/globalpayments_applepay/validateMerchant', '', true);
+		$this->paymentMethod->country             = $this->gateway->country;;
+	}
+
+	public function setClickToPayPaymentMethod() {
+		$this->paymentMethod                = new ClickToPay($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_clicktopay_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_clicktopay_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_clicktopay_payment_action');
+		$this->paymentMethod->ctpClientId   = $this->config->get('payment_globalpayments_clicktopay_ctp_client_id');
+		$this->paymentMethod->buttonless    = (bool) $this->config->get('payment_globalpayments_clicktopay_buttonless');
+		$this->paymentMethod->ccTypes       = $this->config->get('payment_globalpayments_clicktopay_accepted_cards');
+		$this->paymentMethod->canadianDebit = (bool) $this->config->get('payment_globalpayments_clicktopay_canadian_debit');
+		$this->paymentMethod->wrapper       = (bool) $this->config->get('payment_globalpayments_clicktopay_wrapper');
 	}
 
 	public function setSecurePaymentFieldsTranslations() {

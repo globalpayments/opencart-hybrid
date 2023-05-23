@@ -1,0 +1,89 @@
+<div class="tab-pane{% if active_tab == 'clicktopay' %} active{% endif %}" id="tab-clicktopay">
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_enabled">{{ label_enabled }}</label>
+    <div class="col-sm-10 checkbox">
+      <label>
+        <input id="input-clicktopay_enabled" type="checkbox" name="payment_globalpayments_clicktopay_enabled"
+               value="{{ payment_globalpayments_clicktopay_enabled }}"{% if (payment_globalpayments_clicktopay_enabled==1) %} checked{% endif %} /> {{ entry_enabled }}
+      </label>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_title"><span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span></label>
+    <div class="col-sm-10">
+      <input id="input-clicktopay_title" type="text" name="payment_globalpayments_clicktopay_title"
+             value="{{ payment_globalpayments_clicktopay_title }}" placeholder="{{ placeholder_clicktopay_title }}" class="form-control"/>
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-ctp_client_id">{{ label_ctp_client_id }}</label>
+    <div class="col-sm-10">
+      <input id="input-ctp_client_id" type="text" name="payment_globalpayments_clicktopay_ctp_client_id" value="{{ payment_globalpayments_clicktopay_ctp_client_id }}" class="form-control"/><br/>
+      <p>{{ help_ctp_client_id }}</p>
+      {% if error_ctp_client_id %}
+        <div class="text-danger">{{ error_ctp_client_id }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_buttonless">{{ label_buttonless }}</label>
+    <div class="col-sm-10 checkbox">
+      <label>
+        <input id="input-clicktopay_buttonless" type="checkbox" name="payment_globalpayments_clicktopay_buttonless"
+               value="{{ payment_globalpayments_clicktopay_buttonless }}"{% if (payment_globalpayments_clicktopay_buttonless==1) %} checked{% endif %} /> {{ entry_buttonless }}
+      </label>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_canadian_debit">{{ label_canadian_debit }}</label>
+    <div class="col-sm-10 checkbox">
+      <label>
+        <input id="input-clicktopay_canadian_debit" type="checkbox" name="payment_globalpayments_clicktopay_canadian_debit"
+               value="{{ payment_globalpayments_clicktopay_canadian_debit }}"{% if (payment_globalpayments_clicktopay_canadian_debit==1) %} checked{% endif %} /> {{ entry_canadian_debit }}
+      </label>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_wrapper">{{ label_wrapper }}</label>
+    <div class="col-sm-10 checkbox">
+      <label>
+        <input id="input-clicktopay_wrapper" type="checkbox" name="payment_globalpayments_clicktopay_wrapper"
+               value="{{ payment_globalpayments_clicktopay_wrapper }}"{% if (payment_globalpayments_clicktopay_wrapper==1) %} checked{% endif %} /> {{ entry_wrapper }}
+      </label>
+    </div>
+  </div>
+  <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-clicktopay_accepted_cards">{{ label_accepted_cards }}</label>
+    <div class="col-sm-10">
+      <p><input id="input-clicktopay_accepted_cards_visa" type="checkbox" name="payment_globalpayments_clicktopay_accepted_cards[]"
+                value="VISA"{% if 'VISA' in payment_globalpayments_clicktopay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_visa }}</p>
+      <p><input id="input-clicktopay_accepted_cards_mastercard" type="checkbox" name="payment_globalpayments_clicktopay_accepted_cards[]"
+                value="MASTERCARD"{% if 'MASTERCARD' in payment_globalpayments_clicktopay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_mastercard }}</p>
+      <p><input id="input-clicktopay_accepted_cards_amex" type="checkbox" name="payment_globalpayments_clicktopay_accepted_cards[]"
+                value="AMEX"{% if 'AMEX' in payment_globalpayments_clicktopay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_amex }}</p>
+      <p><input id="input-clicktopay_accepted_cards_discover" type="checkbox" name="payment_globalpayments_clicktopay_accepted_cards[]"
+                value="DISCOVER"{% if 'DISCOVER' in payment_globalpayments_clicktopay_accepted_cards %} checked{% endif %} /> {{ entry_card_type_discover }}</p>
+      {% if error_clicktopay_accepted_cards %}
+        <div class="text-danger">{{ error_clicktopay_accepted_cards }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-clicktopay_payment_action">
+      <span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+    </label>
+    <div class="col-sm-10">
+      <select name="payment_globalpayments_clicktopay_payment_action_show" id="input-clicktopay_payment_action" class="form-control" disabled="disabled">
+        <option value="charge" selected="selected">{{ entry_payment_action_charge }}</option>
+        <option value="authorize" {{ payment_globalpayments_clicktopay_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+      </select>
+      <input name="payment_globalpayments_clicktopay_payment_action" type="hidden" value="charge">
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+	$('#input-clicktopay_enabled').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-clicktopay_buttonless').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-clicktopay_canadian_debit').on('change', this.toggleCheckboxValue.bind(this));
+	$('#input-clicktopay_wrapper').on('change', this.toggleCheckboxValue.bind(this));
+</script>

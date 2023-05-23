@@ -2,6 +2,7 @@
 
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
+use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 
 class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
@@ -104,6 +105,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$this->load->model('extension/payment/globalpayments_ucp');
 				$requestData->paymentToken = $this->model_extension_payment_globalpayments_ucp->getCard($postRequestData->paymentTokenId);
 			}
+			$requestData->requestType           = AbstractGateway::getRequestType($this->globalpayments->gateway->paymentAction);
 
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
 

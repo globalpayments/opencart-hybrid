@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f858a379c8760b3fe7875d91b1c62005",
+    "content-hash": "e3f8ebe2d8434fda97ae87ea1d91a9a9",
     "packages": [
         {
             "name": "globalpayments/php-sdk",
-            "version": "6.0.0",
+            "version": "7.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/globalpayments/php-sdk.git",
-                "reference": "7f0765a33416f7ed15afd71d294eb362abd045fb"
+                "reference": "05cfa8cc604854cb21c43cedf502b657f309e3eb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/7f0765a33416f7ed15afd71d294eb362abd045fb",
-                "reference": "7f0765a33416f7ed15afd71d294eb362abd045fb",
+                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/05cfa8cc604854cb21c43cedf502b657f309e3eb",
+                "reference": "05cfa8cc604854cb21c43cedf502b657f309e3eb",
                 "shasum": ""
             },
             "require": {
@@ -55,9 +55,9 @@
             "homepage": "https://developer.heartlandpaymentsystems.com/documentation",
             "support": {
                 "issues": "https://github.com/globalpayments/php-sdk/issues",
-                "source": "https://github.com/globalpayments/php-sdk/tree/6.0.0"
+                "source": "https://github.com/globalpayments/php-sdk/tree/7.0.1"
             },
-            "time": "2022-10-20T12:05:35+00:00"
+            "time": "2023-04-04T12:07:29+00:00"
         },
         {
             "name": "psr/log",
@@ -118,5 +118,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.3.0"
 }

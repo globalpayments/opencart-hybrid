@@ -25,7 +25,6 @@ $_['error_invalid_request']              = 'Invalid request.';
 $_['error_invalid_refund_amount']        = 'Invalid refund amount.';
 $_['error_invalid_refund_amount_format'] = 'Invalid amount. Please use `.` as decimals separator and no thousands separator.';
 
-
 // Column
 $_['text_column_txn_payment_action'] = 'Payment Action';
 $_['text_column_txn_id']             = 'Transaction Id';
@@ -33,3 +32,8 @@ $_['text_column_txn_status']         = 'Transaction Status';
 $_['text_column_txn_amount']         = 'Amount';
 $_['text_column_txn_created']        = 'Time created';
 $_['text_column_action']             = 'Action';
+
+// Meta
+$_['text_meta_billing']  = 'Click To Pay Payment Address';
+$_['text_meta_shipping'] = 'Click To Pay Shipping Address';
+$_['text_meta_email']    = 'Email address';

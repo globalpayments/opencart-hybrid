@@ -2,14 +2,15 @@
 
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
-use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
+use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ApplePay;
 
 class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 	public function __construct( $registry ) {
 		parent::__construct( $registry );
 		$this->load->library('globalpayments');
-		$this->globalpayments->setGateway(GatewayId::APPLE_PAY);
+		$this->globalpayments->SetPaymentMethod(ApplePay::PAYMENT_METHOD_ID);
 	}
 
 	public function index() {
@@ -19,7 +20,7 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 
 		$data['action'] = $this->url->link('extension/payment/globalpayments_applepay/confirm', '', true);
 
-		$data['gateway'] = $this->globalpayments->gateway;
+		$data['paymentMethod'] = $this->globalpayments->paymentMethod;
 
 		if ($this->customer->isLogged()) {
 			$data['customer_is_logged'] = true;
@@ -27,7 +28,7 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 			$data['customer_is_logged'] = false;
 		}
 
-		$data['globalpayments_applepay_params'] = $this->globalpayments->gateway->paymentFieldsParams();
+		$data['globalpayments_applepay_params'] = $this->globalpayments->paymentMethod->paymentFieldsParams();
 		$data['globalpayments_order']           = json_encode($this->order);
 
 		return $this->load->view('extension/payment/globalpayments_applepay', $data);
@@ -39,26 +40,27 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 		$requestData = new RequestData();
 		$requestData = RequestData::setDataObject($requestData, $postRequestData);
 
-		$this->globalpayments->gateway->validateMerchant($requestData);
+		$this->globalpayments->paymentMethod->validateMerchant($requestData);
 	}
 
 	public function confirm() {
 		$this->load->language('extension/payment/globalpayments_ucp');
 		try {
 			$this->setOrder();
-			if (empty($this->request->post[$this->globalpayments->gateway->gatewayId])) {
+			if (empty($this->request->post[$this->globalpayments->paymentMethod->paymentMethodId])) {
 				throw new \Exception($this->language->get('error_order_processing'));
 			}
 
-			$postRequestData                   = (object)$this->request->post[$this->globalpayments->gateway->gatewayId];
+			$postRequestData                   = (object)$this->request->post[$this->globalpayments->paymentMethod->paymentMethodId];
 			$requestData                       = new RequestData();
 			$requestData                       = RequestData::setDataObject($requestData, $postRequestData);
 			$requestData->order                = $this->order;
 
 			$requestData->gatewayId                         = $this->globalpayments->gateway->gatewayId;
-			$requestData->digitalWalletPaymentTokenResponse = htmlspecialchars_decode($postRequestData->digitalWalletTokenResponse);
-			$requestData->mobileType                        = $this->globalpayments->gateway->mobileType;
+			$requestData->digitalWalletPaymentTokenResponse = htmlspecialchars_decode($postRequestData->dwToken);
+			$requestData->mobileType                        = $this->globalpayments->paymentMethod->getMobileType();
 			$requestData->dynamicDescriptor                 = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
+			$requestData->requestType                       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
 
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
 
@@ -74,7 +76,14 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 2, $comment);
 
 			$this->load->model('extension/payment/globalpayments_ucp');
-			$this->model_extension_payment_globalpayments_ucp->addTransaction($this->order->orderReference, $this->globalpayments->gateway->gatewayId, $this->globalpayments->gateway->paymentAction, $this->order->amount, $this->order->currency, $gatewayResponse);
+			$this->model_extension_payment_globalpayments_ucp->addTransaction(
+				$this->order->orderReference,
+				$this->globalpayments->paymentMethod->paymentMethodId,
+				$this->globalpayments->paymentMethod->paymentAction,
+				$this->order->amount,
+				$this->order->currency,
+				$gatewayResponse
+			);
 
 			$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
 		} catch (\Exception $e) {

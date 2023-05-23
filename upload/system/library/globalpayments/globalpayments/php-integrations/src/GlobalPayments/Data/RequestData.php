@@ -93,6 +93,8 @@ class RequestData {
 
 	public $applePayValidationUrl;
 
+	public $requestType;
+
 	public function __set($name, $value) {
 		switch ($name) {
 			case 'digitalWalletPaymentTokenResponse':
@@ -143,8 +145,8 @@ class RequestData {
 	}
 
 	public static function removeSlashesFromDigitalWalletToken(string $token) {
-		$replace = str_replace('\\\\', '\\', $token);
+		$token = str_replace('\\\\', '\\', $token);
 
-		return $replace;
+		return $token;
 	}
 }

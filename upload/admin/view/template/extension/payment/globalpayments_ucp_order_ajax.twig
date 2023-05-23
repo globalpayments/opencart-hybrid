@@ -1,3 +1,17 @@
+{% if dw_billing_address %}
+<table class="table table-bordered">
+  <thead>
+  <tr>
+    <td style="width: 50%;" class="text-left">{{ text_meta_billing }}</td>
+    <td style="width: 50%;" class="text-left">{{ text_meta_shipping }}</td>
+  </thead>
+  <tbody>
+  <tr>
+    <td class="text-left">{{ dw_payer }}<br/>{{ dw_billing_address }}</td>
+    <td class="text-left">{{ dw_shipping_address }}</td>
+  </tbody>
+</table>
+{% endif %}
 <table class="table table-bordered">
   <thead>
   <tr>

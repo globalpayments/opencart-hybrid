@@ -28,7 +28,7 @@ class AuthorizeRequest extends AbstractRequest {
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
 		                         ->withRequestMultiUseToken($this->requestData->saveCard);
 
-		if ($this->requestData->gatewayId == GatewayId::GOOGLE_PAY || $this->requestData->gatewayId == GatewayId::APPLE_PAY) {
+		if ( ! empty($this->requestData->mobileType)) {
 			$builder = $builder->withModifier(TransactionModifier::ENCRYPTED_MOBILE);
 		}
 

@@ -1,50 +1,27 @@
 <?php
 
-namespace GlobalPayments\PaymentGatewayProvider\Gateways;
+namespace GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets;
 
 use GlobalPayments\Api\Entities\Enums\EncyptedMobileType;
-use GlobalPayments\Api\Entities\Enums\GatewayProvider;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 
-class ApplePayGateway extends AbstractGateway {
-	/**
-	 * First line support e-mail.
-	 */
-	public const FIRST_LINE_SUPPORT_EMAIL = 'api.integrations@globalpay.com';
+class ApplePay extends AbstractDigitalWallet {
+	public const PAYMENT_METHOD_ID = 'globalpayments_applepay';
+
+	public $paymentMethodId = self::PAYMENT_METHOD_ID;
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * @var string
 	 */
-	public $gatewayId = GatewayId::APPLE_PAY;
+	public $defaultTitle = 'Pay with Apple Pay';
 
 	/**
-	 * {@inheritDoc}
+	 * Indicates the card brands the merchant accepts for Apple Pay.
 	 *
-	 * @var string
-	 */
-	public $gatewayProvider = GatewayProvider::GP_API;
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @var bool
-	 */
-	public $isDigitalWallet = true;
-
-	/**
-	 * Digital Wallet provider.
-	 *
-	 * @var string
-	 */
-	public $mobileType = EncyptedMobileType::APPLE_PAY;
-
-	/**
-	 * Supported credit card types.
-	 *
-	 * @var array
+	 * @var
 	 */
 	public $ccTypes;
 
@@ -112,23 +89,9 @@ class ApplePayGateway extends AbstractGateway {
 	public $buttonColor;
 
 	/**
-	 * Global Payments gateway.
-	 *
-	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
-	 */
-	private $gateway;
-
-	public function __construct(GatewayInterface $gateway) {
-		$this->gateway = $gateway;
-		parent::__construct();
-	}
-
-	/**
 	 * {@inheritDoc}
-	 *
-	 * @return array|Array
 	 */
-	public function getFrontendGatewayOptions() {
+	public function getFrontendPaymentMethodOptions() {
 		return array(
 			'appleMerchantDisplayName' => $this->appleMerchantDisplayName,
 			'ccTypes'                  => $this->ccTypes,
@@ -136,41 +99,6 @@ class ApplePayGateway extends AbstractGateway {
 			'country'                  => $this->country,
 			'buttonColor'              => $this->buttonColor,
 		);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @return array|Array
-	 */
-	public function getBackendGatewayOptions() {
-		return $this->gateway->getBackendGatewayOptions();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @return string
-	 */
-	public function getFirstLineSupportEmail() {
-		return self::FIRST_LINE_SUPPORT_EMAIL;
-	}
-
-	/**
-	 * The configuration for the globalpayments_secure_payment_fields_params object.
-	 *
-	 * @param bool $jsonEncode
-	 *
-	 * @return array|false|string
-	 * @throws \GlobalPayments\Api\Entities\Exceptions\ApiException
-	 */
-	public function paymentFieldsParams($jsonEncode = true) {
-		$params = array(
-			'id'             => $this->gatewayId,
-			'gatewayOptions' => $this->getFrontendGatewayOptions(),
-		);
-
-		return $jsonEncode ? json_encode($params) : $params;
 	}
 
 	/**
@@ -238,5 +166,12 @@ class ApplePayGateway extends AbstractGateway {
 				'message' => $e->getMessage(),
 			]);
 		}
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getMobileType() {
+		return EncyptedMobileType::APPLE_PAY;
 	}
 }

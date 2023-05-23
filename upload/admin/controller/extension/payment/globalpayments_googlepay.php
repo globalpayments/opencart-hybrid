@@ -127,11 +127,11 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 	}
 
 	public function order() {
-		$this->load->language('extension/payment/globalpayments_googlepay_order');
+		$this->load->language('extension/payment/globalpayments_ucp_order');
 
-		$data['user_token'] = $this->session->data['user_token'];
-
-		$data['order_id'] = (int)$this->request->get['order_id'];
+		$data['user_token']   = $this->session->data['user_token'];
+		$data['order_id']     = (int)$this->request->get['order_id'];
+		$data['payment_code'] = 'globalpayments_googlepay';
 
 		return $this->load->view('extension/payment/globalpayments_ucp_order', $data);
 	}

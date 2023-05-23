@@ -3,6 +3,9 @@ This extension allows Opencart to use Unified Payments payment gateway.
 
 == Changelog ==
 
+= 1.3.0 =
+* Digital Wallets - Click to Pay
+
 = 1.2.0 =
 * Unified Payments - remove 3DS 1
 

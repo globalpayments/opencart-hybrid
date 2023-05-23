@@ -5,6 +5,7 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
 
 class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	private $error = array();
@@ -19,8 +20,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->model('setting/extension');
 		$extensions = $this->model_setting_extension->getInstalled('payment');
 
-		$globalpayments_googlepay_installed = in_array('globalpayments_googlepay', $extensions);
-		$globalpayments_applepay_installed  = in_array('globalpayments_applepay', $extensions);
+		$globalpayments_googlepay_installed  = in_array('globalpayments_googlepay', $extensions);
+		$globalpayments_applepay_installed   = in_array('globalpayments_applepay', $extensions);
+		$globalpayments_clicktopay_installed = in_array('globalpayments_clicktopay', $extensions);
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
 			$this->load->model('setting/setting');
@@ -44,6 +46,13 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$globalpayments_applepay_messages = $this->load->controller('extension/payment/globalpayments_applepay/save');
 				$this->alert = array_merge_recursive($this->alert, $globalpayments_applepay_messages['alert']);
 				$this->error = array_merge_recursive($this->error, $globalpayments_applepay_messages['error']);
+			}
+
+			// Click To Pay
+			if ($globalpayments_clicktopay_installed) {
+				$globalpayments_clicktopay_messages = $this->load->controller('extension/payment/globalpayments_clicktopay/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_clicktopay_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_clicktopay_messages['error']);
 			}
 
 			if (empty($this->error)) {
@@ -193,6 +202,15 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['display_applepay_tab'] = '';
 		}
+		if ($globalpayments_clicktopay_installed) {
+			$data['display_clicktopay_tab'] = $this->load->controller('extension/payment/globalpayments_clicktopay/display', $this->error);
+			$data['tabs'][] = array(
+				'id'   => 'clicktopay',
+				'name' => $this->language->get('tab_clicktopay'),
+			);
+		} else {
+			$data['display_clicktopay_tab'] = '';
+		}
 
 		$data['breadcrumbs'] = array();
 		$data['breadcrumbs'][] = array(
@@ -275,9 +293,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	public function order() {
 		$this->load->language('extension/payment/globalpayments_ucp_order');
 
-		$data['user_token'] = $this->session->data['user_token'];
-
-		$data['order_id'] = (int)$this->request->get['order_id'];
+		$data['user_token']   = $this->session->data['user_token'];
+		$data['order_id']     = (int)$this->request->get['order_id'];
+		$data['payment_code'] = 'globalpayments_ucp';
 
 		return $this->load->view('extension/payment/globalpayments_ucp_order', $data);
 	}
@@ -291,9 +309,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		$this->load->language('extension/payment/globalpayments_ucp_order');
 
-		$data['user_token'] = $this->session->data['user_token'];
-
-		$data['order_id'] = (int)$this->request->get['order_id'];
+		$data['user_token']   = $this->session->data['user_token'];
+		$data['order_id']     = (int)$this->request->get['order_id'];
+		$data['payment_code'] = $this->request->get['payment_code'];
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$transactions  = $this->model_extension_payment_globalpayments_ucp->getTransactions($data['order_id']);
@@ -334,6 +352,31 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 
 		$data['transactions'] = $transactions;
+
+		if ($data['payment_code'] === ClickToPay::PAYMENT_METHOD_ID) {
+			$this->load->model('setting/extension');
+			$extensions = $this->model_setting_extension->getInstalled('payment');
+			if (in_array('globalpayments_clicktopay', $extensions)) {
+				$this->load->model('extension/payment/globalpayments_clicktopay');
+				$order_meta = $this->model_extension_payment_globalpayments_clicktopay->getOrderMeta($data['order_id']);
+				if ($order_meta) {
+					$dw_billing_address = json_decode($order_meta['payment_address']);
+					$data_dw_billing_address  = $dw_billing_address->streetAddress1 . ( ! empty( $dw_billing_address->streetAddress2 ) ? ', ' . $dw_billing_address->streetAddress2 : '' ) . "</br>";
+					$data_dw_billing_address .= ( ! empty( $dw_billing_address->streetAddress2 ) ? $dw_billing_address->streetAddress3 . '</br>' : '' );
+					$data_dw_billing_address .= $dw_billing_address->city . ', ' . $dw_billing_address->state . ' ' . $dw_billing_address->postalCode;
+
+					$dw_shipping_address = json_decode($order_meta['shipping_address']);
+					$data_dw_shipping_address  = $dw_shipping_address->streetAddress1 . ( ! empty( $dw_shipping_address->streetAddress2 ) ? ', ' . $dw_shipping_address->streetAddress2 : '' ) . '</br>';
+					$data_dw_shipping_address .= ( ! empty( $dw_shipping_address->streetAddress2 ) ? $dw_shipping_address->streetAddress3 . '</br>' : '' );
+					$data_dw_shipping_address .= $dw_shipping_address->city . ', ' . $dw_shipping_address->state . ' ' . $dw_shipping_address->postalCode;
+
+					$data['dw_billing_address']  = $data_dw_billing_address;
+					$data['dw_shipping_address'] = $data_dw_shipping_address;
+					$data['dw_email']            = $order_meta['email'];
+					$data['dw_payer']            = $order_meta['payer'];
+				}
+			}
+		}
 
 		$this->response->setOutput($this->load->view('extension/payment/globalpayments_ucp_order_ajax', $data));
 	}
@@ -429,6 +472,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->model('setting/extension');
 		$this->model_setting_extension->install('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->install('payment', 'globalpayments_applepay');
+		$this->model_setting_extension->install('payment', 'globalpayments_clicktopay');
 
 		$this->load->model('user/user_group');
 
@@ -438,18 +482,24 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_applepay');
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_applepay');
 
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_clicktopay');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_clicktopay');
+
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->install();
 		$this->load->model('extension/payment/globalpayments_googlepay');
 		$this->model_extension_payment_globalpayments_googlepay->install();
 		$this->load->model('extension/payment/globalpayments_applepay');
 		$this->model_extension_payment_globalpayments_applepay->install();
+		$this->load->model('extension/payment/globalpayments_clicktopay');
+		$this->model_extension_payment_globalpayments_clicktopay->install();
 	}
 
 	public function uninstall() {
 		$this->load->model('setting/extension');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_applepay');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_clicktopay');
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->uninstall();

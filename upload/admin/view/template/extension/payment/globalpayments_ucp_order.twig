@@ -8,7 +8,8 @@
 			url: 'index.php?route=extension/payment/globalpayments_ucp/getTransaction&user_token={{ user_token }}',
 			dataType: 'html',
 			data: {
-				order_id: '{{ order_id }}'
+				order_id: '{{ order_id }}',
+				payment_code: '{{ payment_code }}'
 			},
 			beforeSend: function () {
 				$('#button-filter').button('loading');

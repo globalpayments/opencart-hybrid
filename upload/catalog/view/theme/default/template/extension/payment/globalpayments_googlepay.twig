@@ -2,9 +2,9 @@
   <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
   <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
   <div class="globalpayments" style="width: 300px; margin: auto">
-    <fieldset id="{{ gateway.gatewayId }}-digitalwallet">
+    <fieldset id="{{ paymentMethod.paymentMethodId }}-digitalwallet">
       <!-- Target for digital wallet -->
-      <div id="{{ gateway.gatewayId }}-digitalwallet-submit'"></div>
+      <div id="{{ paymentMethod.paymentMethodId }}-digitalwallet-submit'"></div>
     </fieldset>
   </div>
     <div class="buttons clearfix">
@@ -34,7 +34,7 @@
 			 */
 			function GlobalPaymentsGatewayProvider (options, order) {
 				/**
-				 * Payment gateway id
+				 * Payment method id
 				 *
 				 * @type {string}
 				 */
@@ -48,11 +48,11 @@
 				this.order = order;
 
 				/**
-				 * Payment gateway options
+				 * Payment method options
 				 *
 				 * @type {object}
 				 */
-				this.gatewayOptions = options.gatewayOptions;
+				this.paymentMethodOptions = options.paymentMethodOptions;
 
 				/**
 				 *
@@ -107,32 +107,32 @@
 				 * Google Merchant ID
 				 */
 				getGoogleMerchantId: function () {
-					return this.gatewayOptions.googleMerchantId;
+					return this.paymentMethodOptions.googleMerchantId;
 				},
 
 				/**
 				 * Google Merchant Display Name
 				 */
 				getGoogleMerchantName: function () {
-					return this.gatewayOptions.googleMerchantName;
+					return this.paymentMethodOptions.googleMerchantName;
 				},
 
 				/**
 				 * Environment
 				 */
 				getEnvironment: function () {
-					return this.gatewayOptions.env;
+					return this.paymentMethodOptions.env;
 				},
 
 				/**
 				 * BTN Color
 				 */
 				getBtnColor: function () {
-					return this.gatewayOptions.btnColor;
+					return this.paymentMethodOptions.btnColor;
 				},
 
 				getAllowedCardNetworks: function () {
-					return this.gatewayOptions.ccTypes;
+					return this.paymentMethodOptions.ccTypes;
 				},
 
 				getAllowedCardAuthMethods: function () {
@@ -144,7 +144,7 @@
 						type: 'PAYMENT_GATEWAY',
 						parameters: {
 							'gateway': 'globalpayments',
-							'gatewayMerchantId': this.gatewayOptions.globalPaymentsMerchantId
+							'gatewayMerchantId': this.paymentMethodOptions.globalPaymentsMerchantId
 						}
 					}
 				},
@@ -213,7 +213,7 @@
 						}
 					});
 
-					$( this.getSubmitButtonTargetSelector()).append(button);
+					$(this.getSubmitButtonTargetSelector()).append(button);
 				},
 
 				onGooglePaymentButtonClicked: function () {
@@ -224,7 +224,7 @@
 					this.paymentsClient.loadPaymentData(paymentDataRequest)
 						.then(function (paymentData) {
 							self.createInputElement(
-								'digitalWalletTokenResponse',
+								'dwToken',
 								JSON.stringify(JSON.parse(paymentData.paymentMethodData.tokenizationData.token))
 							);
 

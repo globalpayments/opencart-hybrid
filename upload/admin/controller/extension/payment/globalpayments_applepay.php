@@ -168,9 +168,9 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 	public function order() {
 		$this->load->language('extension/payment/globalpayments_ucp_order');
 
-		$data['user_token'] = $this->session->data['user_token'];
-
-		$data['order_id'] = (int)$this->request->get['order_id'];
+		$data['user_token']   = $this->session->data['user_token'];
+		$data['order_id']     = (int)$this->request->get['order_id'];
+		$data['payment_code'] = 'globalpayments_applepay';
 
 		return $this->load->view('extension/payment/globalpayments_ucp_order', $data);
 	}

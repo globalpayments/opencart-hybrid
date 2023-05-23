@@ -78,7 +78,7 @@
 		 */
 		function GlobalPaymentsGatewayProvider (options, order) {
 			/**
-			 * Payment gateway id
+			 * Payment method id
 			 *
 			 * @type {string}
 			 */
@@ -92,11 +92,11 @@
 			this.order = order;
 
 			/**
-			 * Payment gateway options
+			 * Payment method options
 			 *
 			 * @type {object}
 			 */
-			this.gatewayOptions = options.gatewayOptions;
+			this.paymentMethodOptions = options.paymentMethodOptions;
 
 			this.attachEventHandlers();
 		};
@@ -134,7 +134,7 @@
 
 				var self = this;
 				var paymentButton = document.createElement('div');
-				paymentButton.className = "apple-pay-button apple-pay-button-" + this.gatewayOptions.buttonColor;
+				paymentButton.className = "apple-pay-button apple-pay-button-" + this.paymentMethodOptions.buttonColor;
 				paymentButton.title = "Pay with Apple Pay";
 				paymentButton.alt = "Pay with Apple Pay";
 				paymentButton.id = this.id;
@@ -187,7 +187,7 @@
 				$.ajax({
 					type: "POST",
 					cache: false,
-					url: this.gatewayOptions.validateMerchantUrl,
+					url: this.paymentMethodOptions.validateMerchantUrl,
 					data: JSON.stringify({ 'applePayValidationUrl': event.validationURL }),
 					dataType: "json",
 					contentType: "application/json",
@@ -211,7 +211,7 @@
 			onApplePayPaymentAuthorize: function (event, session) {
 				var paymentToken = JSON.stringify(event.payment.token.paymentData);
 				this.createInputElement(
-					'digitalWalletTokenResponse',
+					'dwToken',
 					 paymentToken
 				);
 
@@ -227,14 +227,14 @@
 
 			getPaymentRequest: function () {
 				return {
-					countryCode: this.gatewayOptions.country,
+					countryCode: this.paymentMethodOptions.country,
 					currencyCode: this.order.currency,
 					merchantCapabilities: [
 						"supports3DS"
 					],
-					supportedNetworks: this.gatewayOptions.ccTypes,
+					supportedNetworks: this.paymentMethodOptions.ccTypes,
 					total: {
-						label: this.gatewayOptions.appleMerchantDisplayName,
+						label: this.paymentMethodOptions.appleMerchantDisplayName,
 						amount: this.order.amount.toString()
 					},
 				}

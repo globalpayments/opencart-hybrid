@@ -3,21 +3,21 @@
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
 
-class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
-	public function __construct( $registry ) {
-		parent::__construct( $registry );
+class ControllerExtensionPaymentGlobalPaymentsClickToPay extends Controller {
+	public function __construct($registry) {
+		parent::__construct($registry);
 		$this->load->library('globalpayments');
-		$this->globalpayments->setPaymentMethod(GooglePay::PAYMENT_METHOD_ID);
+		$this->globalpayments->setPaymentMethod(ClickToPay::PAYMENT_METHOD_ID);
 	}
 
 	public function index() {
-		$this->load->language('extension/payment/globalpayments_googlepay');
+		$this->load->language('extension/payment/globalpayments_clicktopay');
 
 		$this->setOrder();
 
-		$data['action'] = $this->url->link('extension/payment/globalpayments_googlepay/confirm', '', true);
+		$data['action'] = $this->url->link('extension/payment/globalpayments_clicktopay/confirm', '', true);
 
 		$data['paymentMethod'] = $this->globalpayments->paymentMethod;
 
@@ -27,10 +27,10 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 			$data['customer_is_logged'] = false;
 		}
 
-		$data['globalpayments_googlepay_params'] = $this->globalpayments->paymentMethod->paymentFieldsParams();
-		$data['globalpayments_order']            = json_encode($this->order);
+		$data['globalpayments_clicktopay_params'] = $this->globalpayments->paymentMethod->paymentFieldsParams();
+		$data['globalpayments_order']             = json_encode($this->order);
 
-		return $this->load->view('extension/payment/globalpayments_googlepay', $data);
+		return $this->load->view('extension/payment/globalpayments_clicktopay', $data);
 	}
 
 	public function confirm() {
@@ -41,10 +41,10 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 				throw new \Exception($this->language->get('error_order_processing'));
 			}
 
-			$postRequestData                   = (object)$this->request->post[$this->globalpayments->paymentMethod->paymentMethodId];
-			$requestData                       = new RequestData();
-			$requestData                       = RequestData::setDataObject($requestData, $postRequestData);
-			$requestData->order                = $this->order;
+			$postRequestData    = (object)$this->request->post[$this->globalpayments->paymentMethod->paymentMethodId];
+			$requestData        = new RequestData();
+			$requestData        = RequestData::setDataObject($requestData, $postRequestData);
+			$requestData->order = $this->order;
 
 			$requestData->gatewayId                         = $this->globalpayments->gateway->gatewayId;
 			$requestData->digitalWalletPaymentTokenResponse = htmlspecialchars_decode($postRequestData->dwToken);
@@ -75,6 +75,15 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 				$gatewayResponse
 			);
 
+			$this->load->model('extension/payment/globalpayments_clicktopay');
+			$this->model_extension_payment_globalpayments_clicktopay->addOrderMeta(
+				$this->order->orderReference,
+				json_encode($gatewayResponse->payerDetails->billingAddress),
+				json_encode($gatewayResponse->payerDetails->shippingAddress),
+				$gatewayResponse->payerDetails->email,
+				$gatewayResponse->payerDetails->firstName . ' ' . $gatewayResponse->payerDetails->lastName
+			);
+
 			$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
 		} catch (\Exception $e) {
 			$this->session->data['error'] = $e->getMessage();
@@ -83,7 +92,7 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 	}
 
 	private function setOrder() {
-		if (empty($this->session->data['order_id'])) {
+		if ( empty($this->session->data['order_id'])) {
 			throw new \Exception($this->language->get('error_order_processing'));
 		}
 
@@ -91,7 +100,7 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
 
 		$order                 = new OrderData();
-		$order->amount         = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
+		$order->amount         = $this->currency->format( $order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false );
 		$order->currency       = $order_info['currency_code'];
 		$order->orderReference = $this->session->data['order_id'];
 

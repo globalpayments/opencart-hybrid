@@ -3,10 +3,11 @@
 $_['heading_title'] = 'GlobalPayments - Unified Payments';
 
 // Tab
-$_['tab_ucp']       = 'Unified Payments';
-$_['tab_payment']   = 'Payment';
-$_['tab_googlepay'] = 'Google Pay';
-$_['tab_applepay']  = 'Apple Pay';
+$_['tab_ucp']        = 'Unified Payments';
+$_['tab_payment']    = 'Payment';
+$_['tab_googlepay']  = 'Google Pay';
+$_['tab_applepay']   = 'Apple Pay';
+$_['tab_clicktopay'] = 'Click To Pay';
 
 // Text
 $_['text_globalpayments_ucp'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';

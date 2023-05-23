@@ -227,11 +227,8 @@ abstract class AbstractGateway implements GatewayInterface {
 	 * @throws ApiException
 	 */
 	public function processPayment(RequestData $requestData) {
-		$requestType = $this->getRequestType();
-
 		//$this->handleResponse($request, $response);
-
-		return $this->processRequest($requestType, $requestData);
+		return $this->processRequest($requestData->requestType, $requestData);
 	}
 
 	public function processCapture(RequestData $requestData) {
@@ -344,8 +341,8 @@ abstract class AbstractGateway implements GatewayInterface {
 	 *
 	 * @return string
 	 */
-	private function getRequestType() {
-		switch ($this->paymentAction) {
+	public static function getRequestType($paymentAction) {
+		switch ($paymentAction) {
 			case self::AUTHORIZE:
 				$requestType = AuthorizeRequest::class;
 				break;
