@@ -65,8 +65,11 @@ abstract class AbstractRequest implements RequestInterface {
 		return $_POST;
 	}
 
-	public static function sendJsonResponse(array $response) {
+	public static function sendJsonResponse(array $response, int $responseCode = null) {
 		header('Content-Type: application/json');
+		if ($responseCode) {
+		    http_response_code($responseCode);
+		}
 		echo json_encode($response);
 		exit;
 	}

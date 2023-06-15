@@ -5,7 +5,10 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
+use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
 
 class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	private $error = array();
@@ -20,9 +23,16 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->model('setting/extension');
 		$extensions = $this->model_setting_extension->getInstalled('payment');
 
+		//If needed fix missing payment actions
+		$this->load->model('extension/payment/globalpayments_ucp');
+		$this->model_extension_payment_globalpayments_ucp->fixColumns();
+
 		$globalpayments_googlepay_installed  = in_array('globalpayments_googlepay', $extensions);
 		$globalpayments_applepay_installed   = in_array('globalpayments_applepay', $extensions);
 		$globalpayments_clicktopay_installed = in_array('globalpayments_clicktopay', $extensions);
+		$globalpayments_affirm_installed     = in_array('globalpayments_affirm', $extensions);
+		$globalpayments_klarna_installed     = in_array('globalpayments_klarna', $extensions);
+		$globalpayments_clearpay_installed   = in_array('globalpayments_clearpay', $extensions);
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
 			$this->load->model('setting/setting');
@@ -53,6 +63,27 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$globalpayments_clicktopay_messages = $this->load->controller('extension/payment/globalpayments_clicktopay/save');
 				$this->alert = array_merge_recursive($this->alert, $globalpayments_clicktopay_messages['alert']);
 				$this->error = array_merge_recursive($this->error, $globalpayments_clicktopay_messages['error']);
+			}
+
+			//Affirm
+			if ($globalpayments_affirm_installed) {
+				$globalpayments_affirm_messages = $this->load->controller('extension/payment/globalpayments_affirm/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_affirm_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_affirm_messages['error']);
+			}
+
+			//Klarna
+			if ($globalpayments_klarna_installed) {
+				$globalpayments_klarna_messages = $this->load->controller('extension/payment/globalpayments_klarna/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_klarna_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_klarna_messages['error']);
+			}
+
+			//Clearpay
+			if ($globalpayments_clearpay_installed) {
+				$globalpayments_clearpay_messages = $this->load->controller('extension/payment/globalpayments_clearpay/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_clearpay_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_clearpay_messages['error']);
 			}
 
 			if (empty($this->error)) {
@@ -202,6 +233,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['display_applepay_tab'] = '';
 		}
+
 		if ($globalpayments_clicktopay_installed) {
 			$data['display_clicktopay_tab'] = $this->load->controller('extension/payment/globalpayments_clicktopay/display', $this->error);
 			$data['tabs'][] = array(
@@ -210,6 +242,36 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			);
 		} else {
 			$data['display_clicktopay_tab'] = '';
+		}
+
+		if ($globalpayments_affirm_installed) {
+			$data['display_affirm_tab'] = $this->load->controller('extension/payment/globalpayments_affirm/display', $this->error);
+			$data['tabs'][] = array(
+				'id'   => 'affirm',
+				'name' => $this->language->get('tab_affirm'),
+			);
+		} else {
+			$data['display_affirm_tab'] = '';
+		}
+
+		if ($globalpayments_klarna_installed) {
+			$data['display_klarna_tab'] = $this->load->controller('extension/payment/globalpayments_klarna/display', $this->error);
+			$data['tabs'][] = array(
+				'id'   => 'klarna',
+				'name' => $this->language->get('tab_klarna'),
+			);
+		} else {
+			$data['display_klarna_tab'] = '';
+		}
+
+		if ($globalpayments_clearpay_installed) {
+			$data['display_clearpay_tab'] = $this->load->controller('extension/payment/globalpayments_clearpay/display', $this->error);
+			$data['tabs'][] = array(
+				'id'   => 'clearpay',
+				'name' => $this->language->get('tab_clearpay'),
+			);
+		} else {
+			$data['display_clearpay_tab'] = '';
 		}
 
 		$data['breadcrumbs'] = array();
@@ -328,32 +390,43 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		foreach ($transactions as $key => $transaction) {
 			$transaction_actions = [];
-			if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::AUTHORIZE) {
-				$transaction_actions[] = [
-					'action' => AbstractGateway::CAPTURE,
-					'button' => $this->language->get('button_capture'),
-				];
+			$bnplMethods = [
+				Affirm::PAYMENT_METHOD_ID,
+				Clearpay::PAYMENT_METHOD_ID,
+				Klarna::PAYMENT_METHOD_ID
+			];
+			// we handle the code like this because only for BNPL we add a transaction entry on the INITIALIZE step
+			if (in_array($data['payment_code'], $bnplMethods)) {
+				$transaction_actions = $this->handleBNPLTransactions($data['order_id'], $transaction, $transactions_count, $should_refund);
+			} else {
+				if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::AUTHORIZE) {
+					$transaction_actions[] = [
+						'action' => AbstractGateway::CAPTURE,
+						'button' => $this->language->get('button_capture'),
+					];
+				}
+				if ($should_refund && ($transaction['payment_action'] === AbstractGateway::CAPTURE || $transaction['payment_action'] === AbstractGateway::CHARGE)) {
+					$transaction_actions[] = [
+						'action' => AbstractGateway::REFUND,
+						'button' => $this->language->get('button_refund'),
+					];
+				}
+				if (($transactions_count === 2 && $transaction['payment_action'] === AbstractGateway::CAPTURE)
+					|| ($transactions_count === 1 && ($transaction['payment_action'] === AbstractGateway::CHARGE || $transaction['payment_action'] === AbstractGateway::AUTHORIZE))) {
+						$transaction_actions[] = [
+							'action' => AbstractGateway::REVERSE,
+							'button' => $this->language->get('button_reverse'),
+						];
+				}
 			}
-			if ($should_refund && ($transaction['payment_action'] === AbstractGateway::CAPTURE || $transaction['payment_action'] === AbstractGateway::CHARGE)) {
-				$transaction_actions[] = [
-					'action' => AbstractGateway::REFUND,
-					'button' => $this->language->get('button_refund'),
-				];
-			}
-			if (($transactions_count === 2 && $transaction['payment_action'] === AbstractGateway::CAPTURE)
-			    || ($transactions_count === 1 && ($transaction['payment_action'] === AbstractGateway::CHARGE || $transaction['payment_action'] === AbstractGateway::AUTHORIZE))) {
-				$transaction_actions[] = [
-					'action' => AbstractGateway::REVERSE,
-					'button' => $this->language->get('button_reverse'),
-				];
-			}
+
 			$transactions[$key]['transaction_actions'] = $transaction_actions;
 			$transactions[$key]['time_created']        = date($this->language->get('datetime_format'), strtotime($transaction['time_created']));
 		}
 
 		$data['transactions'] = $transactions;
 
-		if ($data['payment_code'] === ClickToPay::PAYMENT_METHOD_ID) {
+		if ($data['payment_code'] === 'globalpayments_clicktopay') {
 			$this->load->model('setting/extension');
 			$extensions = $this->model_setting_extension->getInstalled('payment');
 			if (in_array('globalpayments_clicktopay', $extensions)) {
@@ -435,6 +508,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 					$gatewayResponse     = $this->globalpayments->gateway->processReverse($requestData);
 					$response['success'] = $this->language->get('text_success_reverse');
 					break;
+				case AbstractGateway::GET_TRANSACTIONS_DETAILS:
+					$this->getBNPLTransactionDetails($requestData);
+					break;
 				default:
 					throw new \Exception($this->language->get('error_invalid_request'));
 			}
@@ -450,6 +526,72 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($response));
 	}
+
+	private function handleBNPLTransactions($orderId, $transaction, $transactions_count, $should_refund) {
+	    $transaction_actions = [];
+	    if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::INITIATE) {
+	        if ($this->user->isLogged() && $this->user->getGroupId() == 1) {
+	            $this->load->model('sale/order');
+	            $order_status_info = $this->model_sale_order->getOrder($orderId);
+	            $order_status = $order_status_info['order_status'];
+	            if ($order_status == 'Pending') {
+	                $this->cache->delete('bnpl_get_transaction_details_response');
+	                $transaction_actions[] = [
+	                    'action' => AbstractGateway::GET_TRANSACTIONS_DETAILS,
+	                    'button' => $this->language->get('button_getTransactionDetails'),
+                    ];
+                }
+            }
+        }
+        if ($transactions_count === 2 && $transaction['payment_action'] === AbstractGateway::AUTHORIZE) {
+            $transaction_actions[] = [
+                'action' => AbstractGateway::CAPTURE,
+                'button' => $this->language->get('button_capture'),
+            ];
+        }
+        if ($should_refund && ($transaction['payment_action'] === AbstractGateway::CAPTURE || $transaction['payment_action'] === AbstractGateway::CHARGE)) {
+            $transaction_actions[] = [
+                'action' => AbstractGateway::REFUND,
+                'button' => $this->language->get('button_refund'),
+            ];
+        }
+        if (($transactions_count === 3 && $transaction['payment_action'] === AbstractGateway::CAPTURE)
+            || ($transactions_count === 2 && ($transaction['payment_action'] === AbstractGateway::CHARGE || $transaction['payment_action'] === AbstractGateway::AUTHORIZE))) {
+                $transaction_actions[] = [
+                    'action' => AbstractGateway::REVERSE,
+                    'button' => $this->language->get('button_reverse'),
+                ];
+        }
+
+        return $transaction_actions;
+    }
+
+    private function getBNPLTransactionDetails($requestData) {
+        if ($this->cache->get('bnpl_get_transaction_details_response')) {
+            $response = $this->cache->get('bnpl_get_transaction_details_response');
+        } else {
+            $gatewayResponse = $this->globalpayments->gateway->getTransactionDetails($requestData);
+            $details = sprintf(
+                "Transaction Id: %s
+                Transaction Status: %s
+                Transaction Type: %s
+                Amount: %s
+                Currency: %s
+                BNPL Provider: %s",
+                $gatewayResponse->transactionId,
+                $gatewayResponse->transactionStatus,
+                $gatewayResponse->transactionType,
+                $gatewayResponse->amount,
+                $gatewayResponse->currency,
+                $gatewayResponse->bnplResponse->providerName,
+            );
+            $response['getTransactionDetails'] = nl2br($details);
+            $response['success'] = $this->language->get('text_success_getTransactionDetails');
+            $this->cache->set('bnpl_get_transaction_details_response', $response);
+        }
+
+        AbstractRequest::sendJsonResponse($response);
+    }
 
 	private function validateRefundAmount($amount, $authAmount) {
 		$amount = str_replace(',', '.', $amount);
@@ -473,6 +615,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->install('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->install('payment', 'globalpayments_applepay');
 		$this->model_setting_extension->install('payment', 'globalpayments_clicktopay');
+		$this->model_setting_extension->install('payment', 'globalpayments_affirm');
+		$this->model_setting_extension->install('payment', 'globalpayments_klarna');
+		$this->model_setting_extension->install('payment', 'globalpayments_clearpay');
 
 		$this->load->model('user/user_group');
 
@@ -485,6 +630,15 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_clicktopay');
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_clicktopay');
 
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_affirm');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_affirm');
+
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_klarna');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_klarna');
+
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_clearpay');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_clearpay');
+
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->install();
 		$this->load->model('extension/payment/globalpayments_googlepay');
@@ -493,6 +647,12 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_extension_payment_globalpayments_applepay->install();
 		$this->load->model('extension/payment/globalpayments_clicktopay');
 		$this->model_extension_payment_globalpayments_clicktopay->install();
+		$this->load->model('extension/payment/globalpayments_affirm');
+		$this->model_extension_payment_globalpayments_affirm->install();
+		$this->load->model('extension/payment/globalpayments_klarna');
+		$this->model_extension_payment_globalpayments_klarna->install();
+		$this->load->model('extension/payment/globalpayments_clearpay');
+		$this->model_extension_payment_globalpayments_clearpay->install();
 	}
 
 	public function uninstall() {
@@ -500,6 +660,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_applepay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_clicktopay');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_affirm');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_klarna');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_clearpay');
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->uninstall();

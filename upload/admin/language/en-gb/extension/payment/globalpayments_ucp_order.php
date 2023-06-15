@@ -37,3 +37,8 @@ $_['text_column_action']             = 'Action';
 $_['text_meta_billing']  = 'Click To Pay Payment Address';
 $_['text_meta_shipping'] = 'Click To Pay Shipping Address';
 $_['text_meta_email']    = 'Email address';
+
+// Admin BNPL
+$_['button_getTransactionDetails']  	  = 'Get Transaction Details';
+$_['text_success_getTransactionDetails'] = 'Transaction details has been successfully loaded.';
+$_['text_confirm_getTransactionDetails'] = 'Are you sure you want to proceed with getting transaction details?';

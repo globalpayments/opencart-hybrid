@@ -27,17 +27,20 @@ $_['error_threedsecure_no_liability'] = '3DS Authentication failed. Please try a
 $_['error_txn_error']                 = 'An error occurred while processing the card.';
 
 // Text
-$_['text_sandbox_warning']         = 'This page is currently in sandbox/test mode. Do not use real/active card numbers.';
-$_['text_ending_in']               = 'ending in';
-$_['text_expires']                 = 'expires';
-$_['text_allow_card_saving']       = 'Save to account';
-$_['text_loading']                 = 'Loading...';
-$_['text_comment_txn_id']          = 'Transaction ID:';
-$_['text_comment_response_code']   = 'Response Code:';
-$_['text_comment_response_status'] = 'Status:';
-$_['text_comment_amount']          = 'Amount:';
-$_['text_comment_currency']        = 'Currency:';
-$_['text_comment_pmt_method']      = 'Payment Method:';
+$_['text_sandbox_warning']            = 'This page is currently in sandbox/test mode. Do not use real/active card numbers.';
+$_['text_ending_in']                  = 'ending in';
+$_['text_expires']                    = 'expires';
+$_['text_allow_card_saving']          = 'Save to account';
+$_['text_loading']                    = 'Loading...';
+$_['text_comment_txn_id']             = 'Transaction ID:';
+$_['text_comment_response_code']      = 'Response Code:';
+$_['text_comment_response_status']    = 'Status:';
+$_['text_comment_amount']             = 'Amount:';
+$_['text_comment_currency']           = 'Currency:';
+$_['text_comment_pmt_method']         = 'Payment Method:';
+$_['text_product_initiate_order']     = 'Your order';
+$_['text_order_notification_return']  = 'Thank you. Your order has been received, but we have encountered an issue when redirecting back.
+                Please contact us for assistance.';
 
 // Placeholder
 $_['placeholder_title'] = 'Credit or Debit Card';

@@ -21,7 +21,7 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 			  `transaction_id` INT(11) NOT NULL AUTO_INCREMENT,
 			  `order_id` INT(11) NOT NULL,
 			  `gateway_id` VARCHAR(50) NOT NULL,
-			  `payment_action` ENUM('authorize', 'charge', 'capture', 'refund', 'reverse') NOT NULL,
+			  `payment_action` ENUM('authorize', 'charge', 'capture', 'refund', 'reverse', 'initiate', 'cancel') NOT NULL,
 			  `gateway_transaction_id` VARCHAR(100) NOT NULL,
 			  `response_code` CHAR(50) NOT NULL,
 			  `response_message` CHAR(50) NOT NULL,
@@ -57,4 +57,14 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 		    `currency` = '" . $currency . "',
 		    `time_created` = '" . $gatewayResponse->timestamp . "'");
 	}
+
+	public function fixColumns() {
+	    // SQL query to check if the value exists
+	    $insertEnumValues = "ENUM('authorize', 'charge', 'capture', 'refund', 'reverse', 'initiate', 'cancel')";
+	    $checkEnumValues = "enum('authorize','charge','capture','refund','reverse','initiate','cancel')";
+	    $latestEnumValues = $this->db->query('SHOW COLUMNS FROM ' . DB_PREFIX . 'globalpayments_transaction WHERE Field = "payment_action" AND Type =' . '"' . $checkEnumValues . '"')->num_rows > 0;
+	    if (empty($latestEnumValues)) {
+	        $this->db->query("ALTER TABLE " . DB_PREFIX . "globalpayments_transaction MODIFY COLUMN payment_action " . $insertEnumValues . " NOT NULL");
+        }
+    }
 }

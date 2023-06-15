@@ -16,12 +16,15 @@ use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ApplePay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
 
 class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.3.0';
+	const VERSION = '1.4.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -60,6 +63,15 @@ class GlobalPayments {
 			case GooglePay::PAYMENT_METHOD_ID:
 				$this->setGooglePayPaymentMethod();
 				break;
+			case Affirm::PAYMENT_METHOD_ID:
+				$this->setAffirmPaymentMethod();
+				break;
+			case Klarna::PAYMENT_METHOD_ID:
+				$this->setKlarnaPaymentMethod();
+				break;
+			case Clearpay::PAYMENT_METHOD_ID:
+				$this->setClearpayPaymentMethod();
+				break;
 		}
 	}
 
@@ -82,6 +94,7 @@ class GlobalPayments {
 		$this->gateway->paymentAction      = $this->config->get('payment_globalpayments_ucp_payment_action');
 		$this->gateway->allowCardSaving    = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
 		$this->gateway->txnDescriptor      = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
+		$this->gateway->baseUrl            = $this->url->link('extension/payment/', '', true);
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');
@@ -160,6 +173,27 @@ class GlobalPayments {
 		$this->paymentMethod->ccTypes       = $this->config->get('payment_globalpayments_clicktopay_accepted_cards');
 		$this->paymentMethod->canadianDebit = (bool) $this->config->get('payment_globalpayments_clicktopay_canadian_debit');
 		$this->paymentMethod->wrapper       = (bool) $this->config->get('payment_globalpayments_clicktopay_wrapper');
+	}
+
+	public function setAffirmPaymentMethod() {
+		$this->paymentMethod                = new Affirm($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_affirm_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_affirm_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_affirm_payment_action');
+	}
+
+	public function setKlarnaPaymentMethod() {
+		$this->paymentMethod                = new Klarna($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_klarna_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_klarna_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_klarna_payment_action');
+	}
+
+	public function setClearpayPaymentMethod() {
+		$this->paymentMethod                = new Clearpay($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_clearpay_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_clearpay_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_clearpay_payment_action');
 	}
 
 	public function setSecurePaymentFieldsTranslations() {

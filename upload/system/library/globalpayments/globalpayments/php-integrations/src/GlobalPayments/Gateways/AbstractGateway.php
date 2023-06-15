@@ -7,10 +7,12 @@ use GlobalPayments\Api\Entities\Transaction;
 use GlobalPayments\Api\Utils\Logging\Logger;
 use GlobalPayments\PaymentGatewayProvider\Clients\SdkClient;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
+use GlobalPayments\PaymentGatewayProvider\Requests\BuyNowPayLater\InitiatePaymentRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\RequestInterface;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\AuthorizeRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\CaptureRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\ChargeRequest;
+use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\GetTransactionDetailsRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\RefundRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\ReverseRequest;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\VerifyRequest;
@@ -42,6 +44,9 @@ abstract class AbstractGateway implements GatewayInterface {
 	const REFUND = 'refund';
 	const REVERSE = 'reverse';
 	const VOID = 'void';
+	const INITIATE = 'initiate';
+	const CANCEL = 'cancel';
+	const GET_TRANSACTIONS_DETAILS = 'getTransactionDetails';
 
 	/**
 	 * Gateway ID. Should be overridden by individual gateway implementations.
@@ -132,6 +137,13 @@ abstract class AbstractGateway implements GatewayInterface {
 	public $debug;
 
 	/**
+	 * Site base url used to build callback urls
+	 *
+	 * @var string
+	 */
+	public $baseUrl;
+
+	/**
 	 * File path to the logging directory.
 	 *
 	 * @var string
@@ -216,7 +228,7 @@ abstract class AbstractGateway implements GatewayInterface {
 	 *
 	 * @return mixed
 	 */
-	protected function getCredentialSetting( $setting ) {
+	public function getCredentialSetting($setting) {
 		return $this->isProduction ? $this->{$setting} : $this->{'sandbox' . ucfirst($setting)};
 	}
 
@@ -251,6 +263,18 @@ abstract class AbstractGateway implements GatewayInterface {
 
 	public function processVerify(RequestData $requestData) {
 		$response = $this->processRequest(VerifyRequest::class, $requestData);
+
+		return $response;
+	}
+
+	public function processInitiatePayment(RequestData $requestData) {
+		$response = $this->processRequest(InitiatePaymentRequest::class, $requestData);
+
+		return $response;
+	}
+
+	public function getTransactionDetails(RequestData $requestData) {
+		$response = $this->processRequest(GetTransactionDetailsRequest::class, $requestData);
 
 		return $response;
 	}

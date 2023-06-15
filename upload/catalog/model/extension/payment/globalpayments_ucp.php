@@ -1,4 +1,9 @@
 <?php
+
+use GlobalPayments\Api\Entities\Enums\BankPaymentStatus;
+use GlobalPayments\Api\Entities\Enums\TransactionStatus;
+use GlobalPayments\Api\Entities\Reporting\TransactionSummary;
+
 class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 	public function getMethod($address, $total) {
 		$this->load->language('extension/payment/globalpayments_ucp');
@@ -63,16 +68,30 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 	}
 
 	public function addTransaction($order_id, $gateway_id, $payment_action, $amount, $currency, $gatewayResponse) {
+		if ($gatewayResponse instanceof TransactionSummary && $gatewayResponse->gatewayResponseMessage == 'REQUEST_SUCCESS') {
+			$transactionId = $gatewayResponse->transactionId;
+			$responseCode = BankPaymentStatus::SUCCESS;
+			$responseMessage = TransactionStatus::PREAUTHORIZED;
+			$referenceNumber = $gatewayResponse->referenceNumber;
+			$transactionDate = $gatewayResponse->transactionDate->format("Y-m-d\TH:i:s.u\Z");
+		} else {
+			$transactionId = $gatewayResponse->transactionReference->transactionId;
+			$responseCode = $gatewayResponse->responseCode;
+			$responseMessage = $gatewayResponse->responseMessage;
+			$referenceNumber = $gatewayResponse->transactionReference->clientTransactionId;
+			$transactionDate = $gatewayResponse->timestamp;
+		}
+
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction` 
 		SET `order_id` = '" . (int)$order_id . "', 
 		    `gateway_id` = '" . $this->db->escape($gateway_id) . "', 
 		    `payment_action` = '" . $this->db->escape($payment_action) . "', 
-		    `gateway_transaction_id` = '" . $this->db->escape($gatewayResponse->transactionReference->transactionId) . "',
-		    `response_code` = '" . $this->db->escape($gatewayResponse->responseCode) . "',
-		    `response_message` = '" . $this->db->escape($gatewayResponse->responseMessage) . "',
-		    `reference` = '" . $this->db->escape($gatewayResponse->transactionReference->clientTransactionId) . "',
+		    `gateway_transaction_id` = '" . $this->db->escape($transactionId) . "',
+		    `response_code` = '" . $this->db->escape($responseCode) . "',
+		    `response_message` = '" . $this->db->escape($responseMessage) . "',
+		    `reference` = '" . $this->db->escape($referenceNumber) . "',
 		    `amount` = '" . (float)$amount . "',
 		    `currency` = '" . $currency . "',
-		    `time_created` = '" . $gatewayResponse->timestamp . "'");
+		    `time_created` = '" . $transactionDate . "'");
 	}
 }

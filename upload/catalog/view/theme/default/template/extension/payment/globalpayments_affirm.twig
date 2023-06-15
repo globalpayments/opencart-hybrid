@@ -1,0 +1,83 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+    <div id="globalpayments-alert" class="alert alert-danger" style="display:none;">
+    {{ text_paymentMethod_not_supported }}
+    </div>
+    <div id="globalpayments-alert-incomplete-data" class="alert alert-danger" style="display:none;">
+    {{ text_invalidCustomerDetails }}
+    </div>
+    <div id="globalpayments-alert-processing-default-error" class="alert alert-danger" style="display:none;">
+    {{ text_paymentMethod_processing_default_error }}
+    </div>
+    <div id="globalpayments-alert-processing-failed-error" class="alert alert-danger" style="display:none;">
+    {{ text_paymentMethod_processing_failed_error }}
+    </div>
+    <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+    <div class="globalpayments" style="width: 300px; margin: auto">
+        <fieldset id="{{ paymentMethod.paymentMethodId }}-digitalwallet">
+            <!-- Target for digital wallet -->
+            <div id="{{ paymentMethod.paymentMethodId }}-digitalwallet-submit'"></div>
+        </fieldset>
+    </div>
+    <div class="buttons clearfix">
+        <div class="pull-right">
+            <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+        </div>
+    </div>
+</form>
+<style>
+    .globalpayments-validation-error, .globalpayments-sandbox-warning {
+        list-style:none outside;
+    }
+</style>
+<script type="text/javascript">
+    $('#globalpayments-loading').hide();
+
+    var globalpayments_action = $('#globalpayments-payment-form').attr('action');
+    var globalpayments_affirm_params = {{ globalpayments_affirm_params }};
+    var globalpayments_affirm_is_allowed = {{ globalpayments_affirm_is_allowed }};
+    var globalpayments_affirm_validCustomerDetails = {{ globalpayments_affirm_validCustomerDetails }};
+
+    $(document).ready(function() {
+        if (false === globalpayments_affirm_is_allowed) {
+            $('#globalpayments-alert').show();
+            $('#button-confirm').addClass('globalpayments-hidden').hide();
+            return;
+        }
+        if (false === globalpayments_affirm_validCustomerDetails) {
+            $('#globalpayments-alert-incomplete-data').show();
+            $('#button-confirm').addClass('globalpayments-hidden').hide();
+            return;
+        }
+
+        $('#button-confirm').click(function() {
+            $(this).prop('disabled', true);
+            $.ajax({
+                url: globalpayments_action,
+                type: 'POST',
+                data: {
+                    globalpayments_affirm: {
+                        bnplType: globalpayments_affirm_params.paymentMethodOptions.bnplType
+                    },
+                },
+                success: function(redirectUrl) {
+                    window.location.href = redirectUrl;
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error(errorThrown);
+                    if (jqXHR.responseJSON.error) {
+                        if (jqXHR.responseJSON.message === 'default_error') {
+                            $('#globalpayments-alert-processing-default-error').show();
+                        }
+
+                        if (jqXHR.responseJSON.message === 'FAILED' || jqXHR.responseJSON.message === 'DECLINED') {
+                            $('#globalpayments-alert-processing-failed-error').show();
+                        }
+
+                        $('#button-confirm').addClass('globalpayments-hidden').hide();
+                        return;
+                    }
+                }
+            });
+        });
+    });
+</script>

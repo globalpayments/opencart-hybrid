@@ -95,6 +95,8 @@ class RequestData {
 
 	public $requestType;
 
+	public $bnpl;
+
 	public function __set($name, $value) {
 		switch ($name) {
 			case 'digitalWalletPaymentTokenResponse':
