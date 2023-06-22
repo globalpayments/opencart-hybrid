@@ -24,7 +24,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.4.0';
+	const VERSION = '1.4.2';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface

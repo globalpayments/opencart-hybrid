@@ -1,5 +1,6 @@
 <?php
 
+use GlobalPayments\Api\Entities\Enums\Environment;
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
@@ -9,6 +10,7 @@ use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
+use GlobalPayments\PaymentGatewayProvider\Requests\AccessToken\GetAccessTokenRequest;
 
 class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	private $error = array();
@@ -295,6 +297,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['header']      = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer']      = $this->load->controller('common/footer');
+		$data['user_token']  = $this->session->data['user_token'];
 
 		$this->response->setOutput($this->load->view('extension/payment/globalpayments_ucp', $data));
 	}
@@ -452,6 +455,47 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 
 		$this->response->setOutput($this->load->view('extension/payment/globalpayments_ucp_order_ajax', $data));
+	}
+
+	public function checkApiCredentials() {
+		$response = [];
+
+		if (!isset($this->request->post['app_id']) || !isset($this->request->post['app_key'])) {
+			$response['error'] = $this->language->get('error_request');
+			$this->response->addHeader('Content-Type: application/json');
+			$this->response->setOutput(json_encode($response));
+
+			return;
+		}
+
+		$this->load->library('globalpayments');
+		$this->globalpayments->setGateway(GatewayId::GP_API);
+
+		$environmentValue = (bool)$this->request->post['environment'];
+		$environment = Environment::TEST;
+		if ($environmentValue) {
+			$environment = Environment::PRODUCTION;
+		}
+
+		$ajaxData['appId'] = $this->request->post['app_id'];
+		$ajaxData['appKey'] = $this->request->post['app_key'];
+		$ajaxData['environment'] = $environment;
+
+		try {
+			$gatewayResponse = $this->globalpayments->gateway->processRequest(GetAccessTokenRequest::class, null, $ajaxData);
+			if (!empty($gatewayResponse->token)) {
+				$response['success'] = $this->language->get('success_credentials_check');
+				unset($response['error']);
+			} else {
+				$response['error'] = $this->language->get('error_request');
+			}
+		} catch (\Exception $e) {
+			unset($response['success']);
+			$response['error'] = $this->language->get('error_request') . ' ' . $e->getMessage();
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($response));
 	}
 
 	public function transactionCommand() {

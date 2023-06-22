@@ -28,6 +28,7 @@ $_['label_app_id']            = 'Live App Id';
 $_['label_app_key']           = 'Live App Key';
 $_['label_sandbox_app_id']    = 'Sandbox App Id';
 $_['label_sandbox_app_key']   = 'Sandbox App Key';
+$_['credentials_check']       = 'Credentials check';
 $_['label_debug']             = 'Enable Logging';
 $_['label_contact_url']       = 'Contact Url';
 $_['label_payment_action']    = 'Payment Action';
@@ -35,20 +36,23 @@ $_['label_allow_card_saving'] = 'Allow Card Saving';
 $_['label_txn_descriptor']    = 'Order Transaction Descriptor';
 
 // Help
-$_['help_title']               = 'This controls the title which the user sees during checkout.';
-$_['help_is_production']       = 'Get your App Id and App Key from your <a href="https://developer.globalpay.com/user/register" target="_blank">Global Payments Developer Account</a>. ' .
+$_['help_title']                 = 'This controls the title which the user sees during checkout.';
+$_['help_is_production']         = 'Get your App Id and App Key from your <a href="https://developer.globalpay.com/user/register" target="_blank">Global Payments Developer Account</a>. ' .
                                  'Please follow the instructions provided in the plugin description.<br/>' .
                                  'When you are ready for Live, please contact <a href="mailto:%s?Subject=OpenCart%%20Live%%20Credentials">support</a> to get you live credentials.';
-$_['help_debug']               = 'Log all request to and from gateway. This can also log private data and should only be enabled in a development or stage environment.';
-$_['help_contact_url']         = 'A link to an About or Contact page on your website with customer care information (maxLength: 256).';
-$_['help_payment_action']      = 'Choose whether you wish to capture funds immediately or authorize payment only for a delayed capture.';
-$_['help_allow_card_saving']   = 'Note: to use the card saving feature, you must have multi-use token support enabled on your account. Please contact <a href="mailto:%s?Subject=OpenCart%%20Card%%20Saving%%20Option">support</a> with any questions regarding this option.';
-$_['help_txn_descriptor']      = 'During a Capture or Authorize payment action, this value will be passed along as the transaction-specific descriptor listed on the customer\'s bank account (maxLength: 25).';
-$_['help_txn_descriptor_note'] = 'Please contact <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">support</a> with any questions regarding this option.';
+$_['help_for_credentials_check'] = 'Please note that Payment Methods will not appear on checkout if the credentials are not correct.';
+$_['help_credentials_check']     = 'Make a request to the Unified Payments server to check App Id and App Key credentials.';
+$_['help_debug']                 = 'Log all request to and from gateway. This can also log private data and should only be enabled in a development or stage environment.';
+$_['help_contact_url']           = 'A link to an About or Contact page on your website with customer care information (maxLength: 256).';
+$_['help_payment_action']        = 'Choose whether you wish to capture funds immediately or authorize payment only for a delayed capture.';
+$_['help_allow_card_saving']     = 'Note: to use the card saving feature, you must have multi-use token support enabled on your account. Please contact <a href="mailto:%s?Subject=OpenCart%%20Card%%20Saving%%20Option">support</a> with any questions regarding this option.';
+$_['help_txn_descriptor']        = 'During a Capture or Authorize payment action, this value will be passed along as the transaction-specific descriptor listed on the customer\'s bank account (maxLength: 25).';
+$_['help_txn_descriptor_note']   = 'Please contact <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">support</a> with any questions regarding this option.';
 
 // Entry
 $_['entry_enabled']                  = 'Enable Gateway';
 $_['entry_is_production']            = 'Live Mode';
+$_['entry_credentials_check']        = 'Credentials Check';
 $_['entry_debug']                    = 'Enable Logging';
 $_['entry_payment_action_authorize'] = 'Authorize only';
 $_['entry_payment_action_charge']    = 'Authorize + Capture';
@@ -67,6 +71,8 @@ $_['error_live_credentials_app_key']    = 'Please provide Live Credentials.';
 $_['error_sandbox_credentials_app_id']  = 'Please provide Sandbox Credentials.';
 $_['error_sandbox_credentials_app_key'] = 'Please provide Sandbox Credentials.';
 $_['error_txn_descriptor']              = 'Please provide Order Transaction Descriptor (maxLength: 25).';
+$_['error_request']                     = 'Unable to perform request. Invalid data.';
 
 // Success
-$_['success_settings_ucp'] = 'Your Unified Payments settings were saved!';
+$_['success_settings_ucp']      = 'Your Unified Payments settings were saved!';
+$_['success_credentials_check'] = 'Your credentials were successfully confirmed!';

@@ -3,6 +3,9 @@ This extension allows Opencart to use Unified Payments payment gateway.
 
 == Changelog ==
 
+= 1.4.2 =
+* Unified Payments - Added Credential Check button
+
 = 1.4.0 =
 * Unified Payments - Added Buy Now Pay Later
 * Unified Payments - Fixed a bug where the Card Number iframe would not be 100% expanded on Mozilla Firefox

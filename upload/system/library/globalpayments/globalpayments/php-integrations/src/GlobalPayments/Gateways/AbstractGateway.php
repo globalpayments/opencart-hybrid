@@ -284,12 +284,17 @@ abstract class AbstractGateway implements GatewayInterface {
 	 *
 	 * @param string $requestType
 	 * @param RequestData $requestData
+	 * @param array $configData
 	 *
 	 * @return Transaction|mixed
 	 * @throws ApiException
 	 */
-	public function processRequest($requestType, RequestData $requestData = null) {
+	public function processRequest($requestType, RequestData $requestData = null, $configData = null) {
 		$request = $this->prepareRequest($requestType, $requestData);
+
+		if (!empty($configData)) {
+			$request->config = array_merge($request->config, $configData);
+		}
 
 		$gatewayResponse = $this->client
 			->setRequest($request)

@@ -32,6 +32,7 @@
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
   {% endfor %}
+    <div id="table-alert"></div>
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
@@ -110,6 +111,14 @@
                   {% if error_sandbox_credentials_app_key %}
                     <div class="text-danger">{{ error_sandbox_credentials_app_key }}</div>
                   {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="button-credentials-check"><span data-toggle="tooltip" title="{{ help_credentials_check }}">{{ credentials_check }}</span></label>
+                <div class="col-sm-10 checkbox">
+                  <button type="button" name="payment_globalpayments_ucp_credentials_check" class="btn btn-primary button-command" id="button-credentials-check">{{ entry_credentials_check }}</button>
+                  <br/><br/>
+                  <p>{{ help_for_credentials_check }}</p>
                 </div>
               </div>
               <div class="form-group">
@@ -198,5 +207,59 @@
 	$('#input-is_production').on('change', this.toggleCredentialsSettings.bind(this));
 	$('#input-debug').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-allow_card_saving').on('change', this.toggleCheckboxValue.bind(this));
+
+	function isLiveMode() {
+		return $('#input-is_production').is(':checked');
+	}
+
+	function getGatewaySetting(setting) {
+		if (isLiveMode()) {
+			return $('#input-' + setting).val().trim();
+		} else {
+			return $('#input-sandbox_' + setting).val().trim();
+		}
+	}
+
+	$('#button-credentials-check').on('click', function () {
+		var gateway_app_id = getGatewaySetting('app_id');
+		var gateway_app_key = getGatewaySetting('app_key');
+		var environment = 0;
+
+		if(!gateway_app_id || !gateway_app_key) {
+			alert('Please be sure that you have filled AppId and AppKey fields!');
+			return;
+		}
+		if (isLiveMode())  {
+			environment = 1;
+		}
+		var clicked_button = $(this);
+
+		$.ajax({
+			url: 'index.php?route=extension/payment/globalpayments_ucp/checkApiCredentials&user_token={{ user_token }}',
+			type: 'post',
+			data: {
+				app_id: gateway_app_id,
+				app_key: gateway_app_key,
+				environment: environment,
+			},
+			dataType: 'json',
+			beforeSend: function () {
+				clicked_button.button('loading');
+				$('.alert').hide().removeClass('alert-success alert-danger');
+			},
+			complete: function () {
+				clicked_button.button('reset');
+			},
+			success: function (json) {
+				if (json['error']) {
+					$('#table-alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '</div>');
+				}
+
+				if (json['success']) {
+					$('#table-alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> ' + json['success'] + '</div>');
+				}
+			}
+		})
+	})
 </script>
 {{ footer }}
