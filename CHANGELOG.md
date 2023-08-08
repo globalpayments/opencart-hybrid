@@ -3,6 +3,9 @@ This extension allows Opencart to use Unified Payments payment gateway.
 
 == Changelog ==
 
+= 1.4.3 =
+* Added the Card Holder Name in the Google Pay and Apple Pay requests
+
 = 1.4.2 =
 * Unified Payments - Added Credential Check button
 

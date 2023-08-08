@@ -154,7 +154,8 @@
 						type: 'CARD',
 						parameters: {
 							allowedAuthMethods: this.getAllowedCardAuthMethods(),
-							allowedCardNetworks: this.getAllowedCardNetworks()
+							allowedCardNetworks: this.getAllowedCardNetworks(),
+							billingAddressRequired: true
 						}
 					}
 				},
@@ -226,6 +227,11 @@
 							self.createInputElement(
 								'dwToken',
 								JSON.stringify(JSON.parse(paymentData.paymentMethodData.tokenizationData.token))
+							);
+
+							self.createInputElement(
+								'cardHolderName',
+								paymentData.paymentMethodData.info.billingAddress.name
 							);
 
 							return self.placeOrder();

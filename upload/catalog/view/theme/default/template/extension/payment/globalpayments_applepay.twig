@@ -210,10 +210,15 @@
 
 			onApplePayPaymentAuthorize: function (event, session) {
 				var paymentToken = JSON.stringify(event.payment.token.paymentData);
+				var billingContact = event.payment.billingContact;
 				this.createInputElement(
 					'dwToken',
 					 paymentToken
 				);
+
+				if (billingContact) {
+					this.createInputElement('cardHolderName', event.payment.billingContact.givenName + ' ' +  event.payment.billingContact.familyName);
+				}
 
 				try {
 					this.blockOnSubmit();
@@ -237,6 +242,7 @@
 						label: this.paymentMethodOptions.appleMerchantDisplayName,
 						amount: this.order.amount.toString()
 					},
+					requiredBillingContactFields: [ 'postalAddress', 'name' ],
 				}
 			},
 

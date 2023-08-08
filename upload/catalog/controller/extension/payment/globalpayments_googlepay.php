@@ -51,6 +51,7 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 			$requestData->mobileType                        = $this->globalpayments->paymentMethod->getMobileType();
 			$requestData->dynamicDescriptor                 = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->requestType                       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
+			$requestData->paymentTokenResponse              = json_encode(['details' => ['cardholderName' => htmlspecialchars_decode($postRequestData->cardHolderName)]]);
 
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
 
