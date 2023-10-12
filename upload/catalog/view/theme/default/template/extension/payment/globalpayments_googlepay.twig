@@ -1,5 +1,5 @@
 <form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
-  <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
+  <div id="globalpayments-alert" class="alert alert-danger" style="display:none;">{{ text_google_pay_not_supported }}</div>
   <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
   <div class="globalpayments" style="width: 300px; margin: auto">
     <fieldset id="{{ paymentMethod.paymentMethodId }}-digitalwallet">
@@ -89,6 +89,10 @@
 						.then(function (response) {
 							if (response.result) {
 								self.addGooglePayButton();
+							} else {
+								$('#globalpayments-alert').show();
+								$('#button-confirm').addClass('globalpayments-hidden').hide();
+								return;
 							}
 						})
 						.catch(function (err) {
@@ -136,7 +140,7 @@
 				},
 
 				getAllowedCardAuthMethods: function () {
-					return ['PAN_ONLY', 'CRYPTOGRAM_3DS'];
+					return this.paymentMethodOptions.acaMethods.split(',');
 				},
 
 				getTokenizationSpecification: function () {

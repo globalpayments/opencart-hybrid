@@ -8,6 +8,7 @@ use GlobalPayments\Api\ServiceConfigs\Gateways\GeniusConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\PorticoConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\TransitConfig;
+use GlobalPayments\Api\ServiceConfigs\Gateways\TransactionApiConfig;
 use GlobalPayments\Api\ServicesContainer;
 use GlobalPayments\Api\Utils\Logging\Logger;
 use GlobalPayments\Api\Utils\Logging\SampleRequestLogger;
@@ -57,6 +58,9 @@ class SdkClient implements ClientInterface {
 			case GatewayProvider::GENIUS:
 				$gatewayConfig = new GeniusConfig();
 				break;
+            		case GatewayProvider::TRANSACTION_API:
+                		$gatewayConfig = new TransactionApiConfig();
+               			break;
 			default:
 				break;
 		}

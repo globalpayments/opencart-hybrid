@@ -121,6 +121,11 @@ class GpApiGateway extends AbstractGateway {
 	public $dynamicHeaders;
 
 	/**
+	 * @var bool
+	 */
+	public $enableThreeDSecure = true;
+
+	/**
 	 * Authentication statuses
 	 */
 	public $threeDSecureAuthenticationStatus = array(
@@ -141,6 +146,7 @@ class GpApiGateway extends AbstractGateway {
 			'apiVersion'            => GpApiConnector::GP_API_VERSION,
 			'env'                   => $this->isProduction ? parent::ENVIRONMENT_PRODUCTION : parent::ENVIRONMENT_SANDBOX,
 			'requireCardHolderName' => true,
+			'enableThreeDSecure' 	=> $this->enableThreeDSecure
 		);
 	}
 

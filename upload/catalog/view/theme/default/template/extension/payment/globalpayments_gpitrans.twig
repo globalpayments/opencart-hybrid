@@ -18,6 +18,7 @@
     {% for stored_payment_method in stored_payment_methods %}
       <div class="radio">
         <label>
+          {{ gateway }}
           <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}"
           {% if stored_payment_method.is_default %}
             checked="checked"
@@ -80,6 +81,7 @@
 	});
 
 	$('#globalpayments-loading').hide();
+
 	var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
 	var globalpayments_secure_payment_threedsecure_params = {{ globalpayments_secure_payment_threedsecure_params }};
 	$.getScript(
@@ -167,9 +169,7 @@
 						$(self.getPlaceOrderButtonSelector()).on('click', function ($e) {
 							$e.preventDefault();
 							$e.stopImmediatePropagation();
-							if (!self.gatewayOptions.enableThreeDSecure) {
-								self.submitForm();
-							}
+
 							self.threeDSecure();
 							return;
 						});
@@ -355,17 +355,8 @@
 					this.paymentTokenResponse = JSON.stringify(responseDetails);
 
 					this.createInputElement('paymentTokenResponse', this.paymentTokenResponse);
-					if (!this.gatewayOptions.enableThreeDSecure) {
-						this.submitForm();
-					} else {
-						this.threeDSecure();
-					}
-				},
 
-				submitForm: function() {
-					var _form = this.getForm();
-					var $form = $(_form);
-					$form.submit();
+					this.threeDSecure();
 				},
 
 				/**
@@ -373,6 +364,7 @@
 				 */
 				threeDSecure: function () {
 					this.blockOnSubmit();
+
 					var self = this;
 					var _form = this.getForm();
 					var $form = $(_form);

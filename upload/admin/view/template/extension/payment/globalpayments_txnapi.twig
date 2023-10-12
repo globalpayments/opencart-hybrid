@@ -1,0 +1,178 @@
+<div class="tab-pane{% if active_tab == 'txnapi' %} active{% endif %}" id="tab-txnapi">
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_enabled">{{ label_enabled }}</label>
+        <div class="col-sm-10 checkbox">
+            <label>
+                <input id="input-txnapi_enabled" type="checkbox" name="payment_globalpayments_txnapi_status"
+                       value="{{ payment_globalpayments_txnapi_status }}"
+                        {% if (payment_globalpayments_txnapi_status==1) %} checked{% endif %} />
+                {{ entry_enabled }}
+            </label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_title">
+            <span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span>
+        </label>
+        <div class="col-sm-10">
+            <input id="input-txnapi_title" type="text" name="payment_globalpayments_txnapi_title"
+                   value="{{ payment_globalpayments_txnapi_title }}" placeholder="{{ placeholder_txnapi_title }}"
+                   class="form-control"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_is_production">{{ label_is_production }}</label>
+        <div class="col-sm-10 checkbox">
+            <label>
+                <input id="input-txnapi_is_production" type="checkbox"
+                       name="payment_globalpayments_txnapi_is_production"
+                       value="{{ payment_globalpayments_txnapi_is_production }}"
+                        {% if (payment_globalpayments_txnapi_is_production==1) %} checked{% endif %}/>
+                {{ entry_is_production }}
+            </label>
+        </div>
+    </div>
+
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 0) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label" for="input-txnapi_public_key">{{ label_txnapi_public_key }}</label>
+        <div class="col-sm-10">
+            <input id="input-txnapi_public_key" type="text" name="payment_globalpayments_txnapi_public_key"
+                   value="{{ payment_globalpayments_txnapi_public_key }}" class="form-control"/>
+            {% if error_live_credentials_txnapi_public_key %}
+                <div class="text-danger">{{ error_live_credentials_txnapi_public_key }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 1) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label"
+               for="input-sandbox_txnapi_public_key">{{ label_sandbox_txnapi_public_key }}</label>
+        <div class="col-sm-10">
+            <input id="input-sandbox_txnapi_public_key" type="text"
+                   name="payment_globalpayments_txnapi_sandbox_public_key"
+                   value="{{ payment_globalpayments_txnapi_sandbox_public_key }}" class="form-control"/>
+            {% if error_sandbox_credentials_txnapi_public_key %}
+                <div class="text-danger">{{ error_sandbox_credentials_txnapi_public_key }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 0) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label" for="input-txnapi_api_key">{{ label_txnapi_api_key }}</label>
+        <div class="col-sm-10">
+            <input id="input-txnapi_api_key" type="password" name="payment_globalpayments_txnapi_api_key"
+                   value="{{ payment_globalpayments_txnapi_api_key }}" class="form-control"/>
+            {% if error_live_credentials_txnapi_api_key %}
+                <div class="text-danger">{{ error_live_credentials_txnapi_api_key }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 1) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label"
+               for="input-sandbox_txnapi_api_key">{{ label_sandbox_txnapi_api_key }}</label>
+        <div class="col-sm-10">
+            <input id="input-sandbox_txnapi_api_key" type="password"
+                   name="payment_globalpayments_txnapi_sandbox_api_key"
+                   value="{{ payment_globalpayments_txnapi_sandbox_api_key }}" class="form-control"/>
+            {% if error_sandbox_credentials_txnapi_api_key %}
+                <div class="text-danger">{{ error_sandbox_credentials_txnapi_api_key }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 0) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label" for="input-txnapi_api_secret">{{ label_txnapi_api_secret }}</label>
+        <div class="col-sm-10">
+            <input id="input-txnapi_api_secret" type="password" name="payment_globalpayments_txnapi_api_secret"
+                   value="{{ payment_globalpayments_txnapi_api_secret }}" class="form-control"/>
+            {% if error_live_credentials_txnapi_api_secret %}
+                <div class="text-danger">{{ error_live_credentials_txnapi_api_secret }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 1) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label"
+               for="input-sandbox_txnapi_api_secret">{{ label_sandbox_txnapi_api_secret }}</label>
+        <div class="col-sm-10">
+            <input id="input-sandbox_txnapi_api_secret" type="password"
+                   name="payment_globalpayments_txnapi_sandbox_api_secret"
+                   value="{{ payment_globalpayments_txnapi_sandbox_api_secret }}" class="form-control"/>
+            {% if error_sandbox_credentials_txnapi_api_secret %}
+                <div class="text-danger">{{ error_sandbox_credentials_txnapi_api_secret }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 0) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label"
+               for="input-txnapi_account_credential">{{ label_txnapi_account_credential }}</label>
+        <div class="col-sm-10">
+            <input id="input-txnapi_account_credential" type="password"
+                   name="payment_globalpayments_txnapi_account_credential"
+                   value="{{ payment_globalpayments_txnapi_account_credential }}" class="form-control"/>
+            {% if error_live_credentials_txnapi_account_credential %}
+                <div class="text-danger">{{ error_live_credentials_txnapi_account_credential }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-group required{% if (payment_globalpayments_txnapi_is_production == 1) %} hidden{% endif %}">
+        <label class="col-sm-2 control-label"
+               for="input-sandbox_txnapi_account_credential">{{ label_sandbox_txnapi_account_credential }}</label>
+        <div class="col-sm-10">
+            <input id="input-sandbox_txnapi_account_credential" type="password"
+                   name="payment_globalpayments_txnapi_sandbox_account_credential"
+                   value="{{ payment_globalpayments_txnapi_sandbox_account_credential }}" class="form-control"/>
+            {% if error_sandbox_credentials_txnapi_account_credential %}
+                <div class="text-danger">{{ error_sandbox_credentials_txnapi_account_credential }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_region">{{ label_region }}</label>
+        <div class="col-sm-10">
+            <select id="input-txnapi_region" name="payment_globalpayments_txnapi_region" class="form-control">
+                <option value="US" {{ payment_globalpayments_txnapi_region == 'US' ? 'selected' : '' }}>{{ entry_us }}</option>
+                <option value="CA" {{ payment_globalpayments_txnapi_region == 'CA' ? 'selected' : '' }}>{{ entry_ca }}</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_debug">
+            <span data-toggle="tooltip" title="{{ help_debug }}">{{ label_debug }}</span>
+        </label>
+        <div class="col-sm-10 checkbox">
+            <label>
+                <input id="input-txnapi_debug" type="checkbox" name="payment_globalpayments_txnapi_debug"
+                       value="{{ payment_globalpayments_txnapi_debug }}"
+                        {% if (payment_globalpayments_txnapi_debug==1) %} checked{% endif %} />
+                {{ entry_debug }}
+            </label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txapi_payment_action">
+            <span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+        </label>
+        <div class="col-sm-10">
+            <select name="payment_globalpayments_txnapi_payment_action" id="input-txapi_payment_action" class="form-control">
+                <option value="charge" {{ payment_globalpayments_txnapi_payment_action == 'charge' ? 'selected' : '' }}>{{ entry_payment_action_charge }}</option>
+                {#                <option value="authorize" {{ payment_globalpayments_txnapi_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option> #}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-txnapi_allow_card_saving">{{ label_allow_card_saving }}</label>
+        <div class="col-sm-10 checkbox">
+            <label>
+                <input id="input-txnapi_allow_card_saving" type="checkbox"
+                       name="payment_globalpayments_txnapi_card"
+                       value="{{ payment_globalpayments_txnapi_card }}"
+                        {% if (payment_globalpayments_txnapi_card==1) %} checked{% endif %} />
+                {{ entry_allow_card_saving }}
+            </label>
+            <br/><br/>
+            <p>{{ help_allow_card_saving }}</p>
+        </div>
+    </div>
+</div>

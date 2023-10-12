@@ -46,6 +46,7 @@ $_['error_apple_merchant_cert_path']    = 'Please provide Apple Merchant Cert Pa
 $_['error_apple_merchant_key_path']     = 'Please provide Apple Merchant Key Path.';
 $_['error_apple_merchant_domain']       = 'Please provide Apple Merchant Domain.';
 $_['error_apple_merchant_display_name'] = 'Please provide Apple Merchant Display Name.';
+$_['error_applepay_accepted_cards']     = 'Please provide Accepted Cards.';
 
 // Success
 $_['success_settings_applepay'] = 'Your Apple Pay settings were saved!';

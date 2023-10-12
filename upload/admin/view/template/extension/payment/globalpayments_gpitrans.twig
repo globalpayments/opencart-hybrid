@@ -140,15 +140,6 @@
                 {% endif %}
                 </div>
               </div>
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="input-enable-threeDSecure">{{ label_enable_three_d_secure }}</label>
-                <div class="col-sm-10 checkbox">
-                  <label>
-                    <input id="input-enable-threeDSecure" type="checkbox" name="payment_globalpayments_ucp_enable_three_d_secure"
-                           value="{{ payment_globalpayments_ucp_enable_three_d_secure }}"{% if (payment_globalpayments_ucp_enable_three_d_secure==1) %} checked{% endif %} /> {{ label_enable_three_d_secure }}
-                  </label>
-                </div>
-              </div>
             </div>
             <div class="tab-pane" id="tab-payment">
               <div class="form-group">
@@ -184,12 +175,7 @@
                 </div>
               </div>
             </div>
-            {{ display_googlepay_tab }}
-            {{ display_applepay_tab }}
-            {{ display_clicktopay_tab }}
-            {{ display_affirm_tab }}
-            {{ display_klarna_tab }}
-            {{ display_clearpay_tab }}
+              {{ display_txnapi_tab }}
           </div>
         </form>
       </div>
@@ -211,12 +197,41 @@
 			$('#input-sandbox_app_key').parents('.form-group').removeClass('hidden');
 		}
 	}
+
+	function toggleTxnApiCredentialsSettings (event) {
+		var isProduction = $(event.target).is(':checked');
+		if (isProduction) {
+			$('#input-txnapi_public_key').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_txnapi_public_key').parents('.form-group').addClass('hidden');
+			$('#input-txnapi_api_key').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_txnapi_api_key').parents('.form-group').addClass('hidden');
+			$('#input-txnapi_api_secret').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_txnapi_api_secret').parents('.form-group').addClass('hidden');
+			$('#input-txnapi_account_credential').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_txnapi_account_credential').parents('.form-group').addClass('hidden');
+		} else {
+			$('#input-txnapi_public_key').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_txnapi_public_key').parents('.form-group').removeClass('hidden');
+			$('#input-txnapi_api_key').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_txnapi_api_key').parents('.form-group').removeClass('hidden');
+			$('#input-txnapi_api_secret').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_txnapi_api_secret').parents('.form-group').removeClass('hidden');
+			$('#input-txnapi_account_credential').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_txnapi_account_credential').parents('.form-group').removeClass('hidden');
+		}
+	}
+
 	$('#input-enabled').on('change', this.toggleCheckboxValue.bind(this));
-	$('#input-enable-threeDSecure').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCredentialsSettings.bind(this));
 	$('#input-debug').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-allow_card_saving').on('change', this.toggleCheckboxValue.bind(this));
+
+	$('#input-txnapi_is_production').on('change', toggleTxnApiCredentialsSettings);
+	$('#input-txnapi_enabled').on('change', toggleCheckboxValue);
+	$('#input-txnapi_is_production').on('change', toggleCheckboxValue);
+	$('#input-txnapi_debug').on('change', toggleCheckboxValue);
+	$('#input-txnapi_allow_card_saving').on('change', toggleCheckboxValue);
 
 	function isLiveMode() {
 		return $('#input-is_production').is(':checked');

@@ -3,6 +3,11 @@ This extension allows Opencart to use Unified Payments payment gateway.
 
 == Changelog ==
 
+= 1.5.0 =
+* GooglePay - configurable Allowed Card Auth Methods
+* Bug fix - Accepted cards field is not mandatory on Apple pay config
+* GPI Transaction - Added GPI Transaction gateway support
+
 = 1.4.3 =
 * Added the Card Holder Name in the Google Pay and Apple Pay requests
 

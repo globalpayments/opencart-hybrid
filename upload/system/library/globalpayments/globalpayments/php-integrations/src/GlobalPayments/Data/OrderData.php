@@ -65,4 +65,9 @@ class OrderData {
 	 * @var string
 	 */
 	public $customerEmail;
+
+	/**
+	 * @var string
+	 */
+	public $addressMatchIndicator;
 }

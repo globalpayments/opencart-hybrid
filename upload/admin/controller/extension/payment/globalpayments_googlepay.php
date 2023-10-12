@@ -20,6 +20,12 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 			$data['error_googlepay_accepted_cards'] = '';
 		}
 
+		if (isset($error['error_googlepay_allowed_card_auth_methods'])) {
+			$data['error_googlepay_allowed_card_auth_methods'] = $error['error_googlepay_allowed_card_auth_methods'];
+		} else {
+			$data['error_googlepay_allowed_card_auth_methods'] = '';
+		}
+
 		if (isset($this->request->post['payment_globalpayments_googlepay_enabled'])) {
 			$data['payment_globalpayments_googlepay_enabled'] = $this->request->post['payment_globalpayments_googlepay_enabled'];
 		} elseif (!empty($this->request->post)) {
@@ -59,6 +65,15 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		} else {
 			$data['payment_globalpayments_googlepay_button_color'] = $this->config->get('payment_globalpayments_googlepay_button_color');
 		}
+
+		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'])) {
+			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = explode(',', $this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods']);
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = '';
+		} else {
+			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = explode(',', $this->config->get('payment_globalpayments_googlepay_allowed_card_auth_methods'));
+		}
+
 		if (isset($this->request->post['payment_globalpayments_googlepay_payment_action'])) {
 			$data['payment_globalpayments_googlepay_payment_action'] = $this->request->post['payment_globalpayments_googlepay_payment_action'];
 		} else {
@@ -91,6 +106,11 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		if (empty($this->request->post['payment_globalpayments_googlepay_accepted_cards'])) {
 			$this->error['error_googlepay_accepted_cards'] = $this->language->get('error_googlepay_accepted_cards');
 		}
+
+		if (empty($this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'])) {
+			$this->error['error_googlepay_allowed_card_auth_methods'] = $this->language->get('error_googlepay_allowed_card_auth_methods');
+		}
+
 		if ($this->error) {
 			$this->alert[] = array(
 				'type'    => 'danger',
@@ -117,6 +137,13 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		} else {
 			$this->request->post['payment_globalpayments_googlepay_accepted_cards'] = null;
 		}
+
+		if (isset($this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'])) {
+			$this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'] = implode(',', $this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods']);
+		} else {
+			$this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'] = null;
+		}
+
 		if ($this->validate()) {
 			$this->model_setting_setting->editSetting('payment_globalpayments_googlepay', $this->request->post);
 		}

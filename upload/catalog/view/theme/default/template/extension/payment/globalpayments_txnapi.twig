@@ -1,0 +1,467 @@
+{{ globalpayments_pay_form }}
+
+<script type="text/javascript">
+    $('body').on('click', '.globalpayments-tab-link', function (event) {
+        event.preventDefault();
+        if ($(this).attr('id') === 'saved-link') {
+            $('#tab-option').val('saved');
+            $('#tab-saved').addClass('active');
+            $('#tab-new').removeClass('active');
+            $('#{{ gateway.gatewayId }}-payment-token').show();
+            $('#{{ gateway.gatewayId }}-card').hide();
+        } else {
+            $('#tab-option').val('new');
+            $('#tab-new').addClass('active');
+            $('#tab-saved').removeClass('active');
+            $('#{{ gateway.gatewayId }}-payment-token').hide();
+            $('#{{ gateway.gatewayId }}-card').show();
+        }
+    });
+
+    $('#globalpayments-loading').hide();
+
+    var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
+    $.getScript(
+        'https://js.paygateway.com/secure_payment/v1/globalpayments.js', function () {
+            $.getScript('https://malsup.github.io/jquery.blockUI.js');
+
+            /**
+             * Frontend code for Global Payments
+             *
+             * @param {object} options
+             */
+            function GlobalPaymentsGatewayProvider(options) {
+                /**
+                 * Card form instance
+                 *
+                 * @type {any}
+                 */
+                this.cardForm = {};
+
+                /**
+                 * Payment gateway id
+                 *
+                 * @type {string}
+                 */
+                this.id = options.id;
+
+                /**
+                 * Payment field options
+                 *
+                 * @type {object}
+                 */
+                this.fieldOptions = options.fieldOptions;
+
+                /**
+                 * Payment field styles
+                 */
+                this.fieldStyles = options.fieldStyles;
+
+                /**
+                 * Payment gateway options
+                 *
+                 * @type {object}
+                 */
+                this.gatewayOptions = options.gatewayOptions;
+
+                /**
+                 *
+                 * @type {null}
+                 */
+                this.paymentTokenResponse = null;
+
+                this.attachEventHandlers();
+            }
+
+            GlobalPaymentsGatewayProvider.prototype = {
+                /**
+                 * Add important event handlers for controlling the payment experience during checkout
+                 *
+                 * @returns
+                 */
+                attachEventHandlers: function () {
+                    var self = this;
+
+                    // General
+                    $(document).ready(function () {
+                        self.renderPaymentFields();
+                    });
+
+                    $('body').on('click', '.globalpayments-tab-link', function () {
+                        self.toggleSubmitButtons();
+                    });
+
+                    $(document).ready(function () {
+                        $(self.getPlaceOrderButtonSelector()).on('click', function ($e) {
+                            $e.preventDefault();
+                            $e.stopImmediatePropagation();
+                            self.blockOnSubmit();
+                            self.placeOrder();
+                        });
+                    });
+                },
+
+                /**
+                 * Renders the payment fields using GlobalPayments.js. Each field is securely hosted on
+                 * Global Payments' production servers.
+                 *
+                 * @returns
+                 */
+                renderPaymentFields: function () {
+                    if ($('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0) {
+                        console.log('Warning! Payment fields cannot be loaded.');
+                        return;
+                    }
+                    if (!(window).GlobalPayments.configure) {
+                        console.log('Warning! Payment fields cannot be loaded (JS).');
+                        return;
+                    }
+
+                    if (this.gatewayOptions.error) {
+                        this.showPaymentError(this.gatewayOptions.message);
+                    }
+
+                    // ensure the submit button's parent is on the page as this is added
+                    // only after the initial page load
+                    if ($(this.getSubmitButtonTargetSelector(this.id)).length === 0) {
+                        this.createSubmitButtonTarget(this.id);
+                    }
+
+                    (window).GlobalPayments.configure(this.gatewayOptions);
+                    this.cardForm = (window).GlobalPayments.ui.form(
+                        {
+                            fields: this.getFieldConfiguration(),
+                            styles: this.getStyleConfiguration()
+                        }
+                    );
+                    this.cardForm.on('submit', 'click', this.blockOnSubmit.bind(this));
+                    this.cardForm.on('token-success', this.handleResponse.bind(this));
+                    this.cardForm.on('token-error', this.handleErrors.bind(this));
+                    this.cardForm.on('error', this.handleErrors.bind(this));
+                    (window).GlobalPayments.on('error', this.handleErrors.bind(this));
+
+                    // match the visibility of our payment form
+                    this.cardForm.ready(function () {
+                        this.toggleSubmitButtons();
+                    });
+                },
+
+                /**
+                 * Gets payment field config
+                 *
+                 * @returns {object}
+                 */
+                getFieldConfiguration: function () {
+                    return {
+                        'card-number': {
+                            placeholder: this.fieldOptions['card-number-field'].placeholder,
+                            target: '#' + this.id + '-' + this.fieldOptions['card-number-field'].class
+                        },
+                        'card-expiration': {
+                            placeholder: this.fieldOptions['card-expiry-field'].placeholder,
+                            target: '#' + this.id + '-' + this.fieldOptions['card-expiry-field'].class
+                        },
+                        'card-cvv': {
+                            placeholder: this.fieldOptions['card-cvv-field'].placeholder,
+                            target: '#' + this.id + '-' + this.fieldOptions['card-cvv-field'].class
+                        },
+                        'card-holder-name': {
+                            placeholder: this.fieldOptions['card-holder-field'].placeholder,
+                            target: '#' + this.id + '-' + this.fieldOptions['card-holder-field'].class
+                        },
+                        'submit': {
+                            text: this.getSubmitButtonText(),
+                            target: this.getSubmitButtonTargetSelector(this.id)
+                        }
+                    };
+                },
+
+                /**
+                 * Gets payment field styles
+                 *
+                 * @returns {object}
+                 */
+                getStyleConfiguration: function () {
+                    return JSON.parse(this.fieldStyles);
+                },
+
+                /**
+                 * Creates the parent for the submit button
+                 *
+                 * @returns
+                 */
+                createSubmitButtonTarget: function (id) {
+                    var el = document.createElement('div')
+                    el.id = this.getSubmitButtonTargetSelector(id).replace('#', '');
+                    el.className = 'globalpayments ' + id + ' card-submit';
+                    $(this.getPlaceOrderButtonSelector()).after(el);
+                    // match the visibility of our payment form
+                    this.toggleSubmitButtons();
+                },
+
+                /**
+                 * Swaps the default Platform 'Place Order' button for our iframe-d button
+                 * or digital wallet buttons when one of our gateways is selected.
+                 *
+                 * @returns
+                 */
+                toggleSubmitButtons: function () {
+                    // our gateway was selected
+                    var selectedPaymentGatewayId = this.id;
+
+                    // stored Cards available (registered user selects stored card as payment method)
+                    var savedCardsAvailable = $(this.getStoredPaymentMethodsRadioSelector(selectedPaymentGatewayId) + '[value!="new"]').length > 0;
+
+                    // user selects (new) card as payment method
+                    var newSavedCardSelected = 'new' === $('#tab-option').val();
+
+                    // selected payment method is card or digital wallet
+                    if (!savedCardsAvailable || savedCardsAvailable && newSavedCardSelected) {
+                        $(this.getSubmitButtonTargetSelector(selectedPaymentGatewayId)).show();
+                        $(this.getPlaceOrderButtonSelector()).addClass('globalpayments-hidden').hide();
+                    } else {
+                        // selected payment method is stored card
+                        $(this.getSubmitButtonTargetSelector(selectedPaymentGatewayId)).hide();
+                        // show platform `Place Order` button
+                        $(this.getPlaceOrderButtonSelector()).removeClass('globalpayments-hidden').show();
+                    }
+                },
+
+                /**
+                 * Gets the current checkout form
+                 *
+                 * @returns {Element}
+                 */
+                getForm: function () {
+                    var checkoutForms = [
+                        // Checkout
+                        'form#globalpayments-payment-form',
+                    ]
+                    var forms = document.querySelectorAll(checkoutForms.join(','));
+
+                    return forms.item(0);
+                },
+
+                /**
+                 * Places/submits the order to Platform
+                 *
+                 * @returns
+                 */
+                placeOrder: function () {
+
+                    $(this.getForm()).submit();
+                },
+                mapCardType(txnApiCardType){
+
+                    const cardTypeMap = {
+                        MasterCard: 'mastercard',
+                        Visa: 'visa',
+                        Discover: 'discover',
+                        'American Express': 'amex',
+                        'Diners Club': 'diners',
+                        JCB: 'jcb'
+                    }
+                    return cardTypeMap[txnApiCardType];
+                },
+
+                /**
+                 * Handles the tokenization response
+                 *
+                 * On valid payment fields, the tokenization response is added to the current
+                 * state.
+                 *
+                 * @param {object} response tokenization response
+                 *
+                 * @returns
+                 */
+                handleResponse: function (response) {
+                    const normalizedResponse = {
+                        paymentReference: response.temporary_token,
+                        details: {
+                            cardNumber: response.card.masked_card_number,
+                            cardBin: response.card.masked_card_number.substring(0, 6),
+                            cardLast4: response.card.masked_card_number.substring(response.card.masked_card_number.length - 4),
+                            cardType: this.mapCardType(response.card.type),
+                            expiryMonth: response.card.expiry_month,
+                            expiryYear: (parseInt(response.card.expiry_year) + 2000).toString()
+                        }
+                    }
+                    this.paymentTokenResponse = JSON.stringify(normalizedResponse);
+                    this.createInputElement('paymentTokenResponse', this.paymentTokenResponse);
+                    this.placeOrder();
+                },
+
+                /**
+                 * Hides all validation error messages
+                 *
+                 * @returns
+                 */
+                resetValidationErrors: function () {
+                    $('.' + this.id + ' .globalpayments-validation-error').hide();
+                    $('.globalpayments-checkout-error').hide();
+                },
+
+                /**
+                 * Shows the validation error for a specific payment field
+                 *
+                 * @param {string} fieldType Field type to show its validation error
+                 *
+                 * @returns
+                 */
+                showValidationError: function (fieldType) {
+                    $('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').addClass('alert alert-danger');
+                    $('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').show();
+                    this.unblockOnError();
+                },
+
+                /**
+                 * Shows payment error and scrolls to it
+                 *
+                 * @param {string} message Error message
+                 *
+                 * @returns
+                 */
+                showPaymentError: function (message) {
+                    var $form = $(this.getForm());
+
+                    // Remove notices from all sources
+                    $('.globalpayments-checkout-error').remove();
+
+                    $form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + message + '</div>');
+
+                    $('html, body').animate({
+                        scrollTop: ($form.offset().top - 100)
+                    }, 1000);
+
+                    this.unblockOnError();
+                },
+
+                handleErrors: function (errorObject){
+                    this.resetValidationErrors();
+
+                    if (!errorObject.hasOwnProperty('error')) {
+                        this.showPaymentError( 'Something went wrong. Please contact us to get assistance.' );
+                        return;
+                    }
+
+                    var error = errorObject.error;
+                    if (error.code === 'invalid_card'){
+                        this.showValidationError('card-number');
+                        return;
+                    }
+                    if (error.code !== 'invalid_input'){
+                        this.showPaymentError(error.message);
+                        return;
+                    }
+                    for ( var i = 0; i < error.detail.length; i++ ) {
+                        var data_path = error.detail[i].data_path;
+                        switch (data_path) {
+                            case '/card/card_number':
+                                this.showValidationError('card-number');
+                                break;
+                            case '/card/card_security_code':
+                                this.showValidationError( 'card-cvv' );
+                                break;
+                            case '/card':
+                                if (error.detail[i].description.includes('expiry')){
+                                    this.showValidationError( 'card-expiration' );
+                                }
+                                break;
+                            case '/card/expiry_year':
+                            case '/card/expiry_month':
+                                this.showValidationError( 'card-expiration' );
+                                break;
+                            default:
+                                this.showPaymentError(error.message);
+                        }
+                    }
+                },
+
+                /**
+                 * Gets submit button text
+                 *
+                 * @returns {string}
+                 */
+                getSubmitButtonText: function () {
+                    return ($(this.getPlaceOrderButtonSelector()).data('value') || $(this.getPlaceOrderButtonSelector()).attr('value'));
+                },
+
+                /**
+                 * Blocks checkout UI
+                 *
+                 * @returns
+                 */
+                blockOnSubmit: function () {
+                    var $form = $(this.getForm());
+                    var form_data = $form.data();
+                    if (1 !== form_data['blockUI.isBlocked']) {
+                        $form.block({
+                            message: null,
+                            overlayCSS: {
+                                background: '#fff',
+                                opacity: 0.6
+                            }
+                        });
+                    }
+                },
+
+                createInputElement: function (name, value) {
+                    var inputElement = (document.getElementById(this.id + '-' + name));
+
+                    if (!inputElement) {
+                        inputElement = document.createElement('input');
+                        inputElement.id = this.id + '-' + name;
+                        inputElement.name = this.id + '[' + name + ']';
+                        inputElement.type = 'hidden';
+                        this.getForm().appendChild(inputElement);
+                    }
+
+                    inputElement.value = value;
+                },
+
+                /**
+                 * Unblocks checkout UI
+                 *
+                 * @returns
+                 */
+                unblockOnError: function () {
+                    var $form = $(this.getForm());
+                    var form_data = $form.data();
+                    if (1 == form_data['blockUI.isBlocked']) {
+                        $form.unblock();
+                    }
+                },
+
+                /**
+                 * Convenience function to get CSS selector for the built-in 'Place Order' button
+                 *
+                 * @returns {string}
+                 */
+                getPlaceOrderButtonSelector: function () {
+                    return '#button-confirm';
+                },
+
+                /**
+                 * Convenience function to get CSS selector for the custom 'Place Order' button's parent element
+                 *
+                 * @param {string} id
+                 * @returns {string}
+                 */
+                getSubmitButtonTargetSelector: function (id) {
+                    return '#' + id + '-card-submit';
+                },
+
+                /**
+                 * Convenience function to get CSS selector for stored card radio inputs
+                 *
+                 * @returns {string}
+                 */
+                getStoredPaymentMethodsRadioSelector: function (id) {
+                    return 'input:radio[name="' + id + '[paymentTokenId]"]';
+                },
+            };
+
+            new GlobalPaymentsGatewayProvider(globalpayments_secure_payment_fields_params);
+        }
+    );
+</script>

@@ -1,40 +1,34 @@
 <?php
 // Heading
-$_['heading_title'] = 'GlobalPayments - Unified Payments';
+$_['heading_title'] = 'GlobalPayments - Gpi Transaction';
 
 // Tab
-$_['tab_ucp']        = 'Unified Payments';
-$_['tab_payment']    = 'Payment';
-$_['tab_googlepay']  = 'Google Pay';
-$_['tab_applepay']   = 'Apple Pay';
-$_['tab_clicktopay'] = 'Click To Pay';
-$_['tab_affirm']     = 'Affirm';
-$_['tab_klarna']     = 'Klarna';
-$_['tab_clearpay']   = 'Clearpay';
+$_['tab_gpitrans'] = 'Unified Payments';
+$_['tab_payment']  = 'Payment';
+$_['tab_txnapi']   = 'Transaction API';
 
 // Text
 $_['text_globalpayments_ucp'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
 $_['text_extension']          = 'Extensions';
-$_['text_edit']               = 'Edit GlobalPayments - Unified Payments';
+$_['text_edit']               = 'Edit GlobalPayments - Transaction API';
 $_['text_success']            = 'Success: You have modified GlobalPayments - Unified Payments account details!';
 $_['text_select_all']         = 'Select All';
 $_['text_unselect_all']       = 'Unselect All';
 
 // Label
-$_['label_enabled']               = 'Enable/Disable';
-$_['label_title']                 = 'Title';
-$_['label_is_production']         = 'Live Mode';
-$_['label_app_id']                = 'Live App Id';
-$_['label_app_key']               = 'Live App Key';
-$_['label_sandbox_app_id']        = 'Sandbox App Id';
-$_['label_sandbox_app_key']       = 'Sandbox App Key';
-$_['credentials_check']           = 'Credentials check';
-$_['label_debug']                 = 'Enable Logging';
-$_['label_contact_url']           = 'Contact Url';
-$_['label_payment_action']        = 'Payment Action';
-$_['label_allow_card_saving']     = 'Allow Card Saving';
-$_['label_txn_descriptor']        = 'Order Transaction Descriptor';
-$_['label_enable_three_d_secure'] = 'Enable 3DSecure';
+$_['label_enabled']           = 'Enable/Disable';
+$_['label_title']             = 'Title';
+$_['label_is_production']     = 'Live Mode';
+$_['label_app_id']            = 'Live App Id';
+$_['label_app_key']           = 'Live App Key';
+$_['label_sandbox_app_id']    = 'Sandbox App Id';
+$_['label_sandbox_app_key']   = 'Sandbox App Key';
+$_['credentials_check']       = 'Credentials check';
+$_['label_debug']             = 'Enable Logging';
+$_['label_contact_url']       = 'Contact Url';
+$_['label_payment_action']    = 'Payment Action';
+$_['label_allow_card_saving'] = 'Allow Card Saving';
+$_['label_txn_descriptor']    = 'Order Transaction Descriptor';
 
 // Help
 $_['help_title']                 = 'This controls the title which the user sees during checkout.';
@@ -76,4 +70,5 @@ $_['error_request']                     = 'Unable to perform request. Invalid da
 
 // Success
 $_['success_settings_ucp']      = 'Your Unified Payments settings were saved!';
+$_['success_settings_gpitrans'] = 'Your Unified Payments settings were saved!';
 $_['success_credentials_check'] = 'Your credentials were successfully confirmed!';

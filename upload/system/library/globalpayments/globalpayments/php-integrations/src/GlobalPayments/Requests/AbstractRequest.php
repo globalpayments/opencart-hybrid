@@ -3,6 +3,7 @@
 namespace GlobalPayments\PaymentGatewayProvider\Requests;
 
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
+use GlobalPayments\Api\Entities\Enums\PaymentMethodUsageMode;
 
 abstract class AbstractRequest implements RequestInterface {
 	/**
@@ -38,7 +39,31 @@ abstract class AbstractRequest implements RequestInterface {
 		return $this->getPaymentTokenFromResponse();
 	}
 
-	private function getPaymentTokenFromResponse() {
+	public function getPaymentTokenInfo() {
+		$token = $this->getMultiUseToken();
+
+		if (empty($token)) {
+				return ['token' => $this->getSingleUseToken(), 'usage' => PaymentMethodUsageMode::SINGLE];
+		}
+
+		return ['token' => $token, 'usage' => PaymentMethodUsageMode::MULTIPLE];
+	}
+
+	private function getMultiUseToken() {
+		return $this->requestData->paymentToken;
+	}
+
+	private function getSingleUseToken()
+	{
+		$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
+
+		if (empty($tokenResponse->paymentReference)) {
+			throw new \Exception('Not enough data to perform request. Unable to retrieve payment token.');
+		}
+	}
+
+	private function getPaymentTokenFromResponse()
+	{
 		$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
 
 		if (empty($tokenResponse->paymentReference)) {

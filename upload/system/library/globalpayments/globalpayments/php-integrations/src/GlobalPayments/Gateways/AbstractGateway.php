@@ -239,7 +239,10 @@ abstract class AbstractGateway implements GatewayInterface {
 	 * @throws ApiException
 	 */
 	public function processPayment(RequestData $requestData) {
-		//$this->handleResponse($request, $response);
+		if(empty($requestData->requestType)) {
+			$requestData->requestType = $this->getRequestType($this->paymentAction);
+		}
+
 		return $this->processRequest($requestData->requestType, $requestData);
 	}
 
@@ -277,6 +280,15 @@ abstract class AbstractGateway implements GatewayInterface {
 		$response = $this->processRequest(GetTransactionDetailsRequest::class, $requestData);
 
 		return $response;
+	}
+
+	/**
+	 * @param Transaction $response
+	 * @return bool
+	 */
+	private static function isTransactionDeclined(Transaction $response): bool {
+		return $response->responseCode !== '00' && 'SUCCESS' !== $response->responseCode &&
+		! (substr($response->responseCode, 0, strlen('approved')) === 'approved');
 	}
 
 	/**

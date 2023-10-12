@@ -363,7 +363,7 @@ SW;
 			'id'             => $this->gatewayId,
 			'gatewayOptions' => $this->securePaymentFieldsFrontendConfiguration(),
 			'fieldOptions'   => $this->securePaymentFieldsConfiguration(),
-			'fieldStyles'    => $this->securePaymentFieldsStyles()
+			'fieldStyles'    => $this->securePaymentFieldsStyles(),
 		);
 
 		return $jsonEncode ? json_encode($params) : $params;

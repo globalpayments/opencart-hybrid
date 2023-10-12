@@ -90,7 +90,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 			if (empty($this->error)) {
 				$this->session->data['success'] = $this->language->get('text_success');
-
 				$this->response->redirect( $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true));
 			}
 		}
@@ -179,7 +178,13 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_contact_url'] = $this->config->get('payment_globalpayments_ucp_contact_url');
 		}
-
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = 0;
+		} else {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+		}
 		// Payment Tab
 		if (isset($this->request->post['payment_globalpayments_ucp_payment_action'])) {
 			$data['payment_globalpayments_ucp_payment_action'] = $this->request->post['payment_globalpayments_ucp_payment_action'];
@@ -198,7 +203,18 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_txn_descriptor'] = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		}
-
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
+		} else {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+		}
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = 1;
+		} else {
+			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+		}
 		$this->load->library('globalpayments');
 		$data['help_is_production']       = sprintf($this->language->get('help_is_production'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
 		$data['help_allow_card_saving']   = sprintf($this->language->get('help_allow_card_saving'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
@@ -325,6 +341,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		     && strlen($this->request->post['payment_globalpayments_ucp_txn_descriptor']) > 25) {
 			$this->error['error_txn_descriptor'] = $this->language->get('error_txn_descriptor');
 		}
+
 		if ( ! empty($this->request->post['payment_globalpayments_ucp_is_production'])) {
 			if (empty($this->request->post['payment_globalpayments_ucp_app_id'])) {
 				$this->error['error_live_credentials_app_id'] = $this->language->get('error_live_credentials_app_id');
@@ -340,6 +357,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$this->error['error_sandbox_credentials_app_key'] = $this->language->get('error_sandbox_credentials_app_key');
 			}
 		}
+
 		if ($this->error) {
 			$this->alert[] = array(
 				'type'    => 'danger',

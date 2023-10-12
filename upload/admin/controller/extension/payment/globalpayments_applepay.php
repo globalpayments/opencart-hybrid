@@ -34,7 +34,11 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 		} else {
 			$data['error_apple_merchant_display_name'] = '';
 		}
-
+		if (isset($error['error_applepay_accepted_cards'])) {
+			$data['error_applepay_accepted_cards'] = $error['error_applepay_accepted_cards'];
+		} else {
+			$data['error_applepay_accepted_cards'] = '';
+		}
 		if (isset($this->request->post['payment_globalpayments_applepay_enabled'])) {
 			$data['payment_globalpayments_applepay_enabled'] = $this->request->post['payment_globalpayments_applepay_enabled'];
 		} elseif (!empty($this->request->post)) {
@@ -129,6 +133,9 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 		}
 		if (empty($this->request->post['payment_globalpayments_applepay_apple_merchant_display_name'])) {
 			$this->error['error_apple_merchant_display_name'] = $this->language->get('error_apple_merchant_display_name');
+		}
+		if (empty($this->request->post['payment_globalpayments_applepay_accepted_cards'])) {
+			$this->error['error_applepay_accepted_cards'] = $this->language->get('error_applepay_accepted_cards');
 		}
 		if ($this->error) {
 			$this->alert[] = array(

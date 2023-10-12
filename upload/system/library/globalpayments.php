@@ -13,6 +13,7 @@ if (is_readable($autoloader)) {
 
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\PaymentGatewayProvider\Gateways\TransactionApiGateway;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ApplePay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePay;
@@ -24,7 +25,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.4.3';
+	const VERSION = '1.5.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -48,6 +49,9 @@ class GlobalPayments {
 			case GatewayId::GP_API:
 				$this->setGpApiGateway();
 				break;
+            		case GatewayId::TRANSACTION_API:
+		                $this->setTransactionApiGateway();
+                		break;
 		}
 	}
 
@@ -95,6 +99,7 @@ class GlobalPayments {
 		$this->gateway->allowCardSaving    = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
 		$this->gateway->txnDescriptor      = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		$this->gateway->baseUrl            = $this->url->link('extension/payment/', '', true);
+		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure')==1;
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');
@@ -128,7 +133,7 @@ class GlobalPayments {
 		$this->gateway->errorThreeDSecureNoLiabilityShift = $this->language->get('error_threedsecure_no_liability');
 
 		$this->load->language('extension/credit_card/globalpayments_ucp');
-		$this->gateway->errorVerifyNotVerified            = $this->language->get('error_txn_not_verified');
+		$this->gateway->errorVerifyNotVerified = $this->language->get('error_txn_not_verified');
 	}
 
 	public function setGooglePayPaymentMethod() {
@@ -141,6 +146,7 @@ class GlobalPayments {
 		$this->paymentMethod->googleMerchantId         = $this->config->get('payment_globalpayments_googlepay_merchant_id');
 		$this->paymentMethod->googleMerchantName       = $this->config->get('payment_globalpayments_googlepay_merchant_name');
 		$this->paymentMethod->buttonColor              = $this->config->get('payment_globalpayments_googlepay_button_color');
+		$this->paymentMethod->acaMethods               = $this->config->get('payment_globalpayments_googlepay_allowed_card_auth_methods');
 	}
 
 	public function setApplePayPaymentMethod() {
@@ -194,6 +200,27 @@ class GlobalPayments {
 		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_clearpay_enabled');
 		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_clearpay_title');
 		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_clearpay_payment_action');
+	}
+
+	public function setTransactionApiGateway() {
+		$this->gateway = new TransactionApiGateway();
+
+		$this->gateway->enabled                  = $this->config->get('payment_globalpayments_txnapi_status');
+		$this->gateway->allowCardSaving          = $this->config->get('payment_globalpayments_txnapi_card');
+		$this->gateway->title                    = $this->config->get('payment_globalpayments_txnapi_title');
+		$this->gateway->isProduction             = $this->config->get('payment_globalpayments_txnapi_is_production');
+		$this->gateway->paymentAction            = $this->config->get('payment_globalpayments_txnapi_payment_action');
+		$this->gateway->region                   = $this->config->get('payment_globalpayments_txnapi_region');
+		$this->gateway->publicKey                = $this->config->get('payment_globalpayments_txnapi_public_key');
+		$this->gateway->sandboxPublicKey         = $this->config->get('payment_globalpayments_txnapi_sandbox_public_key');
+		$this->gateway->apiKey                   = $this->config->get('payment_globalpayments_txnapi_api_key');
+		$this->gateway->sandboxApiKey            = $this->config->get('payment_globalpayments_txnapi_sandbox_api_key');
+		$this->gateway->apiSecret                = $this->config->get('payment_globalpayments_txnapi_api_secret');
+		$this->gateway->sandboxApiSecret         = $this->config->get('payment_globalpayments_txnapi_sandbox_api_secret');
+		$this->gateway->accountCredential        = $this->config->get('payment_globalpayments_txnapi_account_credential');
+		$this->gateway->sandboxAccountCredential = $this->config->get('payment_globalpayments_txnapi_sandbox_account_credential');
+		$this->gateway->debug                    = $this->config->get('payment_globalpayments_txnapi_debug');
+		$this->gateway->logDirectory             = DIR_LOGS;
 	}
 
 	public function setSecurePaymentFieldsTranslations() {

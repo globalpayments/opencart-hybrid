@@ -12,6 +12,7 @@ class AuthorizeRequest extends AbstractRequest {
 		$paymentMethod                 = new CreditCardData();
 		$paymentMethod->token          = $this->getPaymentToken();
 		$paymentMethod->cardHolderName = $this->getCardHolderName();
+		$paymentTokenInfo              = $this->getPaymentTokenInfo();
 		if ( ! empty($this->requestData->mobileType)) {
 			$paymentMethod->mobileType = $this->requestData->mobileType;
 		}
@@ -26,7 +27,8 @@ class AuthorizeRequest extends AbstractRequest {
 		                         ->withDescription($this->requestData->order->description)
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
-		                         ->withRequestMultiUseToken($this->requestData->saveCard);
+		                         ->withRequestMultiUseToken($this->requestData->saveCard)
+		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
 
 		if ( ! empty($this->requestData->mobileType)) {
 			$builder = $builder->withModifier(TransactionModifier::ENCRYPTED_MOBILE);

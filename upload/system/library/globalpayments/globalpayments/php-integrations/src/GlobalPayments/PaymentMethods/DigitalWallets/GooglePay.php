@@ -53,6 +53,13 @@ class GooglePay extends AbstractDigitalWallet {
 	public $buttonColor;
 
 	/**
+	 * Methods allowed to authenticate a card transaction
+	 *
+	 * @var
+	 */
+	public $acaMethods;
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function getFrontendPaymentMethodOptions() {
@@ -63,6 +70,7 @@ class GooglePay extends AbstractDigitalWallet {
 			'globalPaymentsMerchantId' => $this->globalPaymentsMerchantId,
 			'ccTypes'                  => $this->ccTypes,
 			'btnColor'                 => $this->buttonColor,
+			'acaMethods'               => $this->acaMethods
 		);
 	}
 
