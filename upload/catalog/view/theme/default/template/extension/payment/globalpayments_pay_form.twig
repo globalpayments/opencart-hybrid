@@ -1,0 +1,63 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+    <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
+    <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+    {% if customer_is_logged and stored_payment_methods %}
+        <div id="globalpayments-choose" class="form-horizontal">
+            <ul class="nav nav-tabs">
+                <li role="presentation" id="tab-saved"{% if payment_tab_option == 'saved' %} class="active"{% endif %}><a href="#" class="globalpayments-tab-link globalpayments-button" id="saved-link">{{ entry_saved_methods }}</a></li>
+                <li role="presentation" id="tab-new"{% if payment_tab_option == 'new' %} class="active"{% endif %}><a href="#" class="globalpayments-tab-link globalpayments-button" id="new-link">{{ entry_new }}</a></li>
+            </ul>
+        </div>
+    {% endif %}
+    <input type="hidden" name="{{ gateway.gatewayId }}[paymentType]" value="{{ payment_tab_option }}" id="tab-option" />
+    <div class="globalpayments" style="width: 600px; margin: auto">
+        {% if not gateway.isProduction %}
+            {{ environment_indicator }}
+        {% endif %}
+        <fieldset id="{{ gateway.gatewayId }}-payment-token"{% if payment_tab_option != 'saved' %} style="display: none"{% endif %}>
+            {% for stored_payment_method in stored_payment_methods %}
+                <div class="radio">
+                    <label>
+                        <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}"
+                                {% if stored_payment_method.is_default %}
+                            checked="checked"
+                                {% endif %}>
+                        {{ stored_payment_method.card_type }} {{ text_ending_in }} {{ stored_payment_method.card_last4 }} ({{ text_expires }} {{ stored_payment_method.expiry_month }}/{{ stored_payment_method.expiry_year }})
+                    </label>
+                </div>
+            {% endfor %}
+        </fieldset>
+        <fieldset id="{{ gateway.gatewayId }}-card"{% if payment_tab_option != 'new' %} style="display: none"{% endif %}>
+            <!-- Target for the credit card form -->
+            {% for field in secure_payment_fields %}
+                {{ field }}
+            {% endfor %}
+            {% if customer_is_logged and gateway.allowCardSaving %}
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="{{ gateway.gatewayId }}-save_card" value="1" name="{{ gateway.gatewayId }}[saveCard]" /> {{ entry_allow_card_saving }}
+                    </label>
+                </div>
+            {% endif %}
+        </fieldset>
+    </div>
+    <div class="buttons clearfix">
+        <div class="pull-right">
+            <input type="button" value="{{ button_confirm }}" id="button-confirm" style="width: 300px" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+        </div>
+    </div>
+</form>
+<style>
+    .globalpayments iframe {
+        min-height: 5rem;
+        width: 100%;
+    }
+
+    div[id^="GlobalPayments-overlay-"] {
+        z-index: 1001 !important;
+    }
+
+    .globalpayments-validation-error, .globalpayments-sandbox-warning {
+        list-style:none outside;
+    }
+</style>
