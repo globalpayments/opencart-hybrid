@@ -36,7 +36,7 @@ class ControllerExtensionPaymentGlobalPaymentsKlarna extends Controller {
 		$data['globalpayments_klarna_is_allowed'] =
 			json_encode($this->globalpayments->paymentMethod->checkIfPaymentAllowed($this->order));
 		$data['globalpayments_klarna_validCustomerDetails'] =
-			json_encode($this->globalpayments->paymentMethod->validateCustomerDetails($this->session, $this->customer));
+			json_encode($this->globalpayments->paymentMethod->validateCustomerDetails($this->session, $this->customer, $data['customer_is_logged']));
 
 		return $this->load->view('extension/payment/globalpayments_klarna', $data);
 	}

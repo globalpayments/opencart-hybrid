@@ -56,7 +56,8 @@ abstract class AbstractBuyNowPayLater extends AbstractPaymentMethod {
 		return $hasVirtualItems;
 	}
 
-	public function validateCustomerDetails($session, $customer) {
+	public function validateCustomerDetails($session, $customer, $isCustomerLogged = false) {
+
 		$hasPostCode = true;
 		if (empty($session->data['shipping_address']['postcode'])) {
 			$hasPostCode = false;
@@ -65,7 +66,15 @@ abstract class AbstractBuyNowPayLater extends AbstractPaymentMethod {
 			}
 		}
 
-		$valid = $hasPostCode && !empty($customer->getTelephone());
+		if ($isCustomerLogged) {
+			$valid = $hasPostCode && !empty($customer->getTelephone());
+		} else {
+			$valid = $hasPostCode && (
+				array_key_exists('guest', $customer->session->data) &&
+				array_key_exists('telephone', $customer->session->data['guest']) &&
+				!empty($customer->session->data['guest']['telephone'])
+				);
+		}
 
 		return $valid;
 	}

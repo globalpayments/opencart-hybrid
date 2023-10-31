@@ -36,7 +36,7 @@ class ControllerExtensionPaymentGlobalPaymentsAffirm extends Controller {
 		$data['globalpayments_affirm_is_allowed'] =
 			json_encode($this->globalpayments->paymentMethod->checkIfPaymentAllowed($this->order));
 		$data['globalpayments_affirm_validCustomerDetails'] =
-			json_encode($this->globalpayments->paymentMethod->validateCustomerDetails($this->session, $this->customer));
+			json_encode($this->globalpayments->paymentMethod->validateCustomerDetails($this->session, $this->customer, $data['customer_is_logged']));
 
 		return $this->load->view('extension/payment/globalpayments_affirm', $data);
 	}
