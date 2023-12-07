@@ -59,7 +59,7 @@ class ControllerExtensionPaymentGlobalPaymentsClearpay extends Controller {
 			$requestData->requestType       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
 			$requestData->bnpl	        = (object)['callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(), 'type' => $postRequestData->bnplType];
 
-			$gatewayResponse = $this->globalpayments->gateway->processInitiatePayment($requestData);
+			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentBNPL($requestData);
 
 			//Create order in Pending status before the redirect to the 3rd party payment screen
 			$this->load->model('extension/payment/globalpayments_ucp');

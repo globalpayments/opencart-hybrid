@@ -33,18 +33,11 @@
     $('#globalpayments-loading').hide();
 
     var globalpayments_action = $('#globalpayments-payment-form').attr('action');
-    var globalpayments_affirm_params = {{ globalpayments_affirm_params }};
-    var globalpayments_affirm_is_allowed = {{ globalpayments_affirm_is_allowed }};
-    var globalpayments_affirm_validCustomerDetails = {{ globalpayments_affirm_validCustomerDetails }};
+    var globalpayments_sepa_is_allowed = {{ globalpayments_sepa_is_allowed }};
 
     $(document).ready(function() {
-        if (false === globalpayments_affirm_is_allowed) {
+        if (false === globalpayments_sepa_is_allowed) {
             $('#globalpayments-alert').show();
-            $('#button-confirm').addClass('globalpayments-hidden').hide();
-            return;
-        }
-        if (false === globalpayments_affirm_validCustomerDetails) {
-            $('#globalpayments-alert-incomplete-data').show();
             $('#button-confirm').addClass('globalpayments-hidden').hide();
             return;
         }
@@ -54,13 +47,10 @@
             $.ajax({
                 url: globalpayments_action,
                 type: 'POST',
-                data: {
-                    globalpayments_affirm: {
-                        bnplType: globalpayments_affirm_params.paymentMethodOptions.bnplType
-                    },
-                },
                 success: function(redirectUrl) {
-                    window.location.href = redirectUrl;
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, "2000");
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.error(errorThrown);
@@ -80,7 +70,7 @@
             });
             setTimeout(() => {
                 $('#button-confirm').removeAttr('disabled');
-           }, "5000");
+            }, "5000");
         });
     });
 </script>

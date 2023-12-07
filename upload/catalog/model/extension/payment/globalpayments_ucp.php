@@ -1,7 +1,7 @@
 <?php
 
 use GlobalPayments\Api\Entities\Enums\BankPaymentStatus;
-use GlobalPayments\Api\Entities\Enums\TransactionStatus;
+use GlobalPayments\Api\Entities\Enums\PaymentMethodName;
 use GlobalPayments\Api\Entities\Reporting\TransactionSummary;
 
 class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
@@ -68,10 +68,13 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 	}
 
 	public function addTransaction($order_id, $gateway_id, $payment_action, $amount, $currency, $gatewayResponse) {
-		if ($gatewayResponse instanceof TransactionSummary && $gatewayResponse->gatewayResponseMessage == 'REQUEST_SUCCESS') {
+		if ($gatewayResponse instanceof TransactionSummary &&
+			($gatewayResponse->paymentType === PaymentMethodName::BANK_PAYMENT ||
+				$gatewayResponse->gatewayResponseMessage === 'REQUEST_SUCCESS')
+		) {
 			$transactionId = $gatewayResponse->transactionId;
-			$responseCode = BankPaymentStatus::SUCCESS;
-			$responseMessage = TransactionStatus::PREAUTHORIZED;
+			$responseCode = $gatewayResponse->gatewayResponseCode ?? BankPaymentStatus::SUCCESS;;
+			$responseMessage = $gatewayResponse->gatewayResponseMessage;
 			$referenceNumber = $gatewayResponse->referenceNumber;
 			$transactionDate = $gatewayResponse->transactionDate->format("Y-m-d\TH:i:s.u\Z");
 		} else {

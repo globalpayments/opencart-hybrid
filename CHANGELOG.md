@@ -3,16 +3,19 @@
 </a>
 
 # Changelog
+## Latest Version - v1.6.0 (12/07/23)
+### Enhancements:
+- Open Banking
 
-## Latest Version - v1.5.2 (31/10/23)
+## v1.5.2 (10/31/23)
 ### Bug Fixes:
 - BNPL is unavailable for guest user
 
-## v1.5.1 (19/10/23)
+## v1.5.1 (10/19/23)
 ### Bug Fixes:
 - GPI Transaction - Added supporting files
 
-## v1.5.0 (12/10/23)
+## v1.5.0 (10/12/23)
 ### Enhancements:
 - GooglePay - configurable Allowed Card Auth Methods
 - GPI Transaction - Added GPI Transaction gateway support
@@ -24,33 +27,33 @@
 ### Enhancements:
 - Added the Card Holder Name in the Google Pay and Apple Pay requests
 
-## v1.4.2 (22/06/23)
+## v1.4.2 (06/22/23)
 ### Enhancements:
 - Unified Payments - Added Credential Check button
 
-## v1.4.0 (15/06/23)
+## v1.4.0 (06/15/23)
 ### Enhancements:
 - Unified Payments - Added Buy Now Pay Later
 
 ### Bug Fixes:
 - Unified Payments - Fixed a bug where the Card Number iframe would not be 100% expanded on Mozilla Firefox
 
-## v1.3.0 (23/05/23)
+## v1.3.0 (05/23/23)
 ### Enhancements:
 - Digital Wallets - Click to Pay
 
-## v1.2.0 (27/10/22)
+## v1.2.0 (10/27/22)
 ### Enhancements:
 - Unified Payments - remove 3DS 1
 
-## v1.1.0 (11/08/22)
+## v1.1.0 (08/11/22)
 ### Enhancements:
 - Unified Payments - added Card Holder Name for Hosted Fields
 - Unified Payments - `Order Transaction Descriptor` is sent in authorize/charge requests
 - Google Pay - added `Merchant Name` setting
 - Google Pay - renamed `Global Payments Merchant ID` setting to `Global Payments Client ID`
 
-## v1.0.0 (06/07/22)
+## v1.0.0 (07/06/22)
 ### Enhancements:
 - Unified Payments
 - Added Admin option for Apple Pay button color

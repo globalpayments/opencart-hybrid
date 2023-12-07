@@ -97,6 +97,8 @@ class RequestData {
 
 	public $bnpl;
 
+	public $openBanking;
+
 	public function __set($name, $value) {
 		switch ($name) {
 			case 'digitalWalletPaymentTokenResponse':

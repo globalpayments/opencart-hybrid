@@ -1,0 +1,54 @@
+<div class="tab-pane{% if active_tab == 'sepa' %} active{% endif %}" id="tab-sepa">
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_enabled">{{ label_enabled }}</label>
+		<div class="col-sm-10 checkbox">
+			<label>
+				<input id="input-sepa_enabled" type="checkbox" name="payment_globalpayments_sepa_enabled"
+					value="{{ payment_globalpayments_sepa_enabled }}"{% if (payment_globalpayments_sepa_enabled==1) %} checked{% endif %} /> {{ entry_enabled }}
+			</label>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_title"><span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span></label>
+		<div class="col-sm-10">
+			<input id="input-sepa_title" type="text" name="payment_globalpayments_sepa_title"
+				value="{{ payment_globalpayments_sepa_title }}" placeholder="{{ placeholder_sepa_title }}" class="form-control"/>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_payment_action">
+			<span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+		</label>
+		<div class="col-sm-10">
+			<select name="payment_globalpayments_sepa_payment_action_show" id="input-sepa_payment_action" class="form-control" disabled="disabled">
+				<option value="charge" selected="selected">{{ entry_payment_action_charge }}</option>
+				<option value="authorize" {{ payment_globalpayments_sepa_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+			</select>
+			<input name="payment_globalpayments_sepa_payment_action" type="hidden" value="charge">
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_iban">{{ label_iban }}</label>
+		<div class="col-sm-10">
+			<input id="input-sepa_iban" type="text" name="payment_globalpayments_sepa_iban" value="{{ payment_globalpayments_sepa_iban }}" class="form-control"/><br/>
+			<p>{{ help_sepa_iban }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_account_name">{{ label_account_name }}</label>
+		<div class="col-sm-10">
+			<input id="input-sepa_account_name" type="text" name="payment_globalpayments_sepa_account_name" value="{{ payment_globalpayments_sepa_account_name }}" class="form-control"/><br/>
+			<p>{{ help_sepa_account_name }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sepa_countries">{{ label_countries }}</label>
+		<div class="col-sm-10">
+			<input id="input-sepa_countries" type="text" name="payment_globalpayments_sepa_countries" value="{{ payment_globalpayments_sepa_countries }}" class="form-control"/><br/>
+			<p>{{ help_sepa_countries }}</p>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$('#input-sepa_enabled').on('change', this.toggleCheckboxValue.bind(this));
+</script>

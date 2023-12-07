@@ -114,8 +114,10 @@
 				break
 			case 'refund':
 				confirm_text = '{{ text_confirm_refund }}';
+				break;
 			case 'getTransactionDetails':
 				confirm_text = '{{ text_confirm_getTransactionDetails }}';
+				break;
 		}
 
 		if (confirm(confirm_text)) {

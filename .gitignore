@@ -64,6 +64,8 @@ upgrade.txt
 !upload/catalog/controller/extension/payment/globalpayments_klarna.php
 !upload/catalog/controller/extension/payment/globalpayments_gpitrans.php
 !upload/catalog/controller/extension/payment/globalpayments_txnapi.php
+!upload/catalog/controller/extension/payment/globalpayments_fasterpayments.php
+!upload/catalog/controller/extension/payment/globalpayments_sepa.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_affirm.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clearpay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_klarna.php
@@ -72,6 +74,8 @@ upgrade.txt
 !upload/catalog/language/en-gb/extension/payment/globalpayments_googlepay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clicktopay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_txnapi.php
+!upload/catalog/language/en-gb/extension/payment/globalpayments_fasterpayments.php
+!upload/catalog/language/en-gb/extension/payment/globalpayments_sepa.php
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_ucp.php
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_txnapi.php
 !upload/catalog/model/extension/payment/globalpayments_ucp.php

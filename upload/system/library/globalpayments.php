@@ -20,12 +20,14 @@ use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePa
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\FasterPayments;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\Sepa;
 
 class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.5.2';
+	const VERSION = '1.6.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -75,6 +77,12 @@ class GlobalPayments {
 				break;
 			case Clearpay::PAYMENT_METHOD_ID:
 				$this->setClearpayPaymentMethod();
+				break;
+			case Sepa::PAYMENT_METHOD_ID:
+				$this->setSepaPaymentMethod();
+				break;
+			case FasterPayments::PAYMENT_METHOD_ID:
+				$this->setFasterPaymentsPaymentMethod();
 				break;
 		}
 	}
@@ -221,6 +229,27 @@ class GlobalPayments {
 		$this->gateway->sandboxAccountCredential = $this->config->get('payment_globalpayments_txnapi_sandbox_account_credential');
 		$this->gateway->debug                    = $this->config->get('payment_globalpayments_txnapi_debug');
 		$this->gateway->logDirectory             = DIR_LOGS;
+	}
+
+	public function setSepaPaymentMethod() {
+		$this->paymentMethod                = new Sepa($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_sepa_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_sepa_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_sepa_payment_action');
+		$this->paymentMethod->countries     = $this->config->get('payment_globalpayments_sepa_countries');
+		$this->paymentMethod->iban          = $this->config->get('payment_globalpayments_sepa_iban');
+		$this->paymentMethod->accountName   = $this->config->get('payment_globalpayments_sepa_account_name');
+	}
+
+	public function setFasterPaymentsPaymentMethod() {
+		$this->paymentMethod                = new FasterPayments($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_fasterpayments_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_fasterpayments_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_fasterpayments_payment_action');
+		$this->paymentMethod->countries     = $this->config->get('payment_globalpayments_fasterpayments_countries');
+		$this->paymentMethod->sortCode      = $this->config->get('payment_globalpayments_fasterpayments_sort_code');
+		$this->paymentMethod->accountName   = $this->config->get('payment_globalpayments_fasterpayments_account_name');
+		$this->paymentMethod->accountNumber = $this->config->get('payment_globalpayments_fasterpayments_account_number');
 	}
 
 	public function setSecurePaymentFieldsTranslations() {
