@@ -22,12 +22,17 @@ class ControllerExtensionPaymentGlobalPaymentsKlarna extends Controller {
 		} else {
 			$data['payment_globalpayments_klarna_title'] = $this->config->get('payment_globalpayments_klarna_title');
 		}
-
 		if (isset($this->request->post['payment_globalpayments_klarna_payment_action'])) {
 			$data['payment_globalpayments_klarna_payment_action'] = $this->request->post['payment_globalpayments_klarna_payment_action'];
 		} else {
 			$data['payment_globalpayments_klarna_payment_action'] = $this->config->get('payment_globalpayments_klarna_payment_action');
 		}
+		if (isset($this->request->post['payment_globalpayments_klarna_sort_order'])) {
+			$data['payment_globalpayments_klarna_sort_order'] = $this->request->post['payment_globalpayments_klarna_sort_order'];
+		} else {
+			$data['payment_globalpayments_klarna_sort_order'] = $this->config->get('payment_globalpayments_klarna_sort_order') ?? 0;
+		}
+
 		$data['active_tab'] = str_replace('extension/payment/globalpayments_', '', $this->request->get['route']);
 
 		return $this->load->view('extension/payment/globalpayments_klarna', $data);

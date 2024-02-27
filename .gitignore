@@ -1,17 +1,29 @@
 # Ignore everything in the upload folder
-tests/
-storage/
-.idea/
-upload/
-CHANGELOG.md
-CHANGELOG_AUTO.md
-build.xml
-composer.json
-composer.lock
-install.txt
-license.txt
-upgrade.txt
-# Except extension files
+**/*
+!/.gitignore
+!/CHANGELOG.md
+!/metadata.xml
+!/README.md
+
+# Except extension directories
+!upload/
+!upload/admin/
+
+!upload/system/
+!upload/system/library/
+!upload/system/library/globalpayments.php
+!upload/system/library/globalpayments/
+!upload/system/library/globalpayments/composer.json
+!upload/system/library/globalpayments/composer.lock
+!upload/system/library/globalpayments/globalpayments/
+!upload/system/library/globalpayments/globalpayments/php-integrations/
+!upload/system/library/globalpayments/globalpayments/php-integrations/*
+!upload/system/library/globalpayments/globalpayments/php-integrations/**
+
+# upload/admin/controller/extension/payment
+!upload/admin/controller/
+!upload/admin/controller/extension/
+!upload/admin/controller/extension/payment/
 !upload/admin/controller/extension/payment/globalpayments_gpitrans.php
 !upload/admin/controller/extension/payment/globalpayments_ucp.php
 !upload/admin/controller/extension/payment/globalpayments_txnapi.php
@@ -21,6 +33,12 @@ upgrade.txt
 !upload/admin/controller/extension/payment/globalpayments_affirm.php
 !upload/admin/controller/extension/payment/globalpayments_clearpay.php
 !upload/admin/controller/extension/payment/globalpayments_klarna.php
+
+# upload/admin/language/en-gb/extension/payment
+!upload/admin/language/
+!upload/admin/language/en-gb/
+!upload/admin/language/en-gb/extension/
+!upload/admin/language/en-gb/extension/payment/
 !upload/admin/language/en-gb/extension/payment/globalpayments_ucp.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_applepay.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_googlepay.php
@@ -32,6 +50,11 @@ upgrade.txt
 !upload/admin/language/en-gb/extension/payment/globalpayments_gpitrans.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_gpitrans_order.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_txnapi.php
+
+# upload/admin/model/extension/payment
+!upload/admin/model/
+!upload/admin/model/extension/
+!upload/admin/model/extension/payment/
 !upload/admin/model/extension/payment/globalpayments_ucp.php
 !upload/admin/model/extension/payment/globalpayments_applepay.php
 !upload/admin/model/extension/payment/globalpayments_googlepay.php
@@ -41,6 +64,12 @@ upgrade.txt
 !upload/admin/model/extension/payment/globalpayments_klarna.php
 !upload/admin/model/extension/payment/globalpayments_gpitrans.php
 !upload/admin/model/extension/payment/globalpayments_txnapi.php
+
+# upload/admin/view/template/extension/payment
+!upload/admin/view/
+!upload/admin/view/template/
+!upload/admin/view/template/extension/
+!upload/admin/view/template/extension/payment/
 !upload/admin/view/template/extension/payment/globalpayments_ucp.twig
 !upload/admin/view/template/extension/payment/globalpayments_applepay.twig
 !upload/admin/view/template/extension/payment/globalpayments_googlepay.twig
@@ -52,9 +81,18 @@ upgrade.txt
 !upload/admin/view/template/extension/payment/globalpayments_klarna.twig
 !upload/admin/view/template/extension/payment/globalpayments_txnapi.twig
 !upload/admin/view/template/extension/payment/globalpayments_gpitrans.twig
+
+# upload/catalog/controller/extension/credit_card
+!upload/catalog/
+!upload/catalog/controller/
+!upload/catalog/controller/extension/
+!upload/catalog/controller/extension/credit_card/
 !upload/catalog/controller/extension/credit_card/globalpayments_ucp.php
 !upload/catalog/controller/extension/credit_card/globalpayments_gateway.php
 !upload/catalog/controller/extension/credit_card/globalpayments_txnapi.php
+
+# upload/catalog/controller/extension/payment
+!upload/catalog/controller/extension/payment/
 !upload/catalog/controller/extension/payment/globalpayments_ucp.php
 !upload/catalog/controller/extension/payment/globalpayments_applepay.php
 !upload/catalog/controller/extension/payment/globalpayments_googlepay.php
@@ -64,8 +102,12 @@ upgrade.txt
 !upload/catalog/controller/extension/payment/globalpayments_klarna.php
 !upload/catalog/controller/extension/payment/globalpayments_gpitrans.php
 !upload/catalog/controller/extension/payment/globalpayments_txnapi.php
-!upload/catalog/controller/extension/payment/globalpayments_fasterpayments.php
-!upload/catalog/controller/extension/payment/globalpayments_sepa.php
+
+# upload/catalog/language/en-gb/extension/payment
+!upload/catalog/language/
+!upload/catalog/language/en-gb/
+!upload/catalog/language/en-gb/extension/
+!upload/catalog/language/en-gb/extension/payment/
 !upload/catalog/language/en-gb/extension/payment/globalpayments_affirm.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clearpay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_klarna.php
@@ -74,10 +116,16 @@ upgrade.txt
 !upload/catalog/language/en-gb/extension/payment/globalpayments_googlepay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clicktopay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_txnapi.php
-!upload/catalog/language/en-gb/extension/payment/globalpayments_fasterpayments.php
-!upload/catalog/language/en-gb/extension/payment/globalpayments_sepa.php
+
+# upload/catalog/language/en-gb/extension/credit_card
+!upload/catalog/language/en-gb/extension/credit_card/
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_ucp.php
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_txnapi.php
+
+# upload/catalog/model/extension/payment
+!upload/catalog/model/
+!upload/catalog/model/extension/
+!upload/catalog/model/extension/payment/
 !upload/catalog/model/extension/payment/globalpayments_ucp.php
 !upload/catalog/model/extension/payment/globalpayments_applepay.php
 !upload/catalog/model/extension/payment/globalpayments_googlepay.php
@@ -88,12 +136,29 @@ upgrade.txt
 !upload/catalog/model/extension/payment/globalpayments_gpitrans.php
 !upload/catalog/model/extension/payment/globalpayments_txnapi.php
 !upload/catalog/model/extension/payment/globalpayments_gateway.php
+
+# upload/catalog/view/javascript
+!upload/catalog/view/
+!upload/catalog/view/javascript/
 !upload/catalog/view/javascript/globalpayments-3ds.js
+!upload/catalog/view/javascript/globalpayments-3ds.min.js
+!upload/catalog/view/javascript/globalpayments-3ds.min.js.map
+
+# upload/catalog/view/theme/default/template/extension/credit_card
+# upload/catalog/view/theme/default/template/extension/payment
+!upload/catalog/view/theme/
+!upload/catalog/view/theme/default/
+!upload/catalog/view/theme/default/template/
+!upload/catalog/view/theme/default/template/extension/
+!upload/catalog/view/theme/default/template/extension/credit_card/
 !upload/catalog/view/theme/default/template/extension/credit_card/globalpayments_ucp_add.twig
 !upload/catalog/view/theme/default/template/extension/credit_card/globalpayments_ucp_list.twig
 !upload/catalog/view/theme/default/template/extension/credit_card/globalpayments_add_form.twig
 !upload/catalog/view/theme/default/template/extension/credit_card/globalpayments_card_list.twig
 !upload/catalog/view/theme/default/template/extension/credit_card/globalpayments_txnapi_add.twig
+
+# upload/catalog/view/theme/default/template/extension/payment
+!upload/catalog/view/theme/default/template/extension/payment/
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_ucp.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_applepay.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_googlepay.twig
@@ -104,5 +169,3 @@ upgrade.txt
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_gpitrans.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_txnapi.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_pay_form.twig
-!upload/system/library/globalpayments.php
-!upload/system/library/globalpayments/

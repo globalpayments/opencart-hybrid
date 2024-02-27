@@ -98,6 +98,12 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 		} else {
 			$data['payment_globalpayments_applepay_payment_action'] = $this->config->get('payment_globalpayments_applepay_payment_action');
 		}
+		if (isset($this->request->post['payment_globalpayments_applepay_sort_order'])) {
+			$data['payment_globalpayments_applepay_sort_order'] = $this->request->post['payment_globalpayments_applepay_sort_order'];
+		} else {
+			$data['payment_globalpayments_applepay_sort_order'] = $this->config->get('payment_globalpayments_applepay_sort_order') ?? 0;
+		}
+
 		$data['active_tab'] = str_replace('extension/payment/globalpayments_', '', $this->request->get['route']);
 
 		return $this->load->view('extension/payment/globalpayments_applepay', $data);

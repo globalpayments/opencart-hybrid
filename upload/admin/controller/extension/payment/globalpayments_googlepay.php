@@ -65,7 +65,6 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		} else {
 			$data['payment_globalpayments_googlepay_button_color'] = $this->config->get('payment_globalpayments_googlepay_button_color');
 		}
-
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'])) {
 			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = explode(',', $this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods']);
 		} elseif (!empty($this->request->post)) {
@@ -73,12 +72,17 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		} else {
 			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = explode(',', $this->config->get('payment_globalpayments_googlepay_allowed_card_auth_methods'));
 		}
-
 		if (isset($this->request->post['payment_globalpayments_googlepay_payment_action'])) {
 			$data['payment_globalpayments_googlepay_payment_action'] = $this->request->post['payment_globalpayments_googlepay_payment_action'];
 		} else {
 			$data['payment_globalpayments_googlepay_payment_action'] = $this->config->get('payment_globalpayments_googlepay_payment_action');
 		}
+		if (isset($this->request->post['payment_globalpayments_googlepay_sort_order'])) {
+			$data['payment_globalpayments_googlepay_sort_order'] = $this->request->post['payment_globalpayments_googlepay_sort_order'];
+		} else {
+			$data['payment_globalpayments_googlepay_sort_order'] = $this->config->get('payment_globalpayments_googlepay_sort_order') ?? 0;
+		}
+
 		$data['active_tab'] = str_replace('extension/payment/globalpayments_', '', $this->request->get['route']);
 
 		return $this->load->view('extension/payment/globalpayments_googlepay', $data);

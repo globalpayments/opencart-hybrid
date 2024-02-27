@@ -1,32 +1,33 @@
 <?php
 
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
 use GlobalPayments\Api\Entities\Enums\BankPaymentStatus;
+use GlobalPayments\Api\Entities\Enums\BankPaymentType;
 use GlobalPayments\Api\Entities\Enums\TransactionStatus;
 use GlobalPayments\Api\Entities\Reporting\TransactionSummary;
+use GlobalPayments\Api\Gateways\OpenBankingProvider;
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\FasterPayments;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 use Psr\Log\LogLevel;
 
-class ControllerExtensionPaymentGlobalPaymentsFasterPayments extends Controller {
-
+class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 	private $order;
 
 	public function __construct( $registry ) {
 		parent::__construct( $registry );
 		$this->load->library('globalpayments');
-		$this->globalpayments->setPaymentMethod(FasterPayments::PAYMENT_METHOD_ID);
+		$this->globalpayments->setPaymentMethod(OpenBanking::PAYMENT_METHOD_ID);
 	}
 
 	public function index() {
-		$this->load->language('extension/payment/globalpayments_fasterpayments');
+		$this->load->language('extension/payment/globalpayments_openbanking');
 
 		$this->setOrder();
 
-		$data['action'] = $this->url->link('extension/payment/globalpayments_fasterpayments/confirm', '', true);
+		$data['action'] = $this->url->link('extension/payment/globalpayments_openbanking/confirm', '', true);
 		$data['paymentMethod'] = $this->globalpayments->paymentMethod;
 		if ($this->customer->isLogged()) {
 			$data['customer_is_logged'] = true;
@@ -35,10 +36,12 @@ class ControllerExtensionPaymentGlobalPaymentsFasterPayments extends Controller 
 		}
 
 		$data['globalpayments_order'] = json_encode($this->order);
-		$data['globalpayments_fasterpayments_is_allowed'] =
+
+		$data['globalpayments_openbanking_img_path'] = 'catalog/view/theme/default/image/Bank_Payment.png';
+		$data['globalpayments_openbanking_is_allowed'] =
 			json_encode($this->globalpayments->paymentMethod->checkIfPaymentAllowed($this->order));
 
-		return $this->load->view('extension/payment/globalpayments_fasterpayments', $data);
+		return $this->load->view('extension/payment/globalpayments_openbanking', $data);
 	}
 
 	public function confirm() {
@@ -47,17 +50,21 @@ class ControllerExtensionPaymentGlobalPaymentsFasterPayments extends Controller 
 		try {
 			$this->setOrder();
 
+			$provider = OpenBankingProvider::getBankPaymentType($this->order->currency);
+
 			$requestData                    = new RequestData();
 			$requestData->order             = $this->order;
 			$requestData->gatewayId         = $this->globalpayments->gateway->gatewayId;
 			$requestData->dynamicDescriptor = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->requestType       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
-			$requestData->openBanking	    = (object)[
+			$requestData->openBanking       = (object)[
 				'callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(),
-				'sortCode' => $this->config->get('payment_globalpayments_fasterpayments_sort_code'),
-				'accountNumber' => $this->config->get('payment_globalpayments_fasterpayments_account_number'),
-				'accountName' => $this->config->get('payment_globalpayments_fasterpayments_account_name'),
-				'countries' => $this->config->get('payment_globalpayments_fasterpayments_countries'),
+				'sortCode' => $provider === BankPaymentType::FASTERPAYMENTS ?
+					$this->config->get('payment_globalpayments_openbanking_sort_code') : '',
+				'accountNumber' => $this->config->get('payment_globalpayments_openbanking_account_number'),
+				'accountName' => $this->config->get('payment_globalpayments_openbanking_account_name'),
+				'iban' => $this->config->get('payment_globalpayments_openbanking_iban'),
+				'countries' => $this->config->get('payment_globalpayments_openbanking_countries'),
 			];
 			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentOB($requestData);
 
@@ -115,7 +122,7 @@ class ControllerExtensionPaymentGlobalPaymentsFasterPayments extends Controller 
 
 					$this->load->model('checkout/order');
 					$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 7);
-					
+
 					$errorMessage = Utils::mapResponseCodeToFriendlyMessage('FAILED');
 					$message = sprintf('[%1$s] %2$s', LogLevel::ERROR, $errorMessage);
 					$this->log->write($message);

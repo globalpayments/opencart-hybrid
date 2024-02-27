@@ -2,34 +2,65 @@
 
 namespace GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking;
 
-use GlobalPayments\Api\Entities\Enums\BNPLShippingMethod;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\AbstractPaymentMethod;
 use GlobalPayments\Api\Utils\GenerationUtils;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\AbstractPaymentMethod;
 
-abstract class AbstractOpenBanking extends AbstractPaymentMethod {
+class OpenBanking extends AbstractPaymentMethod
+{
+	public const PAYMENT_METHOD_ID = 'globalpayments_openbanking';
+
+	public $paymentMethodId = self::PAYMENT_METHOD_ID;
 
 	/**
-	 * Currencies and countries this payment method is allowed for.
+	 * {@inheritDoc}
 	 *
-	 * @return array
+	 * @var string
 	 */
-	abstract public function getMethodAvailability();
+	public $defaultTitle = 'Bank Payment';
 
-	abstract public function getFrontendPaymentMethodOptions();
+	public $currencies;
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getMethodAvailability()
+	{
+		$countries = [];
+		if (!empty($this->countries)) {
+			$countries = explode("|", $this->countries);
+		}
+
+		return [
+			'GBP' => $countries,
+			'EUR' => $countries,
+		];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function getFrontendPaymentMethodOptions() {
+
+		return [];
+	}
 
 	public function checkIfPaymentAllowed($order) {
+
 		$availability = $this->getMethodAvailability();
 		$currency = $order->currency;
 		$billingCountry = $order->billingAddress['country'];
-		$shippingCountry = $order->shippingAddress['country'];
 		$countriesFilter = !empty($availability[$currency]);
 
 		if (!isset($availability[$currency])) {
 			return false;
 		}
 
+		if (!in_array($currency, explode(',', $this->currencies))){
+			return false;
+		}
+
 		if (!empty($order->cart) && $countriesFilter) {
-			 if (!in_array($billingCountry, $availability[$currency])) {
+			if (!in_array($billingCountry, $availability[$currency])) {
 				return false;
 			}
 		}
@@ -81,22 +112,22 @@ abstract class AbstractOpenBanking extends AbstractPaymentMethod {
 	public function openBankingReturn()
 	{
 		$currentUrl = $_SERVER['REQUEST_URI'];
-  	 	$queryString = $_SERVER['QUERY_STRING'];
-  	  	if (!empty($queryString) && strpos($queryString, 'openBankingReturn&amp;?') !== false) {
+		$queryString = $_SERVER['QUERY_STRING'];
+		if (!empty($queryString) && strpos($queryString, 'openBankingReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingReturn&amp;?', 'processOpenBankingReturn&', $currentUrl);
 			header('Location: ' . $modifiedUrl);
-	 		exit;
-  	  	}
+			exit;
+		}
 	}
 
 	public function openBankingCancel()
 	{
 		$currentUrl = $_SERVER['REQUEST_URI'];
-  	 	$queryString = $_SERVER['QUERY_STRING'];
-  	  	if (!empty($queryString) && strpos($queryString, 'openBankingCancel&amp;?') !== false) {
+		$queryString = $_SERVER['QUERY_STRING'];
+		if (!empty($queryString) && strpos($queryString, 'openBankingCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingCancel&amp;?', 'processOpenBankingCancel&', $currentUrl);
 			header('Location: ' . $modifiedUrl);
-	 		exit;
-  	  	}
+			exit;
+		}
 	}
 }

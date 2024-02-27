@@ -18,25 +18,35 @@
             <div id="{{ paymentMethod.paymentMethodId }}-digitalwallet-submit'"></div>
         </fieldset>
     </div>
-    <div class="buttons clearfix">
-        <div class="pull-right">
-            <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+    <div class="row">
+        <div class="pull-left">
+            <img class="openbanking-img" src="{{ globalpayments_openbanking_img_path }}">
+        </div>
+        <div class="buttons clearfix">
+            <div class="pull-right btn-padding-right">
+                <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+            </div>
         </div>
     </div>
 </form>
+
 <style>
-    .globalpayments-validation-error, .globalpayments-sandbox-warning {
-        list-style:none outside;
+    .btn-padding-right {
+        padding-right: 15px;
+    }
+    .openbanking-img {
+        width: 150px;
+        padding-left: 15px;
     }
 </style>
 <script type="text/javascript">
     $('#globalpayments-loading').hide();
 
     var globalpayments_action = $('#globalpayments-payment-form').attr('action');
-    var globalpayments_fasterpayments_is_allowed = {{ globalpayments_fasterpayments_is_allowed }};
+    var globalpayments_openbanking_is_allowed = {{ globalpayments_openbanking_is_allowed }};
 
     $(document).ready(function() {
-        if (false === globalpayments_fasterpayments_is_allowed) {
+        if (false === globalpayments_openbanking_is_allowed) {
             $('#globalpayments-alert').show();
             $('#button-confirm').addClass('globalpayments-hidden').hide();
             return;

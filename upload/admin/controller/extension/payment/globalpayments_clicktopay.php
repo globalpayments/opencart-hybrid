@@ -67,6 +67,11 @@ class ControllerExtensionPaymentGlobalPaymentsClickToPay extends Controller {
 		} else {
 			$data['payment_globalpayments_clicktopay_accepted_cards'] = explode(',', $this->config->get('payment_globalpayments_clicktopay_accepted_cards'));
 		}
+		if (isset($this->request->post['payment_globalpayments_clicktopay_sort_order'])) {
+			$data['payment_globalpayments_clicktopay_sort_order'] = $this->request->post['payment_globalpayments_clicktopay_sort_order'];
+		} else {
+			$data['payment_globalpayments_clicktopay_sort_order'] = $this->config->get('payment_globalpayments_clicktopay_sort_order') ?? 0;
+		}
 		if (!empty($this->request->post)) {
 			$data['payment_globalpayments_clicktopay_payment_action'] = AbstractGateway::CHARGE;
 		} else {

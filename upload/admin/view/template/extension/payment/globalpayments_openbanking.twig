@@ -1,0 +1,90 @@
+<div class="tab-pane{% if active_tab == 'openbanking' %} active{% endif %}" id="tab-openbanking">
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_enabled">{{ label_enabled }}</label>
+		<div class="col-sm-10 checkbox">
+			<label>
+				<input id="input-openbanking_enabled" type="checkbox" name="payment_globalpayments_openbanking_enabled"
+				value="{{ payment_globalpayments_openbanking_enabled }}"{% if (payment_globalpayments_openbanking_enabled==1) %} checked{% endif %} /> {{ entry_enabled }}
+			</label>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_title"><span data-toggle="tooltip" title="{{ help_title }}">{{ label_title }}</span></label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_title" type="text" name="payment_globalpayments_openbanking_title"
+				value="{{ payment_globalpayments_openbanking_title }}" placeholder="{{ placeholder_openbanking_title }}" class="form-control"/>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_payment_action">
+			<span data-toggle="tooltip" title="{{ help_payment_action }}">{{ label_payment_action }}</span>
+		</label>
+		<div class="col-sm-10">
+			<select name="payment_globalpayments_openbanking_payment_action_show" id="input-openbanking_payment_action" class="form-control" disabled="disabled">
+				<option value="charge" selected="selected">{{ entry_payment_action_charge }}</option>
+				<option value="authorize" {{ payment_globalpayments_openbanking_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+			</select>
+			<input name="payment_globalpayments_openbanking_payment_action" type="hidden" value="charge">
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_account_number">{{ label_account_number }}</label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_account_number" type="text" name="payment_globalpayments_openbanking_account_number" value="{{ payment_globalpayments_openbanking_account_number }}" class="form-control"/><br/>
+			<p>{{ help_openbanking_account_number }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_account_name">{{ label_account_name }}</label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_account_name" type="text" name="payment_globalpayments_openbanking_account_name" value="{{ payment_globalpayments_openbanking_account_name }}" class="form-control"/><br/>
+			<p>{{ help_openbanking_account_name }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_sort_code">{{ label_sort_code }}</label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_sort_code" type="text" name="payment_globalpayments_openbanking_sort_code" value="{{ payment_globalpayments_openbanking_sort_code }}" class="form-control"/><br/>
+			<p>{{ help_openbanking_sort_code }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_iban">{{ label_iban }}</label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_iban" type="text" name="payment_globalpayments_openbanking_iban" value="{{ payment_globalpayments_openbanking_iban }}" class="form-control"/><br/>
+			<p>{{ help_openbanking_iban }}</p>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-openbanking_countries">{{ label_countries }}</label>
+		<div class="col-sm-10">
+			<input id="input-openbanking_countries" type="text" name="payment_globalpayments_openbanking_countries" value="{{ payment_globalpayments_openbanking_countries }}" class="form-control"/><br/>
+			<p>{{ help_openbanking_countries }}</p>
+		</div>
+	</div>
+	<div class="form-group required">
+		<label class="col-sm-2 control-label" for="input-payment_globalpayments_openbanking_currencies">{{ label_currencies }}
+			<span data-toggle="tooltip" title="{{ label_currencies_tooltip }}"></span>
+		</label>
+		<div class="col-sm-10">
+			<p><input id="input-payment_globalpayments_openbanking_currencies_gbp" type="checkbox" name="payment_globalpayments_openbanking_currencies[]"
+					  value="GBP"{% if 'GBP' in payment_globalpayments_openbanking_currencies %} checked{% endif %} /> {{ entry_gbp }}</p>
+			<p><input id="input-payment_globalpayments_openbanking_currencies_eur" type="checkbox" name="payment_globalpayments_openbanking_currencies[]"
+					  value="EUR"{% if 'EUR' in payment_globalpayments_openbanking_currencies %} checked{% endif %} /> {{ entry_eur }}</p>
+			<p>{{ help_openbanking_currencies }}</p>
+
+			{% if error_openbanking_currencies %}
+				<div class="text-danger">{{ error_openbanking_currencies }}</div>
+			{% endif %}
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="input-sort-order">{{ label_sort_order }}</label>
+		<div class="col-sm-10">
+			<input type="text" name="payment_globalpayments_openbanking_sort_order" value="{{ payment_globalpayments_openbanking_sort_order }}" placeholder="{{ label_sort_order }}" id="input-sort-order" class="form-control" />
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$('#input-openbanking_enabled').on('change', this.toggleCheckboxValue.bind(this));
+</script>

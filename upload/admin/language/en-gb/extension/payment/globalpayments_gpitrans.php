@@ -8,7 +8,7 @@ $_['tab_payment']  = 'Payment';
 $_['tab_txnapi']   = 'Transaction API';
 
 // Text
-$_['text_globalpayments_ucp'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
+$_['text_globalpayments_ucp'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://avatars.githubusercontent.com/u/25797248?s=200&v=4" width="40px" height="40px" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
 $_['text_extension']          = 'Extensions';
 $_['text_edit']               = 'Edit GlobalPayments - Transaction API';
 $_['text_success']            = 'Success: You have modified GlobalPayments - Unified Payments account details!';
@@ -29,6 +29,7 @@ $_['label_contact_url']       = 'Contact Url';
 $_['label_payment_action']    = 'Payment Action';
 $_['label_allow_card_saving'] = 'Allow Card Saving';
 $_['label_txn_descriptor']    = 'Order Transaction Descriptor';
+$_['entry_sort_order']        = 'Sort Order';
 
 // Help
 $_['help_title']                 = 'This controls the title which the user sees during checkout.';

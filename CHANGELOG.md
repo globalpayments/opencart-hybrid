@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.6.0 (12/07/23)
+## Latest Version - v1.6.1 (02/27/24)
+- Merged Sepa and Faster Payments into Bank Payment
+- Added sort order for the payment methods
+
+## v1.6.0 (12/07/23)
 ### Enhancements:
 - Open Banking
 

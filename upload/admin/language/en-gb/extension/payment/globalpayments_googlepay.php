@@ -3,7 +3,7 @@
 $_['heading_title'] = 'GlobalPayments - Google Pay';
 
 // Text
-$_['text_globalpayments_googlepay'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
+$_['text_globalpayments_googlepay'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://avatars.githubusercontent.com/u/25797248?s=200&v=4" width="40px" height="40px" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
 
 // Label
 $_['label_enabled']                     = 'Enable/Disable';
@@ -15,6 +15,8 @@ $_['label_merchant_name']               = 'Google Merchant Display Name';
 $_['label_accepted_cards']              = 'Accepted Cards';
 $_['label_googlepay_button_color']      = 'Button Color';
 $_['label_allowed_card_auth_methods']   = 'Allowed Card Auth Methods';
+$_['label_sort_order']                  = 'Sort Order';
+
 // Help
 $_['help_title']          = 'This controls the title which the user sees during checkout.';
 $_['help_payment_action'] = 'Choose whether you wish to capture funds immediately or authorize payment only for a delayed capture.';

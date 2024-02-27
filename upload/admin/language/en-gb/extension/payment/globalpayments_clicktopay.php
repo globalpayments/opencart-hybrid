@@ -3,7 +3,7 @@
 $_['heading_title'] = 'GlobalPayments - Click To Pay';
 
 // Text
-$_['text_globalpayments_clicktopay'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
+$_['text_globalpayments_clicktopay'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://avatars.githubusercontent.com/u/25797248?s=200&v=4" width="40px" height="40px" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
 
 // Label
 $_['label_enabled']        = 'Enable/Disable';
@@ -14,6 +14,7 @@ $_['label_buttonless']     = 'Render Click To Pay natively';
 $_['label_canadian_debit'] = 'Accept Canadian Visa debit cards';
 $_['label_wrapper']        = 'Display Global Payments footer';
 $_['label_accepted_cards'] = 'Accepted Cards';
+$_['label_sort_order']     = 'Sort Order';
 
 // Help
 $_['help_title']          = 'This controls the title which the user sees during checkout.';

@@ -7,8 +7,7 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\Sepa;
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\FasterPayments;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
@@ -38,8 +37,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$globalpayments_affirm_installed         = in_array('globalpayments_affirm', $extensions);
 		$globalpayments_klarna_installed         = in_array('globalpayments_klarna', $extensions);
 		$globalpayments_clearpay_installed       = in_array('globalpayments_clearpay', $extensions);
-		$globalpayments_sepa_installed           = in_array('globalpayments_sepa', $extensions);
-		$globalpayments_fasterpayments_installed = in_array('globalpayments_fasterpayments', $extensions);
+		$globalpayments_openbanking_installed    = in_array('globalpayments_openbanking', $extensions);
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
 			$this->load->model('setting/setting');
@@ -93,18 +91,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$this->error = array_merge_recursive($this->error, $globalpayments_clearpay_messages['error']);
 			}
 
-			//OpenBanking Sepa
-			if ($globalpayments_sepa_installed) {
-				$globalpayments_sepa_messages = $this->load->controller('extension/payment/globalpayments_sepa/save');
-				$this->alert = array_merge_recursive($this->alert, $globalpayments_sepa_messages['alert']);
-				$this->error = array_merge_recursive($this->error, $globalpayments_sepa_messages['error']);
-			}
-
-			//OpenBanking FasterPayments
-			if ($globalpayments_fasterpayments_installed) {
-				$globalpayments_fasterpayments_messages = $this->load->controller('extension/payment/globalpayments_fasterpayments/save');
-				$this->alert = array_merge_recursive($this->alert, $globalpayments_fasterpayments_messages['alert']);
-				$this->error = array_merge_recursive($this->error, $globalpayments_fasterpayments_messages['error']);
+			//OpenBanking
+			if ($globalpayments_openbanking_installed) {
+				$globalpayments_openbanking_messages = $this->load->controller('extension/payment/globalpayments_openbanking/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_openbanking_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_openbanking_messages['error']);
 			}
 
 			if (empty($this->error)) {
@@ -203,6 +194,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['payment_globalpayments_ucp_enable_three_d_secure'] = 0;
 		} else {
 			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+		}
+		if (isset($this->request->post['payment_globalpayments_ucp_sort_order'])) {
+			$data['payment_globalpayments_ucp_sort_order'] = $this->request->post['payment_globalpayments_ucp_sort_order'];
+		} else {
+			$data['payment_globalpayments_ucp_sort_order'] = $this->config->get('payment_globalpayments_ucp_sort_order') ?? 0;
 		}
 		// Payment Tab
 		if (isset($this->request->post['payment_globalpayments_ucp_payment_action'])) {
@@ -311,24 +307,14 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['display_clearpay_tab'] = '';
 		}
 
-		if ($globalpayments_sepa_installed) {
-			$data['display_sepa_tab'] = $this->load->controller('extension/payment/globalpayments_sepa/display', $this->error);
+		if ($globalpayments_openbanking_installed) {
+			$data['display_openbanking_tab'] = $this->load->controller('extension/payment/globalpayments_openbanking/display', $this->error);
 			$data['tabs'][] = array(
-				'id'   => 'sepa',
-				'name' => $this->language->get('tab_sepa'),
+				'id'   => 'openbanking',
+				'name' => $this->language->get('tab_openbanking'),
 			);
 		} else {
-			$data['display_sepa_tab'] = '';
-		}
-
-		if ($globalpayments_fasterpayments_installed) {
-			$data['display_fasterpayments_tab'] = $this->load->controller('extension/payment/globalpayments_fasterpayments/display', $this->error);
-			$data['tabs'][] = array(
-				'id'   => 'fasterpayments',
-				'name' => $this->language->get('tab_fasterpayments'),
-			);
-		} else {
-			$data['display_fasterpayments_tab'] = '';
+			$data['display_openbanking_tab'] = '';
 		}
 
 		$data['breadcrumbs'] = array();
@@ -454,8 +440,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				Affirm::PAYMENT_METHOD_ID,
 				Clearpay::PAYMENT_METHOD_ID,
 				Klarna::PAYMENT_METHOD_ID,
-				Sepa::PAYMENT_METHOD_ID,
-				FasterPayments::PAYMENT_METHOD_ID,
+				OpenBanking::PAYMENT_METHOD_ID
 			];
 			// we handle the code like this because only for the above payment methods we add a transaction entry on the INITIALIZE step
 			if (in_array($data['payment_code'], $paymentMethods)) {
@@ -734,8 +719,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->install('payment', 'globalpayments_affirm');
 		$this->model_setting_extension->install('payment', 'globalpayments_klarna');
 		$this->model_setting_extension->install('payment', 'globalpayments_clearpay');
-		$this->model_setting_extension->install('payment', 'globalpayments_sepa');
-		$this->model_setting_extension->install('payment', 'globalpayments_fasterpayments');
+		$this->model_setting_extension->install('payment', 'globalpayments_openbanking');
 
 		$this->load->model('user/user_group');
 
@@ -757,11 +741,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_clearpay');
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_clearpay');
 
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_sepa');
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_sepa');
-
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_fasterpayments');
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_fasterpayments');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_openbanking');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_openbanking');
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->install();
@@ -777,10 +758,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_extension_payment_globalpayments_klarna->install();
 		$this->load->model('extension/payment/globalpayments_clearpay');
 		$this->model_extension_payment_globalpayments_clearpay->install();
-		$this->load->model('extension/payment/globalpayments_sepa');
-		$this->model_extension_payment_globalpayments_sepa->install();
-		$this->load->model('extension/payment/globalpayments_fasterpayments');
-		$this->model_extension_payment_globalpayments_fasterpayments->install();
+		$this->load->model('extension/payment/globalpayments_openbanking');
+		$this->model_extension_payment_globalpayments_openbanking->install();
 	}
 
 	public function uninstall() {
@@ -791,8 +770,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_affirm');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_klarna');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_clearpay');
-		$this->model_setting_extension->uninstall('payment', 'globalpayments_sepa');
-		$this->model_setting_extension->uninstall('payment', 'globalpayments_fasterpayments');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_openbanking');
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->uninstall();

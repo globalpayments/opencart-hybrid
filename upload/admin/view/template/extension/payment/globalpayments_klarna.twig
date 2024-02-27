@@ -26,6 +26,12 @@
             </select>
         </div>
     </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-sort-order">{{ label_sort_order }}</label>
+        <div class="col-sm-10">
+            <input type="text" name="payment_globalpayments_klarna_sort_order" value="{{ payment_globalpayments_klarna_sort_order }}" placeholder="{{ label_sort_order }}" id="input-sort-order" class="form-control" />
+        </div>
+    </div>
 </div>
 <script type="text/javascript">
 	$('#input-klarna_enabled').on('change', this.toggleCheckboxValue.bind(this));
