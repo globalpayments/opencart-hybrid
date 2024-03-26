@@ -3,6 +3,7 @@
 namespace GlobalPayments\PaymentGatewayProvider\Traits;
 
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 trait SecurePaymentFieldsTrait {
 	/**
@@ -248,7 +249,7 @@ SW;
 				'height' => '40px',
 				'position' => 'absolute',
 				'right' => '0',
-				'top' => '50%',
+				'top' => '25px',
 				'margin-top' => '-20px',
 				'background-position' => '50% 50%',
 			),
@@ -317,6 +318,17 @@ SW;
 				'background-position-y' => '0px',
 				'background-position-x' => '-5px',
 			),
+			'#field-validation-wrapper' => array(
+				'color' => '#a94442 !important',
+				'background-color' => '#f2dede',
+				'border-color' => '#ebccd1',
+				'padding' => '8px 14px 8px 14px',
+				'margin-bottom' => '10px',
+				'border-radius' => '4px',
+				'border' => '1px solid transparent',
+				'font-family' => "'Open Sans', sans-serif !important",
+				'font-size' => '12px !important',
+			),
 		);
 
 		return json_encode($securePaymentFieldsStyles);
@@ -329,10 +341,10 @@ SW;
 	 */
 	private function securePaymentFieldsAssetBaseUrl() {
 		if ($this->isProduction) {
-			return 'https://js.globalpay.com/v1';
+			return 'https://js.globalpay.com/' . Utils::getJsLibVersion();
 		}
 
-		return 'https://js-cert.globalpay.com/v1';
+		return 'https://js-cert.globalpay.com/' . Utils::getJsLibVersion();
 	}
 
 	/**
@@ -418,7 +430,7 @@ SW;
 		$globalpayments_secure_payment_fields_params = $this->securePaymentFieldsParams();
 		$globalpayments_secure_payment_threedsecure_params = $this->securePaymentFieldsThreeDSecureParams();
 		?>
-        <script src="https://js.globalpay.com/v1/globalpayments.js"></script>
+        <script src="https://js.globalpay.com/<?php echo Utils::getJsLibVersion() ?>/globalpayments.js"></script>
 		<?php if ($this->supportsThreeDS) { ?>
             <script src="<?php echo $this->path; ?>../../assets/js/globalpayments-3ds.js"></script>
 		<?php } ?>

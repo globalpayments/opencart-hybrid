@@ -95,9 +95,12 @@ class RequestData {
 
 	public $requestType;
 
-	public $bnpl;
-
-	public $openBanking;
+	/**
+	 * Used for adding extra data
+	 *
+	 * @var mixed
+	 */
+	public $meta;
 
 	public function __set($name, $value) {
 		switch ($name) {

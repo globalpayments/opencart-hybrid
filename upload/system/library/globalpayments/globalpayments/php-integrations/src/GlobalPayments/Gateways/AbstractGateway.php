@@ -8,6 +8,7 @@ use GlobalPayments\Api\Utils\Logging\Logger;
 use GlobalPayments\PaymentGatewayProvider\Clients\SdkClient;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Requests\BuyNowPayLater\InitiatePaymentRequest as InitiatePaymentRequestBNPL;
+use GlobalPayments\PaymentGatewayProvider\Requests\Apm\InitiatePaymentRequest as InitiatePaymentRequestAPM;
 use GlobalPayments\PaymentGatewayProvider\Requests\OpenBanking\InitiatePaymentRequest as InitiatePaymentRequestOB;
 use GlobalPayments\PaymentGatewayProvider\Requests\RequestInterface;
 use GlobalPayments\PaymentGatewayProvider\Requests\Transactions\AuthorizeRequest;
@@ -279,6 +280,12 @@ abstract class AbstractGateway implements GatewayInterface {
 
 	public function processInitiatePaymentOB(RequestData $requestData) {
 		$response = $this->processRequest(InitiatePaymentRequestOB::class, $requestData);
+
+		return $response;
+	}
+
+	public function processInitiatePaymentAPM(RequestData $requestData) {
+		$response = $this->processRequest(InitiatePaymentRequestAPM::class, $requestData);
 
 		return $response;
 	}

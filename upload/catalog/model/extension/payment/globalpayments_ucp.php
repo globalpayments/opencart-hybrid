@@ -68,9 +68,16 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 	}
 
 	public function addTransaction($order_id, $gateway_id, $payment_action, $amount, $currency, $gatewayResponse) {
-		if ($gatewayResponse instanceof TransactionSummary &&
-			($gatewayResponse->paymentType === PaymentMethodName::BANK_PAYMENT ||
-				$gatewayResponse->gatewayResponseMessage === 'REQUEST_SUCCESS')
+		if (
+			$gatewayResponse instanceof TransactionSummary && (
+				in_array(
+					$gatewayResponse->paymentType,
+					array(
+						PaymentMethodName::BANK_PAYMENT,
+						PaymentMethodName::APM
+					)
+				) || $gatewayResponse->gatewayResponseMessage === 'REQUEST_SUCCESS'
+			)
 		) {
 			$transactionId = $gatewayResponse->transactionId;
 			$responseCode = $gatewayResponse->gatewayResponseCode ?? BankPaymentStatus::SUCCESS;;
@@ -85,16 +92,16 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 			$transactionDate = $gatewayResponse->timestamp;
 		}
 
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction` 
-		SET `order_id` = '" . (int)$order_id . "', 
-		    `gateway_id` = '" . $this->db->escape($gateway_id) . "', 
-		    `payment_action` = '" . $this->db->escape($payment_action) . "', 
-		    `gateway_transaction_id` = '" . $this->db->escape($transactionId) . "',
-		    `response_code` = '" . $this->db->escape($responseCode) . "',
-		    `response_message` = '" . $this->db->escape($responseMessage) . "',
-		    `reference` = '" . $this->db->escape($referenceNumber) . "',
-		    `amount` = '" . (float)$amount . "',
-		    `currency` = '" . $currency . "',
-		    `time_created` = '" . $transactionDate . "'");
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction`
+		SET `order_id` = '" . (int)$order_id . "',
+		`gateway_id` = '" . $this->db->escape($gateway_id) . "',
+		`payment_action` = '" . $this->db->escape($payment_action) . "',
+		`gateway_transaction_id` = '" . $this->db->escape($transactionId) . "',
+		`response_code` = '" . $this->db->escape($responseCode) . "',
+		`response_message` = '" . $this->db->escape($responseMessage) . "',
+		`reference` = '" . $this->db->escape($referenceNumber) . "',
+		`amount` = '" . (float)$amount . "',
+		`currency` = '" . $currency . "',
+		`time_created` = '" . $transactionDate . "'");
 	}
 }

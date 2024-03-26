@@ -26,3 +26,6 @@ $_['error_remove_card']      = 'Something went wrong while removing your GlobalP
 $_['error_add_card']         = 'Something went wrong while storing your GlobalPayments Card. Please try again.';
 $_['error_default_card']     = 'Something went wrong while setting your GlobalPayments Card to default. Please try again.';
 $_['error_txn_not_verified'] = 'Your card could not be verified.';
+
+// JS Library version
+$_['js_lib_version'] = '3.0.11';

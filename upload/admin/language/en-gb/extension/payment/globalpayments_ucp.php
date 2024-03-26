@@ -11,6 +11,7 @@ $_['tab_clicktopay']     = 'Click To Pay';
 $_['tab_affirm']         = 'Affirm';
 $_['tab_klarna']         = 'Klarna';
 $_['tab_clearpay']       = 'Clearpay';
+$_['tab_paypal']         = 'PayPal';
 $_['tab_openbanking']    = 'Bank Payment';
 
 // Text

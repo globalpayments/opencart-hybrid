@@ -16,8 +16,8 @@ use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\Api\PaymentMethods\BNPL;
 use GlobalPayments\Api\Entities\Enums\BNPLShippingMethod;
 use GlobalPayments\Api\Entities\Enums\BNPLType;
-use GlobalPayments\Api\Entities\Customer;
 use GlobalPayments\Api\Entities\Product;
+use GlobalPayments\Api\Entities\Customer;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 class InitiatePaymentRequest extends AbstractRequest {
@@ -26,10 +26,10 @@ class InitiatePaymentRequest extends AbstractRequest {
 	public function execute() {
 		$requestData = $this->requestData;
 
-		$paymentMethod = new BNPL($requestData->bnpl->type);
-		$paymentMethod->returnUrl       = $requestData->bnpl->callbackUrls['return'];
-		$paymentMethod->statusUpdateUrl = $requestData->bnpl->callbackUrls['status'];
-		$paymentMethod->cancelUrl       = $requestData->bnpl->callbackUrls['cancel'];
+		$paymentMethod = new BNPL($requestData->meta->type);
+		$paymentMethod->returnUrl       = $requestData->meta->callbackUrls['return'];
+		$paymentMethod->statusUpdateUrl = $requestData->meta->callbackUrls['status'];
+		$paymentMethod->cancelUrl       = $requestData->meta->callbackUrls['cancel'];
 
 		$shippingMethod = $this->getShippingMethod();
 		$billingAddress = $this->mapAddress($this->requestData->order->billingAddress);
@@ -41,15 +41,15 @@ class InitiatePaymentRequest extends AbstractRequest {
 		}
 
 		$builder = $paymentMethod
-			            ->authorize($this->requestData->order->amount)
-			            ->withCurrency($this->requestData->order->currency)
-			            ->withOrderId((string) $this->requestData->order->orderReference)
-			            ->withProductData($this->getProductsData())
-			            ->withAddress($shippingAddress, AddressType::SHIPPING)
-		                    ->withAddress($billingAddress, AddressType::BILLING)
-		                    ->withCustomerData($this->getCustomerData())
-		                    ->withBNPLShippingMethod($shippingMethod)
-							->execute();
+			->authorize($this->requestData->order->amount)
+			->withCurrency($this->requestData->order->currency)
+			->withOrderId((string) $this->requestData->order->orderReference)
+			->withProductData($this->getProductsData())
+			->withAddress($shippingAddress, AddressType::SHIPPING)
+			->withAddress($billingAddress, AddressType::BILLING)
+			->withCustomerData($this->getCustomerData())
+			->withBNPLShippingMethod($shippingMethod)
+			->execute();
 
 		return $builder;
 	}

@@ -76,4 +76,8 @@ class Utils {
 				return 'An error occurred while processing the payment. Please try again or use a different payment method.';
 		}
 	}
+
+	public static function getJsLibVersion() {
+		return '3.0.11';
+	}
 }

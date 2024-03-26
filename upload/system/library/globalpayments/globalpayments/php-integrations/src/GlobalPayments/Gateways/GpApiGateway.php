@@ -120,6 +120,8 @@ class GpApiGateway extends AbstractGateway {
 	 */
 	public $dynamicHeaders;
 
+	public $language;
+
 	/**
 	 * @var bool
 	 */
@@ -146,7 +148,11 @@ class GpApiGateway extends AbstractGateway {
 			'apiVersion'            => GpApiConnector::GP_API_VERSION,
 			'env'                   => $this->isProduction ? parent::ENVIRONMENT_PRODUCTION : parent::ENVIRONMENT_SANDBOX,
 			'requireCardHolderName' => true,
-			'enableThreeDSecure' 	=> $this->enableThreeDSecure
+			'enableThreeDSecure' 	=> $this->enableThreeDSecure,
+			'fieldValidation' => [
+				'enabled' => true,
+			],
+			'language' => $this->language,
 		);
 	}
 

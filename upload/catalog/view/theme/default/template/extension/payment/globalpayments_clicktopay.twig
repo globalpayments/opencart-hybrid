@@ -18,7 +18,7 @@
 	var globalpayments_clicktopay_params = {{ globalpayments_clicktopay_params }};
 	var globalpayments_order = {{ globalpayments_order }};
 	$.getScript(
-		'https://js.globalpay.com/v1/globalpayments.js', function () {
+		'https://js.globalpay.com/{{ js_lib_version }}/globalpayments.js', function () {
 			$.getScript('https://malsup.github.io/jquery.blockUI.js');
 			/**
 			 * Frontend code for Global Payments

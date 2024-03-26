@@ -29,23 +29,23 @@ class InitiatePaymentRequest extends AbstractRequest {
 
 		$paymentMethod = new BankPayment();
 
-		if (!empty($requestData->openBanking->accountNumber)) {
-			$paymentMethod->accountNumber = $requestData->openBanking->accountNumber;
+		if (!empty($requestData->meta->accountNumber)) {
+			$paymentMethod->accountNumber = $requestData->meta->accountNumber;
 		}
-		if (!empty($requestData->openBanking->iban)) {
-			$paymentMethod->iban          = $requestData->openBanking->iban;
+		if (!empty($requestData->meta->iban)) {
+			$paymentMethod->iban          = $requestData->meta->iban;
 		}
-		if (!empty($requestData->openBanking->sortCode)) {
-			$paymentMethod->sortCode     = $requestData->openBanking->sortCode;
+		if (!empty($requestData->meta->sortCode)) {
+			$paymentMethod->sortCode     = $requestData->meta->sortCode;
 		}
-		if (!empty($requestData->openBanking->countries)) {
-			$paymentMethod->countries    = explode("|", $requestData->openBanking->countries);
+		if (!empty($requestData->meta->countries)) {
+			$paymentMethod->countries    = explode("|", $requestData->meta->countries);
 		}
 
-		$paymentMethod->accountName      = $requestData->openBanking->accountName;
-		$paymentMethod->returnUrl        = $requestData->openBanking->callbackUrls['return'];
-		$paymentMethod->statusUpdateUrl  = $requestData->openBanking->callbackUrls['status'];
-		$paymentMethod->cancelUrl        = $requestData->openBanking->callbackUrls['cancel'];
+		$paymentMethod->accountName      = $requestData->meta->accountName;
+		$paymentMethod->returnUrl        = $requestData->meta->callbackUrls['return'];
+		$paymentMethod->statusUpdateUrl  = $requestData->meta->callbackUrls['status'];
+		$paymentMethod->cancelUrl        = $requestData->meta->callbackUrls['cancel'];
 
 		$builder = $paymentMethod->charge($this->requestData->order->amount)
 					 ->withCurrency($this->requestData->order->currency)

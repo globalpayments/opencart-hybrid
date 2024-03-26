@@ -20,13 +20,14 @@ use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\GooglePa
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\Apm\Paypal;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
 
 class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.6.1';
+	const VERSION = '1.6.2';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -50,9 +51,9 @@ class GlobalPayments {
 			case GatewayId::GP_API:
 				$this->setGpApiGateway();
 				break;
-            		case GatewayId::TRANSACTION_API:
-		                $this->setTransactionApiGateway();
-                		break;
+			case GatewayId::TRANSACTION_API:
+				$this->setTransactionApiGateway();
+				break;
 		}
 	}
 
@@ -80,6 +81,9 @@ class GlobalPayments {
 			case OpenBanking::PAYMENT_METHOD_ID:
 				$this->setOpenBankingPaymentMethod();
 				break;
+			case Paypal::PAYMENT_METHOD_ID:
+				$this->setPaypalPaymentMethod();
+				break;
 		}
 	}
 
@@ -104,6 +108,7 @@ class GlobalPayments {
 		$this->gateway->txnDescriptor      = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		$this->gateway->baseUrl            = $this->url->link('extension/payment/', '', true);
 		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure')==1;
+		$this->gateway->language           = $this->language->get('code');
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');
@@ -238,6 +243,15 @@ class GlobalPayments {
 		$this->paymentMethod->accountNumber = $this->config->get('payment_globalpayments_openbanking_account_number');
 		$this->paymentMethod->iban          = $this->config->get('payment_globalpayments_openbanking_iban');
 		$this->paymentMethod->currencies    = $this->config->get('payment_globalpayments_openbanking_currencies');
+	}
+
+	public function setPaypalPaymentMethod() {
+		$this->paymentMethod                = new Paypal($this->gateway);
+		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_paypal_enabled');
+		$this->paymentMethod->title         = $this->config->get('payment_globalpayments_paypal_title');
+		$this->paymentMethod->paymentAction = $this->config->get('payment_globalpayments_paypal_payment_action');
+		$this->paymentMethod->accountName   = $this->config->get('payment_globalpayments_paypal_account_name');
+		$this->paymentMethod->country       = $this->gateway->country;
 	}
 
 	public function setSecurePaymentFieldsTranslations() {

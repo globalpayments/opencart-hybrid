@@ -1,0 +1,70 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+    <div id="globalpayments-alert-processing-default-error" class="alert alert-danger" style="display:none;">
+        {{ text_paymentMethod_processing_default_error }}
+    </div>
+    <div id="globalpayments-alert-processing-failed-error" class="alert alert-danger" style="display:none;">
+        {{ text_paymentMethod_processing_failed_error }}
+    </div>
+    <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+    <div class="globalpayments" style="width: 300px; margin: auto">
+        <fieldset id="{{ paymentMethod.paymentMethodId }}-digitalwallet">
+            <!-- Target for digital wallet -->
+            <div id="{{ paymentMethod.paymentMethodId }}-digitalwallet-submit'"></div>
+        </fieldset>
+    </div>
+    <div class="row">
+        <div class="buttons clearfix">
+            <div class="pull-right btn-padding-right">
+                <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .btn-padding-right {
+        padding-right: 15px;
+    }
+    .paypal-img {
+        width: 150px;
+        padding-left: 15px;
+    }
+</style>
+<script type="text/javascript">
+    $('#globalpayments-loading').hide();
+
+    var globalpayments_action = $('#globalpayments-payment-form').attr('action');
+
+    $(document).ready(function() {
+        $('#button-confirm').click(function() {
+            $(this).prop('disabled', true);
+            $.ajax({
+                url: globalpayments_action,
+                type: 'POST',
+                success: function(redirectUrl) {
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, "2000");
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error(errorThrown);
+                    if (jqXHR.responseJSON.error) {
+                        if (jqXHR.responseJSON.message === 'default_error') {
+                            $('#globalpayments-alert-processing-default-error').show();
+                        }
+
+                        if (jqXHR.responseJSON.message === 'FAILED' || jqXHR.responseJSON.message === 'DECLINED') {
+                            $('#globalpayments-alert-processing-failed-error').show();
+                        }
+
+                        $('#button-confirm').addClass('globalpayments-hidden').hide();
+                        return;
+                    }
+                }
+            });
+            setTimeout(() => {
+                $('#button-confirm').removeAttr('disabled');
+            }, "5000");
+        });
+    });
+</script>

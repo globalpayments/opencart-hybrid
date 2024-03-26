@@ -33,9 +33,12 @@
 !upload/admin/controller/extension/payment/globalpayments_affirm.php
 !upload/admin/controller/extension/payment/globalpayments_clearpay.php
 !upload/admin/controller/extension/payment/globalpayments_klarna.php
+!upload/admin/controller/extension/payment/globalpayments_paypal.php
+
+# upload/admin/language for all languages
+!upload/admin/language/
 
 # upload/admin/language/en-gb/extension/payment
-!upload/admin/language/
 !upload/admin/language/en-gb/
 !upload/admin/language/en-gb/extension/
 !upload/admin/language/en-gb/extension/payment/
@@ -50,6 +53,11 @@
 !upload/admin/language/en-gb/extension/payment/globalpayments_gpitrans.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_gpitrans_order.php
 !upload/admin/language/en-gb/extension/payment/globalpayments_txnapi.php
+!upload/admin/language/en-gb/extension/payment/globalpayments_paypal.php
+
+# upload/admin/language/fr-ca
+!upload/admin/language/fr-ca/
+!upload/admin/language/fr-ca/fr-ca.php
 
 # upload/admin/model/extension/payment
 !upload/admin/model/
@@ -64,6 +72,7 @@
 !upload/admin/model/extension/payment/globalpayments_klarna.php
 !upload/admin/model/extension/payment/globalpayments_gpitrans.php
 !upload/admin/model/extension/payment/globalpayments_txnapi.php
+!upload/admin/model/extension/payment/globalpayments_paypal.php
 
 # upload/admin/view/template/extension/payment
 !upload/admin/view/
@@ -81,6 +90,7 @@
 !upload/admin/view/template/extension/payment/globalpayments_klarna.twig
 !upload/admin/view/template/extension/payment/globalpayments_txnapi.twig
 !upload/admin/view/template/extension/payment/globalpayments_gpitrans.twig
+!upload/admin/view/template/extension/payment/globalpayments_paypal.twig
 
 # upload/catalog/controller/extension/credit_card
 !upload/catalog/
@@ -102,9 +112,12 @@
 !upload/catalog/controller/extension/payment/globalpayments_klarna.php
 !upload/catalog/controller/extension/payment/globalpayments_gpitrans.php
 !upload/catalog/controller/extension/payment/globalpayments_txnapi.php
+!upload/catalog/controller/extension/payment/globalpayments_paypal.php
+
+# upload/catalog/language for all languages
+!upload/catalog/language/
 
 # upload/catalog/language/en-gb/extension/payment
-!upload/catalog/language/
 !upload/catalog/language/en-gb/
 !upload/catalog/language/en-gb/extension/
 !upload/catalog/language/en-gb/extension/payment/
@@ -116,6 +129,11 @@
 !upload/catalog/language/en-gb/extension/payment/globalpayments_googlepay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clicktopay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_txnapi.php
+!upload/catalog/language/en-gb/extension/payment/globalpayments_paypal.php
+
+# upload/catalog/language/fr-ca
+!upload/catalog/language/fr-ca/
+!upload/catalog/language/fr-ca/fr-ca.php
 
 # upload/catalog/language/en-gb/extension/credit_card
 !upload/catalog/language/en-gb/extension/credit_card/
@@ -136,6 +154,7 @@
 !upload/catalog/model/extension/payment/globalpayments_gpitrans.php
 !upload/catalog/model/extension/payment/globalpayments_txnapi.php
 !upload/catalog/model/extension/payment/globalpayments_gateway.php
+!upload/catalog/model/extension/payment/globalpayments_paypal.php
 
 # upload/catalog/view/javascript
 !upload/catalog/view/
@@ -169,3 +188,4 @@
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_gpitrans.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_txnapi.twig
 !upload/catalog/view/theme/default/template/extension/payment/globalpayments_pay_form.twig
+!upload/catalog/view/theme/default/template/extension/payment/globalpayments_paypal.twig

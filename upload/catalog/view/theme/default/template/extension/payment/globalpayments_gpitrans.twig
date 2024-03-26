@@ -85,7 +85,7 @@
 	var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
 	var globalpayments_secure_payment_threedsecure_params = {{ globalpayments_secure_payment_threedsecure_params }};
 	$.getScript(
-		'https://js.globalpay.com/v1/globalpayments.js', function () {
+		'https://js.globalpay.com/{{ js_lib_version }}/globalpayments.js', function () {
 			$.getScript('catalog/view/javascript/globalpayments-3ds.min.js');
 			$.getScript('https://malsup.github.io/jquery.blockUI.js');
 
@@ -213,6 +213,11 @@
 					this.cardForm.on('token-success', this.handleResponse.bind(this));
 					this.cardForm.on('token-error', this.handleErrors.bind(this));
 					this.cardForm.on('error', this.handleErrors.bind(this));
+					this.cardForm.on('card-form-validity', (isValid) => {
+						if (!isValid) {
+							this.unblockOnError();
+						}
+					});
 					(window).GlobalPayments.on('error', this.handleErrors.bind(this));
 
 					// match the visibility of our payment form
@@ -534,72 +539,9 @@
 					for (var i = 0; i < numberOfReasons; i++) {
 						var reason = error.reasons[i];
 						switch (reason.code) {
-							case 'INVALID_CARD_NUMBER':
-								this.showValidationError('card-number');
+							case 'NOT_AUTHENTICATED':
+								this.showPaymentError('We\'re not able to process this payment. Please refresh the page and try again.')
 								break;
-							case 'INVALID_CARD_EXPIRATION':
-								this.showValidationError('card-expiration');
-								break;
-							case 'INVALID_CARD_SECURITY_CODE':
-								this.showValidationError('card-cvv');
-								break;
-							case 'INVALID_CARD_HOLDER_NAME':
-							case 'TOO_LONG_DATA':
-								this.showValidationError('card-holder');
-								break;
-							case 'MANDATORY_DATA_MISSING':
-								var n = reason.message.search("card type");
-								if (n >= 0) {
-									this.showValidationError('card-number');
-									 break;
-								}
-								var n = reason.message.search('expiry_year');
-								if (n >= 0) {
-									this.showValidationError('card-expiration');
-									break;
-								}
-								var n = reason.message.search("expiry_month");
-								if (n >= 0) {
-									this.showValidationError('card-expiration');
-									break;
-								}
-								var n = reason.message.search("card.cvn.number");
-								if (n >= 0) {
-									this.showValidationError('card-cvv');
-									break;
-								}
-							case 'INVALID_REQUEST_DATA':
-								var n = reason.message.search("card.number");
-								if (n >= 0) {
-									this.showValidationError('card-number');
-									break;
-								}
-								var n = reason.message.search("number contains unexpected data");
-								if (n >= 0) {
-									this.showValidationError('card-number');
-									break;
-								}
-								var n = reason.message.search("Luhn Check");
-								if (n >= 0) {
-									this.showValidationError('card-number');
-									break;
-								}
-								var n = reason.message.search("cvv contains unexpected data");
-								if (n >= 0) {
-									this.showValidationError('card-cvv');
-									break;
-								}
-								var n = reason.message.search("expiry_year");
-								if (n >= 0) {
-									this.showValidationError('card-expiration');
-									break;
-								}
-							case 'SYSTEM_ERROR_DOWNSTREAM':
-								var n = reason.message.search("card expdate");
-								if (n >= 0) {
-									this.showValidationError('card-expiration');
-									break;
-								}
 							case 'ERROR':
 								if (reason.message == "IframeField: target cannot be found with given selector") {
 									break;

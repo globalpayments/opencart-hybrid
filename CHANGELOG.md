@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.6.1 (02/27/24)
+## Latest Version - v1.6.2 (03/26/24)
+- Implemented PayPal payment method
+- Updated Hosted Fields JS Library version to 3.0.11
+
+## v1.6.1 (02/27/24)
 - Merged Sepa and Faster Payments into Bank Payment
 - Added sort order for the payment methods
 

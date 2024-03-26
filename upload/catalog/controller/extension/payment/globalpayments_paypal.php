@@ -1,11 +1,12 @@
 <?php
 
-use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
-use GlobalPayments\Api\Entities\Enums\BankPaymentStatus;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\Apm\Paypal;
 use GlobalPayments\Api\Entities\Enums\BankPaymentType;
+use GlobalPayments\Api\Entities\Enums\BankPaymentStatus;
+use GlobalPayments\Api\Entities\Enums\PaymentMethodType;
 use GlobalPayments\Api\Entities\Enums\TransactionStatus;
 use GlobalPayments\Api\Entities\Reporting\TransactionSummary;
-use GlobalPayments\Api\Gateways\OpenBankingProvider;
+use GlobalPayments\Api\Entities\Transaction;
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
@@ -13,21 +14,22 @@ use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 use Psr\Log\LogLevel;
 
-class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
+
+class ControllerExtensionPaymentGlobalPaymentsPaypal extends Controller {
 	private $order;
 
 	public function __construct( $registry ) {
 		parent::__construct( $registry );
 		$this->load->library('globalpayments');
-		$this->globalpayments->setPaymentMethod(OpenBanking::PAYMENT_METHOD_ID);
+		$this->globalpayments->setPaymentMethod(Paypal::PAYMENT_METHOD_ID);
 	}
 
 	public function index() {
-		$this->load->language('extension/payment/globalpayments_openbanking');
+		$this->load->language('extension/payment/globalpayments_paypal');
 
 		$this->setOrder();
 
-		$data['action'] = $this->url->link('extension/payment/globalpayments_openbanking/confirm', '', true);
+		$data['action'] = $this->url->link('extension/payment/globalpayments_paypal/confirm', '', true);
 		$data['paymentMethod'] = $this->globalpayments->paymentMethod;
 		if ($this->customer->isLogged()) {
 			$data['customer_is_logged'] = true;
@@ -37,11 +39,7 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 
 		$data['globalpayments_order'] = json_encode($this->order);
 
-		$data['globalpayments_openbanking_img_path'] = 'catalog/view/theme/default/image/Bank_Payment.png';
-		$data['globalpayments_openbanking_is_allowed'] =
-			json_encode($this->globalpayments->paymentMethod->checkIfPaymentAllowed($this->order));
-
-		return $this->load->view('extension/payment/globalpayments_openbanking', $data);
+		return $this->load->view('extension/payment/globalpayments_paypal', $data);
 	}
 
 	public function confirm() {
@@ -50,23 +48,18 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 		try {
 			$this->setOrder();
 
-			$provider = OpenBankingProvider::getBankPaymentType($this->order->currency);
-
 			$requestData                    = new RequestData();
 			$requestData->order             = $this->order;
 			$requestData->gatewayId         = $this->globalpayments->gateway->gatewayId;
 			$requestData->dynamicDescriptor = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->requestType       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
-			$requestData->meta              = (object)[
+			$requestData->meta              = (object) [
 				'callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(),
-				'sortCode' => $provider === BankPaymentType::FASTERPAYMENTS ?
-					$this->config->get('payment_globalpayments_openbanking_sort_code') : '',
-				'accountNumber' => $this->config->get('payment_globalpayments_openbanking_account_number'),
-				'accountName' => $this->config->get('payment_globalpayments_openbanking_account_name'),
-				'iban' => $this->config->get('payment_globalpayments_openbanking_iban'),
-				'countries' => $this->config->get('payment_globalpayments_openbanking_countries'),
+				'paymentAction' => $this->globalpayments->paymentMethod->paymentAction,
+				'provider' => $this->globalpayments->paymentMethod->provider,
 			];
-			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentOB($requestData);
+
+			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentAPM($requestData);
 
 			//Create order in Pending status before the redirect to the 3rd party payment screen
 			$this->load->model('extension/payment/globalpayments_ucp');
@@ -81,7 +74,7 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 			$this->load->model('checkout/order');
 			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 1);
 
-			$redirectUrl = $gatewayResponse->bankPaymentResponse->redirectUrl;
+			$redirectUrl = $gatewayResponse->alternativePaymentResponse->redirectUrl;
 			AbstractRequest::sendJsonResponse([$redirectUrl]);
 		} catch (\Exception $e) {
 			$message = sprintf('[%1$s] %2$s - %3$s', LogLevel::ERROR, Utils::mapResponseCodeToFriendlyMessage(), $e->getMessage());
@@ -90,11 +83,11 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 		}
 	}
 
-	public function openBankingReturn() {
-		$this->globalpayments->paymentMethod->openBankingReturn();
+	public function paypalReturn() {
+		$this->globalpayments->paymentMethod->paypalReturn();
 	}
 
-	public function processOpenBankingReturn() {
+	public function processPaypalReturn() {
 
 		try {
 			$this->globalpayments->paymentMethod->validateRequest($this->request);
@@ -102,10 +95,32 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 			$requestData = new RequestData();
 			$requestData->transactionId = $this->request->get['id'];
 			$gatewayResponse = $this->globalpayments->gateway->getTransactionDetails($requestData);
+			$orderId = $gatewayResponse->orderId ?? 0;
 			switch($gatewayResponse->transactionStatus) {
 				case TransactionStatus::INITIATED:
 				case TransactionStatus::PREAUTHORIZED:
 				case TransactionStatus::CAPTURED:
+					$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
+					break;
+
+				case TransactionStatus::PENDING:
+					$transaction = Transaction::fromId($this->request->get['id'], $orderId, PaymentMethodType::APM);
+					$transaction->alternativePaymentResponse = $gatewayResponse->alternativePaymentResponse;
+					$transaction->confirm()->execute();
+
+					$paymentAction = $this->globalpayments->paymentMethod->paymentAction;
+
+					$this->load->model('extension/payment/globalpayments_ucp');
+					$this->model_extension_payment_globalpayments_ucp->addTransaction(
+						$orderId,
+						$this->globalpayments->paymentMethod->paymentMethodId,
+						$paymentAction === AbstractGateway::CHARGE ? AbstractGateway::CAPTURE : AbstractGateway::AUTHORIZE,
+						$gatewayResponse->amount,
+						$gatewayResponse->currency,
+						$gatewayResponse
+					);
+					$this->addOrderHistory($orderId, 2, $gatewayResponse);
+
 					$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
 					break;
 				case TransactionStatus::DECLINED:
@@ -143,11 +158,11 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 		}
 	}
 
-	public function openBankingCancel() {
-		$this->globalpayments->paymentMethod->openBankingCancel();
+	public function paypalCancel() {
+		$this->globalpayments->paymentMethod->paypalCancel();
 	}
 
-	public function processOpenBankingCancel() {
+	public function processPaypalCancel() {
 		try {
 			$this->globalpayments->paymentMethod->validateRequest($this->request);
 			$requestData = new RequestData();
@@ -171,91 +186,6 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 		}
 
 		$this->response->redirect($this->url->link( 'checkout/checkout', '', true));
-	}
-
-	public function openBankingStatus() {
-		$receivedRequest = Utils::getRequest();
-		try {
-			$this->globalpayments->paymentMethod->validateRequest($receivedRequest);
-			$requestData = new RequestData();
-			$requestBody = json_decode($receivedRequest['body']);
-			$requestData->transactionId = $requestBody->id;
-			$gatewayResponse = $this->globalpayments->gateway->getTransactionDetails($requestData);
-			$orderId = $gatewayResponse->orderId ?? 0;
-			switch($requestBody->status) {
-				case TransactionStatus::PREAUTHORIZED:
-					//Do Authorization
-					$this->load->model('extension/payment/globalpayments_ucp');
-					$this->model_extension_payment_globalpayments_ucp->addTransaction(
-						$orderId,
-						$this->globalpayments->paymentMethod->paymentMethodId,
-						AbstractGateway::AUTHORIZE,
-						$gatewayResponse->amount,
-						$gatewayResponse->currency,
-						$gatewayResponse
-					);
-
-					//Do Charge = Authorization + Capture
-					if ($this->globalpayments->paymentMethod->paymentAction == AbstractGateway::CHARGE) {
-						$requestData                  = new RequestData();
-						$requestData->transactionId   = $requestBody->id;
-						$requestData->order           = new OrderData();
-						$requestData->order->amount   = $gatewayResponse->amount;
-						$requestData->order->currency = $gatewayResponse->currency;
-						$captureResponse = $this->globalpayments->gateway->processCapture($requestData);
-
-						$this->model_extension_payment_globalpayments_ucp->addTransaction(
-							$orderId,
-							$this->globalpayments->paymentMethod->paymentMethodId,
-							AbstractGateway::CAPTURE,
-							$gatewayResponse->amount,
-							$gatewayResponse->currency,
-							$captureResponse
-						);
-					}
-					$this->addOrderHistory($orderId, 2, $gatewayResponse);
-					break;
-				case TransactionStatus::CAPTURED:
-					$this->load->model('extension/payment/globalpayments_ucp');
-					$this->model_extension_payment_globalpayments_ucp->addTransaction(
-						$orderId,
-						$this->globalpayments->paymentMethod->paymentMethodId,
-						AbstractGateway::CHARGE,
-						$gatewayResponse->amount,
-						$gatewayResponse->currency,
-						$gatewayResponse
-					);
-					$this->addOrderHistory($orderId, 2, $gatewayResponse);
-					break;
-				case TransactionStatus::DECLINED:
-				case 'FAILED':
-					$this->load->model('extension/payment/globalpayments_ucp');
-					$this->model_extension_payment_globalpayments_ucp->addTransaction(
-						$orderId,
-						$this->globalpayments->paymentMethod->paymentMethodId,
-						AbstractGateway::REVERSE,
-						$gatewayResponse->amount,
-						$gatewayResponse->currency,
-						$gatewayResponse
-					);
-					$this->addOrderHistory($orderId, 10, $gatewayResponse);
-
-					$errorMessage = Utils::mapResponseCodeToFriendlyMessage('FAILED');
-					$this->session->data['error'] = $errorMessage;
-					$message = sprintf('[%1$s] %2$s', LogLevel::ERROR, $errorMessage);
-					$this->log->write($message);
-					break;
-				default:
-					throw new \Exception(
-						'Order ID: ' . $orderId . '. Unexpected transaction status on statusUrl: ' . $requestBody->status
-					);
-			}
-			exit;
-		} catch (\Exception $e) {
-			$message = sprintf('[%1$s] Error completing order status. %2$s', LogLevel::ERROR, $e->getMessage());
-			$this->log->write($message);
-			exit;
-		}
 	}
 
 	private function setOrder() {

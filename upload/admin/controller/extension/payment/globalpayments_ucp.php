@@ -7,6 +7,7 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\PaymentGatewayProvider\PaymentMethods\Apm\Paypal;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Affirm;
@@ -38,6 +39,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$globalpayments_klarna_installed         = in_array('globalpayments_klarna', $extensions);
 		$globalpayments_clearpay_installed       = in_array('globalpayments_clearpay', $extensions);
 		$globalpayments_openbanking_installed    = in_array('globalpayments_openbanking', $extensions);
+		$globalpayments_paypal_installed         = in_array('globalpayments_paypal', $extensions);
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
 			$this->load->model('setting/setting');
@@ -96,6 +98,13 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$globalpayments_openbanking_messages = $this->load->controller('extension/payment/globalpayments_openbanking/save');
 				$this->alert = array_merge_recursive($this->alert, $globalpayments_openbanking_messages['alert']);
 				$this->error = array_merge_recursive($this->error, $globalpayments_openbanking_messages['error']);
+			}
+
+			//Paypal
+			if ($globalpayments_paypal_installed) {
+				$globalpayments_paypal_messages = $this->load->controller('extension/payment/globalpayments_paypal/save');
+				$this->alert = array_merge_recursive($this->alert, $globalpayments_paypal_messages['alert']);
+				$this->error = array_merge_recursive($this->error, $globalpayments_paypal_messages['error']);
 			}
 
 			if (empty($this->error)) {
@@ -317,6 +326,16 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['display_openbanking_tab'] = '';
 		}
 
+		if ($globalpayments_paypal_installed) {
+			$data['display_paypal_tab'] = $this->load->controller('extension/payment/globalpayments_paypal/display', $this->error);
+			$data['tabs'][] = array(
+				'id'   => 'paypal',
+				'name' => $this->language->get('tab_paypal'),
+			);
+		} else {
+			$data['display_paypal_tab'] = '';
+		}
+
 		$data['breadcrumbs'] = array();
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
@@ -440,7 +459,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				Affirm::PAYMENT_METHOD_ID,
 				Clearpay::PAYMENT_METHOD_ID,
 				Klarna::PAYMENT_METHOD_ID,
-				OpenBanking::PAYMENT_METHOD_ID
+				OpenBanking::PAYMENT_METHOD_ID,
+				Paypal::PAYMENT_METHOD_ID,
 			];
 			// we handle the code like this because only for the above payment methods we add a transaction entry on the INITIALIZE step
 			if (in_array($data['payment_code'], $paymentMethods)) {
@@ -548,11 +568,12 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->language('extension/payment/globalpayments_ucp_order');
 
 		if ( ! isset($this->request->post['order_id'])
-		     || ! isset($this->request->post['gateway_id'])
-		     || ! isset($this->request->post['transaction_id'])
-		     || ! isset($this->request->post['transaction_type'])
-		     || ! isset($this->request->post['transaction_amount'])
-		     || ! isset($this->request->post['currency'])) {
+			|| ! isset($this->request->post['gateway_id'])
+			|| ! isset($this->request->post['transaction_id'])
+			|| ! isset($this->request->post['transaction_type'])
+			|| ! isset($this->request->post['transaction_amount'])
+			|| ! isset($this->request->post['currency'])
+		) {
 			$response['error'] = $this->language->get('error_request');
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($response));
@@ -617,82 +638,90 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	}
 
 	private function handleInitializedTransactions($orderId, $transaction, $transactions_count, $should_refund) {
-	    $transaction_actions = [];
-	    if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::INITIATE) {
-	        if ($this->user->isLogged() && $this->user->getGroupId() == 1) {
-	            $this->load->model('sale/order');
-	            $order_status_info = $this->model_sale_order->getOrder($orderId);
-	            $order_status = $order_status_info['order_status'];
-	            if ($order_status == 'Pending') {
-	                $this->cache->delete('get_initiated_transaction_details_response');
-	                $transaction_actions[] = [
-	                    'action' => AbstractGateway::GET_TRANSACTIONS_DETAILS,
-	                    'button' => $this->language->get('button_getTransactionDetails'),
-                    ];
-                }
-            }
-        }
-        if ($transactions_count === 2 && $transaction['payment_action'] === AbstractGateway::AUTHORIZE) {
-            $transaction_actions[] = [
-                'action' => AbstractGateway::CAPTURE,
-                'button' => $this->language->get('button_capture'),
-            ];
-        }
-        if ($should_refund && ($transaction['payment_action'] === AbstractGateway::CAPTURE || $transaction['payment_action'] === AbstractGateway::CHARGE)) {
-            $transaction_actions[] = [
-                'action' => AbstractGateway::REFUND,
-                'button' => $this->language->get('button_refund'),
-            ];
-        }
-        if (($transactions_count === 3 && $transaction['payment_action'] === AbstractGateway::CAPTURE)
-            || ($transactions_count === 2 && ($transaction['payment_action'] === AbstractGateway::CHARGE || $transaction['payment_action'] === AbstractGateway::AUTHORIZE))) {
-                $transaction_actions[] = [
-                    'action' => AbstractGateway::REVERSE,
-                    'button' => $this->language->get('button_reverse'),
-                ];
-        }
+		$transaction_actions = [];
+		if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::INITIATE) {
+			if ($this->user->isLogged() && $this->user->getGroupId() == 1) {
+				$this->load->model('sale/order');
+				$order_status_info = $this->model_sale_order->getOrder($orderId);
+				$order_status = $order_status_info['order_status'];
+				if ($order_status == 'Pending') {
+					$this->cache->delete('get_initiated_transaction_details_response');
+					$transaction_actions[] = [
+						'action' => AbstractGateway::GET_TRANSACTIONS_DETAILS,
+						'button' => $this->language->get('button_getTransactionDetails'),
+					];
+				}
+			}
+		}
+		if ($transactions_count === 2 && $transaction['payment_action'] === AbstractGateway::AUTHORIZE) {
+			$transaction_actions[] = [
+				'action' => AbstractGateway::CAPTURE,
+				'button' => $this->language->get('button_capture'),
+			];
+		}
+		if ($should_refund && ($transaction['payment_action'] === AbstractGateway::CAPTURE || $transaction['payment_action'] === AbstractGateway::CHARGE)) {
+			$transaction_actions[] = [
+				'action' => AbstractGateway::REFUND,
+				'button' => $this->language->get('button_refund'),
+			];
+		}
+		if (($transactions_count === 3 && $transaction['payment_action'] === AbstractGateway::CAPTURE)
+			|| ($transactions_count === 2 && ($transaction['payment_action'] === AbstractGateway::CHARGE || $transaction['payment_action'] === AbstractGateway::AUTHORIZE))) {
+				$transaction_actions[] = [
+					'action' => AbstractGateway::REVERSE,
+					'button' => $this->language->get('button_reverse'),
+				];
+		}
 
-        return $transaction_actions;
-    }
+		return $transaction_actions;
+	}
 
-    private function getInitializedTransactionDetails($requestData) {
-        if ($this->cache->get('get_initiated_transaction_details_response')) {
-            $response = $this->cache->get('get_initiated_transaction_details_response');
-        } else {
-            $gatewayResponse = $this->globalpayments->gateway->getTransactionDetails($requestData);
-            $details = sprintf(
-                "Transaction Id: %s
-                Transaction Status: %s
-                Transaction Type: %s
-                Amount: %s
-                Currency: %s",
-                $gatewayResponse->transactionId,
-                $gatewayResponse->transactionStatus,
-                $gatewayResponse->transactionType,
-                $gatewayResponse->amount,
-                $gatewayResponse->currency,
-            );
+	private function getInitializedTransactionDetails($requestData) {
+		if ($this->cache->get('get_initiated_transaction_details_response')) {
+			$response = $this->cache->get('get_initiated_transaction_details_response');
+		} else {
+			$gatewayResponse = $this->globalpayments->gateway->getTransactionDetails($requestData);
+			$details = sprintf(
+				"Transaction Id: %s
+				Transaction Status: %s
+				Transaction Type: %s
+				Amount: %s
+				Currency: %s",
+				$gatewayResponse->transactionId,
+				$gatewayResponse->transactionStatus,
+				$gatewayResponse->transactionType,
+				$gatewayResponse->amount,
+				$gatewayResponse->currency,
+			);
 
-            if (!empty($gatewayResponse->bnplResponse)) {
-	            $details .= sprintf("
-	                Provider: %s
-	                Provider type: %s",
-	                PaymentMethodName::BNPL,
-	                $gatewayResponse->bnplResponse->providerName
-	            );
-            } elseif ($gatewayResponse->bankPaymentResponse) {
-	            $details .= sprintf("
-	                Payment type: %s",
-	                $gatewayResponse->paymentType //PAYMENT TYPE
-	            );
-            }
-            $response['getTransactionDetails'] = nl2br($details);
-            $response['success'] = $this->language->get('text_success_getTransactionDetails');
-            $this->cache->set('get_initiated_transaction_details_response', $response);
-        }
+			if (!empty($gatewayResponse->bnplResponse)) {
+				$details .= sprintf("
+					Provider: %s
+					Provider type: %s",
+					PaymentMethodName::BNPL,
+					$gatewayResponse->bnplResponse->providerName
+				);
+			} elseif ($gatewayResponse->bankPaymentResponse) {
+				$details .= sprintf("
+					Payment type: %s",
+					$gatewayResponse->paymentType //PAYMENT TYPE
+				);
+			} elseif ($gatewayResponse->alternativePaymentResponse) {
+				$details .= sprintf("
+					Provider: %s
+					Provider type: %s",
+					PaymentMethodName::APM,
+					strtoupper($gatewayResponse->alternativePaymentResponse->providerName)
+				);
+			}
 
-        AbstractRequest::sendJsonResponse($response);
-    }
+			$response['getTransactionDetails'] = nl2br($details);
+			$response['success'] = $this->language->get('text_success_getTransactionDetails');
+			$this->cache->set('get_initiated_transaction_details_response', $response);
+		}
+
+		AbstractRequest::sendJsonResponse($response);
+	}
 
 	private function validateRefundAmount($amount, $authAmount) {
 		$amount = str_replace(',', '.', $amount);
@@ -720,6 +749,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->install('payment', 'globalpayments_klarna');
 		$this->model_setting_extension->install('payment', 'globalpayments_clearpay');
 		$this->model_setting_extension->install('payment', 'globalpayments_openbanking');
+		$this->model_setting_extension->install('payment', 'globalpayments_paypal');
 
 		$this->load->model('user/user_group');
 
@@ -744,6 +774,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_openbanking');
 		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_openbanking');
 
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/payment/globalpayments_paypal');
+		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/payment/globalpayments_paypal');
+
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->install();
 		$this->load->model('extension/payment/globalpayments_googlepay');
@@ -760,6 +793,10 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_extension_payment_globalpayments_clearpay->install();
 		$this->load->model('extension/payment/globalpayments_openbanking');
 		$this->model_extension_payment_globalpayments_openbanking->install();
+
+		$this->load->model('extension/payment/globalpayments_paypal');
+		$this->model_extension_payment_globalpayments_paypal->install();
+
 	}
 
 	public function uninstall() {
@@ -771,6 +808,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_klarna');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_clearpay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_openbanking');
+		$this->model_setting_extension->uninstall('payment', 'globalpayments_paypal');
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->uninstall();
