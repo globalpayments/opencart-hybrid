@@ -97,6 +97,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$requestData->paymentTokenResponse = ! empty($postRequestData->paymentTokenResponse) ? htmlspecialchars_decode($postRequestData->paymentTokenResponse) : null;
 			$requestData->dynamicDescriptor    = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->order                = $this->order;
+			$requestData->meta                 = (object) [
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
+			];
 
 			if (isset($postRequestData->paymentType)
 			    && 'saved' === $postRequestData->paymentType

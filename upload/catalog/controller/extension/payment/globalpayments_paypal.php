@@ -57,6 +57,7 @@ class ControllerExtensionPaymentGlobalPaymentsPaypal extends Controller {
 				'callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(),
 				'paymentAction' => $this->globalpayments->paymentMethod->paymentAction,
 				'provider' => $this->globalpayments->paymentMethod->provider,
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
 			];
 
 			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentAPM($requestData);

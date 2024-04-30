@@ -89,12 +89,14 @@
     $('#refund-amount').on('input', function() {
       var amount = $(this).val();
       if (amount.length > 0) {
-        $('#transaction-command-refund').text('{{ button_refund }}' + ' ' + amount + ' ' + $('.button-command').attr('data-currency'));
+        $('#transaction-command-refund').text("{{ button_refund }}" + ' ' + amount + ' ' + $('.button-command').attr('data-currency'));
       } else {
-        $('#transaction-command-refund').text('{{ button_refund }}');
+        $('#transaction-command-refund').text("{{ button_refund }}");
       }
 
     });
+	$('.button-command').button({ loadingText: "{{ text_loading }}" });
+
 	$('.button-command').on('click', function () {
 		var gateway_id = $(this).attr('data-gatewayId');
 		var transaction_type = $(this).attr('data-type');
@@ -107,16 +109,16 @@
 
 		switch (transaction_type) {
 			case 'capture':
-				confirm_text = '{{ text_confirm_capture }}';
+				confirm_text = "{{ text_confirm_capture }}";
 				break
 			case 'reverse':
-				confirm_text = '{{ text_confirm_reverse }}';
+				confirm_text = "{{ text_confirm_reverse }}";
 				break
 			case 'refund':
-				confirm_text = '{{ text_confirm_refund }}';
+				confirm_text = "{{ text_confirm_refund }}";
 				break;
 			case 'getTransactionDetails':
-				confirm_text = '{{ text_confirm_getTransactionDetails }}';
+				confirm_text = "{{ text_confirm_getTransactionDetails }}";
 				break;
 		}
 
@@ -125,7 +127,7 @@
 				url: 'index.php?route=extension/payment/globalpayments_ucp/transactionCommand&user_token={{ user_token }}',
 				type: 'post',
 				data: {
-					order_id: '{{ order_id }}',
+					order_id: "{{ order_id }}",
 					gateway_id: gateway_id,
 					transaction_id: gateway_transaction_id,
 					transaction_type: transaction_type,
@@ -157,7 +159,7 @@
 							$('#myModal').modal('show');
 						}
 					} else {
-						getTransaction('{{ transaction_id }}');
+						getTransaction("{{ transaction_id }}");
 					}
 				}
 			})

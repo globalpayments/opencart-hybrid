@@ -65,6 +65,7 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 				'accountName' => $this->config->get('payment_globalpayments_openbanking_account_name'),
 				'iban' => $this->config->get('payment_globalpayments_openbanking_iban'),
 				'countries' => $this->config->get('payment_globalpayments_openbanking_countries'),
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
 			];
 			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentOB($requestData);
 

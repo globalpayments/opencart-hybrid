@@ -12,7 +12,7 @@ $_['entry_cc_number']         = 'Credit Card Number';
 $_['entry_cc_exp_date']       = 'Credit Card Expiration Date';
 $_['entry_cc_cvv']            = 'Credit Card Security Code';
 $_['entry_cc_card_holder']    = 'Card Holder Name';
-$_['entry_allow_card_saving'] = 'Save to account';
+$_['entry_allow_card_saving'] = 'Save for later use';
 
 // Error
 $_['error_cc_number']        = 'Please enter a valid Credit Card Number';
@@ -23,6 +23,7 @@ $_['error_order_processing'] = 'Something went wrong while processing your order
 $_['error_txn_not_verified'] = 'Your card could not be verified.';
 $_['error_txn_declined']     = 'Your card has been declined by the bank.';
 $_['error_txn_error']        = 'An error occurred while processing the card.';
+$_['error_card_decline']     = 'Please try again with another card.';
 
 // Text
 $_['text_sandbox_warning']         = 'This page is currently in sandbox/test mode. Do not use real/active card numbers.';

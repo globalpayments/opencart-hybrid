@@ -51,6 +51,9 @@ class ControllerExtensionPaymentGlobalPaymentsClickToPay extends Controller {
 			$requestData->mobileType                        = $this->globalpayments->paymentMethod->getMobileType();
 			$requestData->dynamicDescriptor                 = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->requestType                       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
+			$requestData->meta                              = [
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
+			];
 
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
 

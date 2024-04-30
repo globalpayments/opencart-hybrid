@@ -251,13 +251,15 @@
 		}
 	}
 
+	$('#button-credentials-check').button({ loadingText: "{{ text_loading }}" });
+
 	$('#button-credentials-check').on('click', function () {
 		var gateway_app_id = getGatewaySetting('app_id');
 		var gateway_app_key = getGatewaySetting('app_key');
 		var environment = 0;
 
 		if(!gateway_app_id || !gateway_app_key) {
-			alert('Please be sure that you have filled AppId and AppKey fields!');
+			alert( "{{ alert_credentials_check }}" );
 			return;
 		}
 		if (isLiveMode())  {

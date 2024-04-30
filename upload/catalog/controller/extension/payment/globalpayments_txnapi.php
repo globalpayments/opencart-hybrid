@@ -123,6 +123,10 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 		$requestData = RequestData::setDataObject($requestData, $postRequestData);
 		$requestData->paymentTokenResponse = !empty($postRequestData->paymentTokenResponse) ? htmlspecialchars_decode($postRequestData->paymentTokenResponse) : null;
 		$requestData->order = $this->order;
+		$requestData->meta = (object) [
+			'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
+		];
+
 		if (isset($postRequestData->paymentType)
 			&& 'saved' === $postRequestData->paymentType
 			&& isset($postRequestData->paymentTokenId)

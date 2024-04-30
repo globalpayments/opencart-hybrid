@@ -56,8 +56,46 @@
 !upload/admin/language/en-gb/extension/payment/globalpayments_paypal.php
 
 # upload/admin/language/fr-ca
-!upload/admin/language/fr-ca/
 !upload/admin/language/fr-ca/fr-ca.php
+
+# upload/admin/language/fr-ca/extension/payment
+!upload/admin/language/fr-ca/
+!upload/admin/language/fr-ca/extension/
+!upload/admin/language/fr-ca/extension/payment/
+!upload/admin/language/fr-ca/extension/payment/globalpayments_ucp.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_applepay.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_googlepay.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_clicktopay.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_ucp_order.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_affirm.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_clearpay.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_klarna.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_openbanking.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_gpitrans.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_gpitrans_order.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_txnapi.php
+!upload/admin/language/fr-ca/extension/payment/globalpayments_paypal.php
+
+# upload/admin/language/fr-fr
+!upload/admin/language/fr-fr/fr-fr.php
+
+# upload/admin/language/fr-fr/extension/payment
+!upload/admin/language/fr-fr/
+!upload/admin/language/fr-fr/extension/
+!upload/admin/language/fr-fr/extension/payment/
+!upload/admin/language/fr-fr/extension/payment/globalpayments_ucp.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_applepay.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_googlepay.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_clicktopay.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_ucp_order.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_affirm.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_clearpay.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_klarna.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_openbanking.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_gpitrans.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_gpitrans_order.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_txnapi.php
+!upload/admin/language/fr-fr/extension/payment/globalpayments_paypal.php
 
 # upload/admin/model/extension/payment
 !upload/admin/model/
@@ -130,15 +168,60 @@
 !upload/catalog/language/en-gb/extension/payment/globalpayments_clicktopay.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_txnapi.php
 !upload/catalog/language/en-gb/extension/payment/globalpayments_paypal.php
+!upload/catalog/language/en-gb/extension/payment/globalpayments_shared_text.php
 
 # upload/catalog/language/fr-ca
-!upload/catalog/language/fr-ca/
 !upload/catalog/language/fr-ca/fr-ca.php
+
+# upload/catalog/language/fr-ca/extension/payment
+!upload/catalog/language/fr-ca/
+!upload/catalog/language/fr-ca/extension/
+!upload/catalog/language/fr-ca/extension/payment/
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_affirm.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_clearpay.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_klarna.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_ucp.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_applepay.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_googlepay.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_clicktopay.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_openbanking.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_txnapi.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_paypal.php
+!upload/catalog/language/fr-ca/extension/payment/globalpayments_shared_text.php
+
+# upload/catalog/language/fr-fr
+!upload/catalog/language/fr-fr/fr-fr.php
+
+# upload/catalog/language/fr-fr/extension/payment
+!upload/catalog/language/fr-fr/
+!upload/catalog/language/fr-fr/extension/
+!upload/catalog/language/fr-fr/extension/payment/
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_affirm.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_clearpay.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_klarna.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_ucp.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_applepay.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_googlepay.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_clicktopay.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_openbanking.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_txnapi.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_paypal.php
+!upload/catalog/language/fr-fr/extension/payment/globalpayments_shared_text.php
 
 # upload/catalog/language/en-gb/extension/credit_card
 !upload/catalog/language/en-gb/extension/credit_card/
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_ucp.php
 !upload/catalog/language/en-gb/extension/credit_card/globalpayments_txnapi.php
+
+# upload/catalog/language/fr-ca/extension/credit_card
+!upload/catalog/language/fr-ca/extension/credit_card/
+!upload/catalog/language/fr-ca/extension/credit_card/globalpayments_ucp.php
+!upload/catalog/language/fr-ca/extension/credit_card/globalpayments_txnapi.php
+
+# upload/catalog/language/fr-fr/extension/credit_card
+!upload/catalog/language/fr-fr/extension/credit_card/
+!upload/catalog/language/fr-fr/extension/credit_card/globalpayments_ucp.php
+!upload/catalog/language/fr-fr/extension/credit_card/globalpayments_txnapi.php
 
 # upload/catalog/model/extension/payment
 !upload/catalog/model/

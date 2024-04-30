@@ -73,3 +73,6 @@ $_['error_request']                     = 'Unable to perform request. Invalid da
 $_['success_settings_ucp']      = 'Your Unified Payments settings were saved!';
 $_['success_settings_gpitrans'] = 'Your Unified Payments settings were saved!';
 $_['success_credentials_check'] = 'Your credentials were successfully confirmed!';
+
+// Alert
+$_['alert_credentials_check'] = 'Please be sure that you have filled AppId and AppKey fields!';

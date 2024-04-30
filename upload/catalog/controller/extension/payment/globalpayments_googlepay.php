@@ -45,6 +45,9 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 			$requestData                       = new RequestData();
 			$requestData                       = RequestData::setDataObject($requestData, $postRequestData);
 			$requestData->order                = $this->order;
+			$requestData->meta                 = (object) [
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
+			];
 
 			$requestData->gatewayId                         = $this->globalpayments->gateway->gatewayId;
 			$requestData->digitalWalletPaymentTokenResponse = htmlspecialchars_decode($postRequestData->dwToken);

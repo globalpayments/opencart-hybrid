@@ -58,7 +58,7 @@ abstract class AbstractRequest implements RequestInterface {
 		$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
 
 		if (empty($tokenResponse->paymentReference)) {
-			throw new \Exception('Not enough data to perform request. Unable to retrieve payment token.');
+			throw new \Exception($this->requestData->meta->shared_text['error_unable_to_get_payment_token']);
 		}
 	}
 
@@ -67,7 +67,7 @@ abstract class AbstractRequest implements RequestInterface {
 		$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
 
 		if (empty($tokenResponse->paymentReference)) {
-			throw new \Exception( 'Not enough data to perform request. Unable to retrieve payment token.' );
+			throw new \Exception($this->requestData->meta->shared_text['error_unable_to_get_payment_token']);
 		}
 
 		return $tokenResponse->paymentReference;

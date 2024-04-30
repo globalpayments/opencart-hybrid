@@ -85,7 +85,7 @@
 	var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
 	var globalpayments_secure_payment_threedsecure_params = {{ globalpayments_secure_payment_threedsecure_params }};
 	$.getScript(
-		'https://js.globalpay.com/{{ js_lib_version }}/globalpayments.js', function () {
+		'https://js.globalpay.com/v1/globalpayments.js', function () {
 			$.getScript('catalog/view/javascript/globalpayments-3ds.min.js');
 			$.getScript('https://malsup.github.io/jquery.blockUI.js');
 
@@ -391,7 +391,7 @@
 								return false;
 							}
 							if ('NOT_ENROLLED' === versionCheckData.status && 'YES' !== versionCheckData.liabilityShift) {
-								self.showPaymentError('Please try again with another card.');
+								self.showPaymentError( "{{ error_card_decline }}" );
 								return false;
 							}
 							if ('NOT_ENROLLED' === versionCheckData.status && 'YES' === versionCheckData.liabilityShift) {

@@ -57,7 +57,11 @@ class ControllerExtensionPaymentGlobalPaymentsKlarna extends Controller {
 			$requestData->gatewayId         = $this->globalpayments->gateway->gatewayId;
 			$requestData->dynamicDescriptor = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 			$requestData->requestType       = AbstractGateway::getRequestType($this->globalpayments->paymentMethod->paymentAction);
-			$requestData->meta              = (object)['callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(), 'type' => $postRequestData->bnplType];
+			$requestData->meta              = (object)[
+				'callbackUrls' => $this->globalpayments->paymentMethod->getCallbackUrls(),
+				'type' => $postRequestData->bnplType,
+				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
+			];
 
 			$gatewayResponse = $this->globalpayments->gateway->processInitiatePaymentBNPL($requestData);
 

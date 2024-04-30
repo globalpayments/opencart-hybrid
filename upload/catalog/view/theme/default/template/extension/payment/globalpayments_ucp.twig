@@ -399,7 +399,7 @@
 								return false;
 							}
 							if ('NOT_ENROLLED' === versionCheckData.status && 'YES' !== versionCheckData.liabilityShift) {
-								self.showPaymentError('Please try again with another card.');
+								self.showPaymentError( "{{ error_card_decline }}" );
 								return false;
 							}
 							if ('NOT_ENROLLED' === versionCheckData.status && 'YES' === versionCheckData.liabilityShift) {
