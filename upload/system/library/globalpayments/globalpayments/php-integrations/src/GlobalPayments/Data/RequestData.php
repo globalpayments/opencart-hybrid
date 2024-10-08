@@ -79,7 +79,7 @@ class RequestData {
 	 *
 	 * @var ThreeDSecure
 	 */
-	protected $theeDSecure;
+	protected $threeDSecure;
 
 	/**
 	 * Contains the value a merchant wishes to appear on the payer's payment method statement for this transaction.
@@ -108,18 +108,29 @@ class RequestData {
 				$this->paymentToken = self::removeSlashesFromDigitalWalletToken($value);
 				break;
 			case 'order':
-				if ( ! ($value instanceof OrderData)) {
+				if (!($value instanceof OrderData)) {
 					throw new \Exception('Unable to set Order request data.');
 				}
 				$this->order = $value;
 				break;
-			case 'theeDSecure':
-				if ( ! ($value instanceof ThreeDSecure)) {
+			case 'threeDSecure':
+				if (!($value instanceof ThreeDSecure)) {
 					throw new \Exception('Unable to set 3D Secure request data.');
 				}
-				$this->theeDSecure = $value;
+				$this->threeDSecure = $value;
 				break;
 		}
+	}
+
+	public function __get($name) {
+		if (property_exists($this, $name)) {
+			return $this->{$name};
+		}
+	}
+
+	public function __isset($name)
+	{
+		return isset($this->{$name});
 	}
 
 	/**

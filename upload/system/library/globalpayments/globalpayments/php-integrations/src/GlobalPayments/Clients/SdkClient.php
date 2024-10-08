@@ -3,6 +3,7 @@
 namespace GlobalPayments\PaymentGatewayProvider\Clients;
 
 use GlobalPayments\Api\Entities\Enums\GatewayProvider;
+use GlobalPayments\Api\Entities\GpApi\AccessTokenInfo;
 use GlobalPayments\Api\ServiceConfigs\AcceptorConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\GeniusConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
@@ -13,7 +14,6 @@ use GlobalPayments\Api\ServicesContainer;
 use GlobalPayments\Api\Utils\Logging\Logger;
 use GlobalPayments\Api\Utils\Logging\SampleRequestLogger;
 use GlobalPayments\PaymentGatewayProvider\Requests\RequestInterface;
-use Psr\Log\LogLevel;
 
 class SdkClient implements ClientInterface {
 	/**
@@ -46,6 +46,14 @@ class SdkClient implements ClientInterface {
 		switch ($this->request->config['gatewayProvider']) {
 			case GatewayProvider::GP_API:
 				$gatewayConfig = new GpApiConfig();
+
+				$accountName = $this->request->config['accountName'] ?? null;
+				if (!empty($accountName)) {
+					$accessTokenInfo = new AccessTokenInfo();
+					$accessTokenInfo->transactionProcessingAccountName = $accountName;
+					$gatewayConfig->accessTokenInfo = $accessTokenInfo;
+				}
+
 				break;
 			case GatewayProvider::PORTICO:
 				$gatewayConfig = new PorticoConfig();
@@ -58,9 +66,9 @@ class SdkClient implements ClientInterface {
 			case GatewayProvider::GENIUS:
 				$gatewayConfig = new GeniusConfig();
 				break;
-            		case GatewayProvider::TRANSACTION_API:
-                		$gatewayConfig = new TransactionApiConfig();
-               			break;
+			case GatewayProvider::TRANSACTION_API:
+				$gatewayConfig = new TransactionApiConfig();
+				break;
 			default:
 				break;
 		}
@@ -74,8 +82,8 @@ class SdkClient implements ClientInterface {
 			$this->request->config
 		);
 
-		if ( ! empty($this->request->config['debug'])) {
-			if ( empty($this->request->config['logDirectory'])) {
+		if (!empty($this->request->config['debug'])) {
+			if (empty($this->request->config['logDirectory'])) {
 				throw new \Exception('Unable to log request. Log directory not set.');
 			}
 			$config->requestLogger = new SampleRequestLogger(new Logger(

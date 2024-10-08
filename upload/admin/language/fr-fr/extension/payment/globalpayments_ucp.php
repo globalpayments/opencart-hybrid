@@ -28,8 +28,10 @@ $_['label_title']                 = 'Titre';
 $_['label_is_production']         = 'Mode En ligne';
 $_['label_app_id']                = 'ID d\'appli En ligne';
 $_['label_app_key']               = 'Clé d\'appli En ligne';
+$_['label_account_name']          = 'Nom de compte En ligne';
 $_['label_sandbox_app_id']        = 'ID d\'appli Test';
 $_['label_sandbox_app_key']       = 'Clé d\'appli Test';
+$_['label_sandbox_account_name']  = 'Nom de compte En ligne';
 $_['credentials_check']           = 'Vérification des identifiants';
 $_['label_debug']                 = 'Activer l\'enregistrement';
 $_['label_contact_url']           = 'URL de contact';
@@ -52,6 +54,7 @@ $_['help_payment_action']        = 'Choisissez de capturer les fonds immédiatem
 $_['help_allow_card_saving']     = 'Remarque : Pour utiliser la fonction de sauvegarde de carte, vous devez activer la prise en charge de jetons à multiples usages dans votre compte. Veuillez contacter <a href="mailto:%s?Subject=OpenCart%%20Card%%20Saving%%20Option">le Soutien</a> si vous avez des questions sur cette option.';
 $_['help_txn_descriptor']        = 'Lors d\'une capture ou d\'une autorisation de paiement, cette valeur sera transmise en tant que descripteur de transaction énoncé dans le compte bancaire du client (longueur max : 25).';
 $_['help_txn_descriptor_note']   = 'Veuillez contacter <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">le Soutien</a> si vous avez des questions sur cette option.';
+$_['help_account_name']          = 'Spécifiez quel compte utiliser lorsque vous traitez une transaction. Compte défaut serait utilisé si pas spécifiée.';
 
 // Entry
 $_['entry_enabled']                  = 'Activer la passerelle';

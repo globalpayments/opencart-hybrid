@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.6.3';
+	const VERSION = '1.6.4';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -99,8 +99,10 @@ class GlobalPayments {
 		$this->gateway->isProduction       = $this->config->get('payment_globalpayments_ucp_is_production');
 		$this->gateway->appId              = $this->config->get('payment_globalpayments_ucp_app_id');
 		$this->gateway->appKey             = $this->config->get('payment_globalpayments_ucp_app_key');
+		$this->gateway->accountName        = $this->config->get('payment_globalpayments_ucp_account_name');
 		$this->gateway->sandboxAppId       = $this->config->get('payment_globalpayments_ucp_sandbox_app_id');
 		$this->gateway->sandboxAppKey      = $this->config->get('payment_globalpayments_ucp_sandbox_app_key');
+		$this->gateway->sandboxAccountName = $this->config->get('payment_globalpayments_ucp_sandbox_account_name');
 		$this->gateway->debug              = $this->config->get('payment_globalpayments_ucp_debug');
 		$this->gateway->merchantContactUrl = $this->config->get('payment_globalpayments_ucp_contact_url');
 		$this->gateway->paymentAction      = $this->config->get('payment_globalpayments_ucp_payment_action');

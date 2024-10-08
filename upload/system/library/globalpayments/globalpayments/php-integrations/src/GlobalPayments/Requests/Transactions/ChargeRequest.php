@@ -13,11 +13,11 @@ class ChargeRequest extends AbstractRequest {
 		$paymentMethod->token          = $this->getPaymentToken();
 		$paymentMethod->cardHolderName = $this->getCardHolderName();
 		$paymentTokenInfo              = $this->getPaymentTokenInfo();
-		if ( ! empty($this->requestData->mobileType)) {
+		if (!empty($this->requestData->mobileType)) {
 			$paymentMethod->mobileType = $this->requestData->mobileType;
 		}
 
-		if ( ! empty($this->requestData->threeDSecure)) {
+		if (!empty($this->requestData->threeDSecure)) {
 			$paymentMethod->threeDSecure = $this->requestData->threeDSecure;
 		}
 
@@ -30,7 +30,7 @@ class ChargeRequest extends AbstractRequest {
 		                         ->withRequestMultiUseToken($this->requestData->saveCard)
 		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
 
-		if ( ! empty($this->requestData->mobileType)) {
+		if (!empty($this->requestData->mobileType)) {
 			$builder = $builder->withModifier(TransactionModifier::ENCRYPTED_MOBILE);
 		}
 

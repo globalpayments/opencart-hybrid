@@ -64,6 +64,13 @@ class GpApiGateway extends AbstractGateway {
 	public $sandboxAppKey;
 
 	/**
+	 * Sandbox Account Name.
+	 *
+	 * @var string
+	 */
+	public $sandboxAccountName;
+
+	/**
 	 * Live App ID.
 	 *
 	 * @var string
@@ -73,10 +80,16 @@ class GpApiGateway extends AbstractGateway {
 	/**
 	 * Live App Key.
 	 *
-	 *
 	 * @var string
 	 */
 	public $appKey;
+
+	/**
+	 * Live Account Name.
+	 *
+	 * @var string
+	 */
+	public $accountName;
 
 	/**
 	 * Merchant country.
@@ -167,6 +180,7 @@ class GpApiGateway extends AbstractGateway {
 			'gatewayId'                => $this->gatewayId,
 			'appId'                    => $this->getCredentialSetting('appId'),
 			'appKey'                   => $this->getCredentialSetting('appKey'),
+			'accountName'              => $this->getCredentialSetting('accountName'),
 			'channel'                  => Channel::CardNotPresent,
 			'country'                  => $this->country,
 			'environment'              => $this->isProduction ? Environment::PRODUCTION : Environment::TEST,
@@ -305,7 +319,7 @@ CNR;
 
 	public function processPayment(RequestData $requestData) {
 		if ( ! empty($requestData->serverTransactionId)) {
-			$requestData->theeDSecure = $this->threeDSecureGetAuthenticationData($requestData);
+			$requestData->threeDSecure = $this->threeDSecureGetAuthenticationData($requestData);
 		}
 
 		return parent::processPayment($requestData);

@@ -175,6 +175,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_app_key'] = $this->config->get('payment_globalpayments_ucp_app_key');
 		}
+		if (isset($this->request->post['payment_globalpayments_ucp_account_name'])) {
+			$data['payment_globalpayments_ucp_account_name'] = $this->request->post['payment_globalpayments_ucp_account_name'];
+		} else {
+			$data['payment_globalpayments_ucp_account_name'] = $this->config->get('payment_globalpayments_ucp_account_name');
+		}
 		if (isset($this->request->post['payment_globalpayments_ucp_sandbox_app_id'])) {
 			$data['payment_globalpayments_ucp_sandbox_app_id'] = $this->request->post['payment_globalpayments_ucp_sandbox_app_id'];
 		} else {
@@ -184,6 +189,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['payment_globalpayments_ucp_sandbox_app_key'] = $this->request->post['payment_globalpayments_ucp_sandbox_app_key'];
 		} else {
 			$data['payment_globalpayments_ucp_sandbox_app_key'] = $this->config->get('payment_globalpayments_ucp_sandbox_app_key');
+		}
+		if (isset($this->request->post['payment_globalpayments_ucp_sandbox_account_name'])) {
+			$data['payment_globalpayments_ucp_sandbox_account_name'] = $this->request->post['payment_globalpayments_ucp_sandbox_account_name'];
+		} else {
+			$data['payment_globalpayments_ucp_sandbox_account_name'] = $this->config->get('payment_globalpayments_ucp_sandbox_account_name');
 		}
 		if (isset($this->request->post['payment_globalpayments_ucp_debug'])) {
 			$data['payment_globalpayments_ucp_debug'] = $this->request->post['payment_globalpayments_ucp_debug'];

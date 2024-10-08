@@ -93,6 +93,15 @@
                 {% endif %}
                 </div>
               </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-account_name">{{ label_account_name }}</label>
+                <div class="col-sm-10">
+                  <input id="input-account_name" type="text" name="payment_globalpayments_ucp_account_name"
+                         value="{{ payment_globalpayments_ucp_account_name }}" class="form-control"/>
+                  <br/>
+                  <p>{{ help_account_name }}</p>
+                </div>
+              </div>
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-sandbox_app_id">{{ label_sandbox_app_id }}</label>
                 <div class="col-sm-10">
@@ -111,6 +120,15 @@
                   {% if error_sandbox_credentials_app_key %}
                     <div class="text-danger">{{ error_sandbox_credentials_app_key }}</div>
                   {% endif %}
+                </div>
+              </div>
+              <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
+                <label class="col-sm-2 control-label" for="input-sandbox_account_name">{{ label_sandbox_account_name }}</label>
+                <div class="col-sm-10">
+                  <input id="input-sandbox_account_name" type="text" name="payment_globalpayments_ucp_sandbox_account_name"
+                         value="{{ payment_globalpayments_ucp_sandbox_account_name }}" class="form-control"/>
+                  <br/>
+                  <p>{{ help_account_name }}</p>
                 </div>
               </div>
               <div class="form-group">
@@ -210,13 +228,17 @@
 		if (isProduction) {
 			$('#input-sandbox_app_id').parents('.form-group').addClass('hidden');
 			$('#input-sandbox_app_key').parents('.form-group').addClass('hidden');
+			$('#input-sandbox_account_name').parents('.form-group').addClass('hidden');
 			$('#input-app_id').parents('.form-group').removeClass('hidden');
 			$('#input-app_key').parents('.form-group').removeClass('hidden');
+			$('#input-account_name').parents('.form-group').removeClass('hidden');
 		} else {
 			$('#input-app_id').parents('.form-group').addClass('hidden');
 			$('#input-app_key').parents('.form-group').addClass('hidden');
+			$('#input-account_name').parents('.form-group').addClass('hidden');
 			$('#input-sandbox_app_id').parents('.form-group').removeClass('hidden');
 			$('#input-sandbox_app_key').parents('.form-group').removeClass('hidden');
+			$('#input-sandbox_account_name').parents('.form-group').removeClass('hidden');
 		}
 	}
 	$('#input-enabled').on('change', this.toggleCheckboxValue.bind(this));
