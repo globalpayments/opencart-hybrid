@@ -16,6 +16,13 @@ use GlobalPayments\Api\Utils\Logging\SampleRequestLogger;
 use GlobalPayments\PaymentGatewayProvider\Requests\RequestInterface;
 
 class SdkClient implements ClientInterface {
+
+	/**
+	 * @var RequestInterface
+	 *
+	 */
+	public $request;
+
 	/**
 	 * @param RequestInterface $request
 	 *

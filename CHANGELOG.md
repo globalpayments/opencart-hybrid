@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.6.4 (10/08/24)
+
+## Latest Version - v1.6.5 (03/31/25)
+- Fixed PHP deprecated warnings
+
+## v1.6.4 (10/08/24)
 - Fixed a bug where the 3DS result was not sent in the transaction request
 - Added the possibility to configure the Transaction Processing Account Name
 

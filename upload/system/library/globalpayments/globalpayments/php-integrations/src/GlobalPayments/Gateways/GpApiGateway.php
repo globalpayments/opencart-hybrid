@@ -113,6 +113,21 @@ class GpApiGateway extends AbstractGateway {
 	public $methodNotificationUrl;
 
 	/**
+	 *
+	 *
+	 * @var string
+	 */
+	public $checkEnrollmentUrl;
+
+	/**
+	 *
+	 *
+	 * @var string
+	 */
+	public $initiateAuthenticationUrl;
+
+
+	/**
 	 * 3DS Challenge notification endpoint.
 	 *
 	 * @var string
