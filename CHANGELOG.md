@@ -4,6 +4,9 @@
 
 # Changelog
 
+## Latest Version - v1.6.6 (05/01/25)
+- Added translation for spanish (MX)
+
 ## Latest Version - v1.6.5 (03/31/25)
 - Fixed PHP deprecated warnings
 
