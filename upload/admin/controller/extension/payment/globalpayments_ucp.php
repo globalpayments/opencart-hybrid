@@ -124,6 +124,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['error_live_credentials_app_key'] = '';
 		}
+		if (isset($this->error['error_live_credentials_account_name'])) {
+			$data['error_live_credentials_account_name'] = $this->error['error_live_credentials_account_name'];
+		} else {
+			$data['error_live_credentials_account_name'] = '';
+		}
 		if (isset($this->error['error_sandbox_credentials_app_id'])) {
 			$data['error_sandbox_credentials_app_id'] = $this->error['error_sandbox_credentials_app_id'];
 		} else {
@@ -133,6 +138,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['error_sandbox_credentials_app_key'] = $this->error['error_sandbox_credentials_app_key'];
 		} else {
 			$data['error_sandbox_credentials_app_key'] = '';
+		}
+		if (isset($this->error['error_sandbox_credentials_account_name'])) {
+			$data['error_sandbox_credentials_account_name'] = $this->error['error_sandbox_credentials_account_name'];
+		} else {
+			$data['error_sandbox_credentials_account_name'] = '';
 		}
 		if (isset($this->error['error_contact_url'])) {
 			$data['error_contact_url'] = $this->error['error_contact_url'];
@@ -403,12 +413,18 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			if (empty($this->request->post['payment_globalpayments_ucp_app_key'])) {
 				$this->error['error_live_credentials_app_key'] = $this->language->get('error_live_credentials_app_key');
 			}
+			if (empty($this->request->post['payment_globalpayments_ucp_account_name'])) {
+				$this->error['error_live_credentials_account_name'] = $this->language->get('error_live_credentials_account_name');
+			}
 		} else {
 			if (empty($this->request->post['payment_globalpayments_ucp_sandbox_app_id'])) {
 				$this->error['error_sandbox_credentials_app_id'] = $this->language->get('error_sandbox_credentials_app_id');
 			}
 			if (empty($this->request->post['payment_globalpayments_ucp_sandbox_app_key'])) {
 				$this->error['error_sandbox_credentials_app_key'] = $this->language->get('error_sandbox_credentials_app_key');
+			}
+			if (empty($this->request->post['payment_globalpayments_ucp_sandbox_account_name'])) {
+				$this->error['error_sandbox_credentials_account_name'] = $this->language->get('error_sandbox_credentials_account_name');
 			}
 		}
 
@@ -557,6 +573,10 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		try {
 			$gatewayResponse = $this->globalpayments->gateway->processRequest(GetAccessTokenRequest::class, null, $ajaxData);
+			$accountNames = [];
+			foreach($gatewayResponse->accounts as $value){
+				$accountNames[] = $value->name;
+			}
 			if (!empty($gatewayResponse->token)) {
 				$response['success'] = $this->language->get('success_credentials_check');
 				unset($response['error']);
@@ -567,6 +587,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			unset($response['success']);
 			$response['error'] = $this->language->get('error_request') . ' ' . $e->getMessage();
 		}
+		$response['accountNames'] = $accountNames;
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($response));

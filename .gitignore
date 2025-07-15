@@ -4,6 +4,7 @@
 !/CHANGELOG.md
 !/metadata.xml
 !/README.md
+!/appsec.properties
 
 # Except extension directories
 !upload/

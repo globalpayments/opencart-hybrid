@@ -10,9 +10,7 @@ class GetAccessTokenRequest extends AbstractRequest {
 	public function __construct(array $config = array(), RequestData $requestData = null) {
 		parent::__construct($config, $requestData);
 
-		$this->config['permissions'] = [
-			'PMT_POST_Create_Single',
-		];
+		$this->config['permissions'] = [];
 		// @TODO: Currently we request an access token every time we load hosted fields.
 		// @TODO: Should we set access token expiration?
 		// @TODO: How we should handle an expired access token?

@@ -4,6 +4,9 @@
 
 # Changelog
 
+## Latest Version - v1.6.7 (14/07/25)
+- Added dropdown for mandatory AccountNames in admin configuration
+
 ## Latest Version - v1.6.6 (05/01/25)
 - Added translation for spanish (MX)
 

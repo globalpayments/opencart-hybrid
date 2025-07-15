@@ -75,8 +75,10 @@ $_['error_settings_ucp']                = 'Warning: Your Unified Payments settin
 $_['error_contact_url']                 = 'Please provide a Contact Url (maxLength: 256).';
 $_['error_live_credentials_app_id']     = 'Please provide Live Credentials.';
 $_['error_live_credentials_app_key']    = 'Please provide Live Credentials.';
+$_['error_live_credentials_account_name'] = 'Please provide Live Account Name.';
 $_['error_sandbox_credentials_app_id']  = 'Please provide Sandbox Credentials.';
 $_['error_sandbox_credentials_app_key'] = 'Please provide Sandbox Credentials.';
+$_['error_sandbox_credentials_account_name'] = 'Please provide Sandbox Account Name.';
 $_['error_txn_descriptor']              = 'Please provide Order Transaction Descriptor (maxLength: 25).';
 $_['error_request']                     = 'Unable to perform request. Invalid data.';
 

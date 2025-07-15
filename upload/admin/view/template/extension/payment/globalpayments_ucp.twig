@@ -96,8 +96,10 @@
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-account_name">{{ label_account_name }}</label>
                 <div class="col-sm-10">
-                  <input id="input-account_name" type="text" name="payment_globalpayments_ucp_account_name"
-                         value="{{ payment_globalpayments_ucp_account_name }}" class="form-control"/>
+                  <select name="payment_globalpayments_ucp_account_name" id="input-account_name" title="{{ help_account_name }}" class="form-control"></select>
+                  {% if error_live_credentials_account_name %}
+                    <div class="text-danger">{{ error_live_credentials_account_name }}</div>
+                  {% endif %}
                   <br/>
                   <p>{{ help_account_name }}</p>
                 </div>
@@ -122,11 +124,14 @@
                   {% endif %}
                 </div>
               </div>
+
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-sandbox_account_name">{{ label_sandbox_account_name }}</label>
                 <div class="col-sm-10">
-                  <input id="input-sandbox_account_name" type="text" name="payment_globalpayments_ucp_sandbox_account_name"
-                         value="{{ payment_globalpayments_ucp_sandbox_account_name }}" class="form-control"/>
+                <select name="payment_globalpayments_ucp_sandbox_account_name" id="input-sandbox_account_name" title="{{ help_credentials_check }}" class="form-control"></select>
+                  {% if error_sandbox_credentials_account_name %}
+                    <div class="text-danger">{{ error_sandbox_credentials_account_name }}</div>
+                  {% endif %}
                   <br/>
                   <p>{{ help_account_name }}</p>
                 </div>
@@ -139,6 +144,7 @@
                   <p>{{ help_for_credentials_check }}</p>
                 </div>
               </div>
+
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-debug"><span data-toggle="tooltip" title="{{ help_debug }}">{{ label_debug }}</span></label>
                 <div class="col-sm-10 checkbox">
@@ -293,6 +299,30 @@
 				clicked_button.button('reset');
 			},
 			success: function (json) {
+        if(environment == 1){
+            var accountSelected = '{{ payment_globalpayments_ucp_account_name}}';
+        }else{
+            var accountSelected = '{{ payment_globalpayments_ucp_sandbox_account_name}}';
+        }
+        if(environment == 1){
+          $('#input-account_name').empty();
+          $.each(json.accountNames,function(a,values){
+            $('#input-account_name').append($('<option >', { value: values, text: values }));
+          });
+
+          if(accountSelected != ''){
+              $('#input-account_name').val(accountSelected);
+          }
+        }else{
+          $('#input-sandbox_account_name').empty();
+          $.each(json.accountNames,function(a,values){
+            $('#input-sandbox_account_name').append($('<option >', { value: values, text: values }));
+          });
+
+          if(accountSelected != ''){
+              $('#input-sandbox_account_name').val(accountSelected);
+          }
+        }
 				if (json['error']) {
 					$('#table-alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '</div>');
 				}
@@ -303,5 +333,10 @@
 			}
 		})
 	})
+
+  $(document).ready(function() {
+    $('#button-credentials-check').trigger('click');
+  });
+
 </script>
 {{ footer }}
