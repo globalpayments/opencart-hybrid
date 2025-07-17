@@ -4,6 +4,10 @@
 
 # Changelog
 
+## Latest Version - v1.6.8 (16/07/25)
+### Bug Fixes:
+UI error and GPAPI portal link in admin
+
 ## Latest Version - v1.6.7 (14/07/25)
 - Added dropdown for mandatory AccountNames in admin configuration
 

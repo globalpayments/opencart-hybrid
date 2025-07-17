@@ -54,7 +54,7 @@ $_['help_payment_action']        = 'Choose whether you wish to capture funds imm
 $_['help_allow_card_saving']     = 'Note: to use the card saving feature, you must have multi-use token support enabled on your account. Please contact <a href="mailto:%s?Subject=OpenCart%%20Card%%20Saving%%20Option">support</a> with any questions regarding this option.';
 $_['help_txn_descriptor']        = 'During a Capture or Authorize payment action, this value will be passed along as the transaction-specific descriptor listed on the customer\'s bank account (maxLength: 25).';
 $_['help_txn_descriptor_note']   = 'Please contact <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">support</a> with any questions regarding this option.';
-$_['help_account_name']          = 'Specify which account to use when processing a transaction. Default account will be used if this is not specified.';
+$_['help_account_name']          = 'Specify which account to use when processing a transaction. Default account will be used if this is not specified. <br>For assistance locating your account name, please contact our <a href="https://developer.globalpay.com/support/integration-support" target="_blank">Integration Support</a> Team based on location';
 
 // Entry
 $_['entry_enabled']                  = 'Enable Gateway';

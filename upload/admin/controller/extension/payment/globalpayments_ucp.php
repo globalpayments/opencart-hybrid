@@ -571,9 +571,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$ajaxData['appKey'] = $this->request->post['app_key'];
 		$ajaxData['environment'] = $environment;
 
+		$accountNames = [];
 		try {
 			$gatewayResponse = $this->globalpayments->gateway->processRequest(GetAccessTokenRequest::class, null, $ajaxData);
-			$accountNames = [];
 			foreach($gatewayResponse->accounts as $value){
 				$accountNames[] = $value->name;
 			}
