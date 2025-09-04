@@ -4,9 +4,16 @@
 
 # Changelog
 
+## Latest Version - v1.7.0 (04/09/25)
+### Enhancements:
+- Added Blik and open banking payment method functionality for Poland merchants
+- Various security updates
+### Bug Fixes:
+- Fixed gateway request format error
+
 ## Latest Version - v1.6.8 (16/07/25)
 ### Bug Fixes:
-UI error and GPAPI portal link in admin
+- UI error and GPAPI portal link in admin
 
 ## Latest Version - v1.6.7 (14/07/25)
 - Added dropdown for mandatory AccountNames in admin configuration

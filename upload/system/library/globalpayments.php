@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.6.8';
+	const VERSION = '1.7.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -95,6 +95,8 @@ class GlobalPayments {
 		 * All these settings should be provided through the Admin Dashboard.
 		 */
 		$this->gateway->enabled            = $this->config->get('payment_globalpayments_ucp_enabled');
+		$this->gateway->enabledBlik        = $this->config->get('payment_globalpayments_ucp_enabled_blik');
+		$this->gateway->enabledOpenbanking = $this->config->get('payment_globalpayments_ucp_enabled_openbanking');
 		$this->gateway->title              = $this->config->get('payment_globalpayments_ucp_title');
 		$this->gateway->isProduction       = $this->config->get('payment_globalpayments_ucp_is_production');
 		$this->gateway->appId              = $this->config->get('payment_globalpayments_ucp_app_id');

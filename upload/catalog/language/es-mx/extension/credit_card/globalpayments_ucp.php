@@ -28,4 +28,4 @@ $_['error_default_card']     = 'Ocurrió un error a la hora de configurar su Tar
 $_['error_txn_not_verified'] = 'No se pudo verificar su tarjeta';
 
 // JS Library version
-$_['js_lib_version'] = '3.0.11';
+$_['js_lib_version'] = '4.1.11';

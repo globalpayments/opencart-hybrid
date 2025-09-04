@@ -87,8 +87,14 @@ class Paypal extends AbstractPaymentMethod {
 		$queryString = $_SERVER['QUERY_STRING'];
 		if (!empty($queryString) && strpos($queryString, 'paypalReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('paypalReturn&amp;?', 'processPaypalReturn&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-			exit;
+			
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
 		}
 	}
 
@@ -98,8 +104,14 @@ class Paypal extends AbstractPaymentMethod {
 		$queryString = $_SERVER['QUERY_STRING'];
 		if (!empty($queryString) && strpos($queryString, 'paypalCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('paypalCancel&amp;?', 'processPaypalCancel&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-			exit;
+			
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
 		}
 	}
 }

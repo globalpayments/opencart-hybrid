@@ -27,7 +27,7 @@ class ChargeRequest extends AbstractRequest {
 		                         ->withDescription($this->requestData->order->description)
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
-		                         ->withRequestMultiUseToken($this->requestData->saveCard)
+		                         ->withRequestMultiUseToken((int)$this->requestData->saveCard)
 		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
 
 		if (!empty($this->requestData->mobileType)) {

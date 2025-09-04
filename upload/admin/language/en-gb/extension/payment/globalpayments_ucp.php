@@ -40,6 +40,8 @@ $_['label_allow_card_saving']     = 'Allow Card Saving';
 $_['label_txn_descriptor']        = 'Order Transaction Descriptor';
 $_['label_enable_three_d_secure'] = 'Enable 3DSecure';
 $_['label_sort_order']            = 'Sort Order';
+$_['label_blik']                  = 'Enable Blik Payment';
+$_['label_open_banking']          = 'Enable Open Banking Payment';
 
 // Help
 $_['help_title']                 = 'This controls the title which the user sees during checkout.';
@@ -88,3 +90,7 @@ $_['success_credentials_check'] = 'Your credentials were successfully confirmed!
 
 // Alert
 $_['alert_credentials_check'] = 'Please be sure that you have filled AppId and AppKey fields!';
+
+$_['text_success_full_refund']               = 'Payment fully refunded successfully!';
+$_['text_success_partial_refund']            = 'Payment partially refunded successfully!';
+$_['text_refunded_comment']                  = 'Order has been fully refunded .';

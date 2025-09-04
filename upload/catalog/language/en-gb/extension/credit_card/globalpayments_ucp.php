@@ -28,4 +28,4 @@ $_['error_default_card']     = 'Something went wrong while setting your GlobalPa
 $_['error_txn_not_verified'] = 'Your card could not be verified.';
 
 // JS Library version
-$_['js_lib_version'] = '3.0.11';
+$_['js_lib_version'] = '4.1.11';

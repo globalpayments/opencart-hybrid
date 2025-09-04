@@ -28,4 +28,4 @@ $_['error_default_card']     = 'Une erreur est survenue lors de la configuration
 $_['error_txn_not_verified'] = 'Votre carte n\'a pas pu être vérifiée.';
 
 // JS Library version
-$_['js_lib_version'] = '3.0.11';
+$_['js_lib_version'] = '4.1.11';

@@ -156,6 +156,34 @@ class GpApiGateway extends AbstractGateway {
 	public $enableThreeDSecure = true;
 
 	/**
+     * States whether the Blik payment method should be enabled
+     *
+     * @var bool
+     */
+    public $enabledBlik;
+
+	/**
+     * States whether the Open Banking payment method should be enabled
+     *
+     * @var bool
+     */
+    public $enabledOpenbanking;
+
+	/**
+	 * Base country for payment method eligibility checks
+	 *
+	 * @var string
+	 */
+	public $baseCountry;
+
+	/**
+	 * Base currency for payment method eligibility checks
+	 *
+	 * @var string
+	 */
+	public $baseCurrency;
+
+	/**
 	 * Authentication statuses
 	 */
 	public $threeDSecureAuthenticationStatus = array(
@@ -171,6 +199,10 @@ class GpApiGateway extends AbstractGateway {
 	 * @throws \GlobalPayments\Api\Entities\Exceptions\ApiException
 	 */
 	public function getFrontendGatewayOptions() {
+		// Check if BLIK and Open Banking should be enabled based on country and currency
+		$enableBlik = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledBlik : 0;
+		$enableOpenbanking = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledOpenbanking : 0;
+		
 		return array(
 			'accessToken'           => $this->getAccessToken(),
 			'apiVersion'            => GpApiConnector::GP_API_VERSION,
@@ -180,6 +212,8 @@ class GpApiGateway extends AbstractGateway {
 			'fieldValidation' => [
 				'enabled' => true,
 			],
+			'enableBlik' => $enableBlik,
+			'enableOpenbanking' => $enableOpenbanking,
 			'language' => $this->language,
 		);
 	}
@@ -338,5 +372,19 @@ CNR;
 		}
 
 		return parent::processPayment($requestData);
+	}
+
+	/**
+	 * Check if Polish payment methods (BLIK and Open Banking) should be enabled
+	 * Based on base country being Poland (PL) and base currency being PLN
+	 *
+	 * @return bool
+	 */
+	private function shouldEnablePolishPaymentMethods(): bool {
+
+		if (!empty($this->baseCountry) && !empty($this->baseCurrency)) {
+			return ($this->baseCountry === 'PL' && $this->baseCurrency === 'PLN');
+		}
+		return false;
 	}
 }

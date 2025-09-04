@@ -115,8 +115,14 @@ class OpenBanking extends AbstractPaymentMethod
 		$queryString = $_SERVER['QUERY_STRING'];
 		if (!empty($queryString) && strpos($queryString, 'openBankingReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingReturn&amp;?', 'processOpenBankingReturn&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-			exit;
+
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
 		}
 	}
 
@@ -126,8 +132,14 @@ class OpenBanking extends AbstractPaymentMethod
 		$queryString = $_SERVER['QUERY_STRING'];
 		if (!empty($queryString) && strpos($queryString, 'openBankingCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingCancel&amp;?', 'processOpenBankingCancel&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-			exit;
+
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
 		}
 	}
 }

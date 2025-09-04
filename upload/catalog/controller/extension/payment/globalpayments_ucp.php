@@ -39,6 +39,22 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$data['stored_payment_methods'] = null;
 		}
 
+		// Get store currency and country
+		$store_currency = $this->config->get('config_currency');
+		$store_country_id = $this->config->get('config_country_id');
+
+		// Get country ISO code from country ID
+		$this->load->model('localisation/country');
+		$country_info = $this->model_localisation_country->getCountry($store_country_id);
+		$store_country_iso = isset($country_info['iso_code_2']) ? $country_info['iso_code_2'] : '';
+
+		// Set base country and currency in the gateway before getting secure payment params
+		$this->globalpayments->gateway->baseCountry = $store_country_iso;
+		$this->globalpayments->gateway->baseCurrency = $store_currency;
+
+		$data['base_currency'] = $store_currency;
+		$data['base_country']  = $store_country_iso;
+
 		$data['environment_indicator']                             = $this->globalpayments->gateway->getEnvironmentIndicator('alert alert-danger');
 		$data['secure_payment_fields']                             = $this->globalpayments->gateway->getCreditCardFormatFields();
 		$data['globalpayments_secure_payment_fields_params']       = $this->globalpayments->gateway->securePaymentFieldsParams();

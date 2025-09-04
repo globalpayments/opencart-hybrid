@@ -163,6 +163,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_enabled'] = $this->config->get('payment_globalpayments_ucp_enabled');
 		}
+		if (isset($this->request->post['payment_globalpayments_ucp_enabled_blik'])) {
+			$data['payment_globalpayments_ucp_enabled_blik'] = $this->request->post['payment_globalpayments_ucp_enabled_blik'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enabled_blik'] = 0;
+		} else {
+			$data['payment_globalpayments_ucp_enabled_blik'] = $this->config->get('payment_globalpayments_ucp_enabled_blik');
+		}
+		if (isset($this->request->post['payment_globalpayments_ucp_enabled_openbanking'])) {
+			$data['payment_globalpayments_ucp_enabled_openbanking'] = $this->request->post['payment_globalpayments_ucp_enabled_openbanking'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enabled_openbanking'] = 0;
+		} else {
+			$data['payment_globalpayments_ucp_enabled_openbanking'] = $this->config->get('payment_globalpayments_ucp_enabled_openbanking');
+		}
 		if ( isset($this->request->post['payment_globalpayments_ucp_title']) ) {
 			$data['payment_globalpayments_ucp_title'] = $this->request->post['payment_globalpayments_ucp_title'];
 		} else {
@@ -229,6 +243,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_sort_order'] = $this->config->get('payment_globalpayments_ucp_sort_order') ?? 0;
 		}
+
 		// Payment Tab
 		if (isset($this->request->post['payment_globalpayments_ucp_payment_action'])) {
 			$data['payment_globalpayments_ucp_payment_action'] = $this->request->post['payment_globalpayments_ucp_payment_action'];
@@ -379,7 +394,30 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['footer']      = $this->load->controller('common/footer');
 		$data['user_token']  = $this->session->data['user_token'];
 
+		// Add base country and currency for BLIK and Open Banking conditions
+		$this->load->model('setting/setting');
+		$settings = $this->model_setting_setting->getSetting('config');
+		$data['base_country'] = isset($settings['config_country_id']) ? $this->getCountryIsoCode($settings['config_country_id']) : '';
+		$data['base_currency'] = $this->config->get('config_currency');
+
 		$this->response->setOutput($this->load->view('extension/payment/globalpayments_ucp', $data));
+	}
+
+	/**
+	 * Get country ISO code from country ID
+	 *
+	 * @param int $country_id
+	 * @return string
+	 */
+	private function getCountryIsoCode($country_id) {
+		if (empty($country_id)) {
+			return '';
+		}
+
+		$this->load->model('localisation/country');
+		$country = $this->model_localisation_country->getCountry($country_id);
+
+		return isset($country['iso_code_2']) ? $country['iso_code_2'] : '';
 	}
 
 	public function validate() {
@@ -643,10 +681,39 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 					break;
 				case AbstractGateway::REFUND:
 					$gatewayResponse     = $this->globalpayments->gateway->processRefund($requestData);
-					$response['success'] = (empty($requestData->order->amount)) ? $this->language->get('text_success_full_refund') : $this->language->get('text_success_partial_refund');
+					// Check if this is a complete refund to update order status
+					// Get the original order total to compare with refund amount
+					$this->load->model('sale/order');
+					$orderInfo = $this->model_sale_order->getOrder($this->request->post['order_id']);
+                    $orderTotal = $this->currency->format($orderInfo['total'], $orderInfo['currency_code'], $orderInfo['currency_value'], false);
+					$isCompleteRefund = false;
+                    $this->load->model('extension/payment/globalpayments_ucp');
+                    $transactions = $this->model_extension_payment_globalpayments_ucp->getTransactions($this->request->post['order_id']);
+                    $totalamountrefunded = 0;
+                    foreach ($transactions as $transaction) {
+                        if ($transaction['payment_action'] === 'refund') {
+                            $totalamountrefunded += (float) $transaction['amount'];
+                        }
+                    }
+                    $totalamountrefunded += (float) $amount;
+                    if ($orderInfo) {
+						$isCompleteRefund = (float) $totalamountrefunded >= (float) $orderTotal;
+					}
+
+					if ($isCompleteRefund) {
+						// Update order status to 11 (Refunded) for complete refunds
+						$this->completeStatusUpdate((int) $this->request->post['order_id']);
+						$response['success'] = $this->language->get('text_success_full_refund');
+					} else {
+                        $this->orderHistoryUpdate((int) $this->request->post['order_id']);
+						$response['success'] = $this->language->get('text_success_partial_refund');
+
+					}
 					break;
 				case AbstractGateway::REVERSE:
 					$gatewayResponse     = $this->globalpayments->gateway->processReverse($requestData);
+					// Update order status to 11 (Refunded) for complete refunds
+					$this->completeStatusUpdate((int) $this->request->post['order_id']);
 					$response['success'] = $this->language->get('text_success_reverse');
 					break;
 				case AbstractGateway::GET_TRANSACTIONS_DETAILS:
@@ -666,6 +733,29 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($response));
+	}
+
+	private function orderHistoryUpdate($orderId): void
+	{
+		$orderStatusId = 2; // processing
+		$comment = "Partially refund done";
+		$notify = 1; // true
+
+		// Add order history entry
+		$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', comment = '" . $this->db->escape($comment) . "', date_added = NOW()");
+	}
+
+	private function completeStatusUpdate($orderId): void
+	{
+		$orderStatusId = 11; // Refunded status
+		$comment = $this->language->get('text_refunded_comment');
+		$notify = 1; // true
+
+		// Update order status
+		$this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = '" . (int)$orderStatusId . "', date_modified = NOW() WHERE order_id = '" . (int)$orderId . "'");
+
+		// Add order history entry
+		$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', comment = '" . $this->db->escape($comment) . "', date_added = NOW()");
 	}
 
 	private function handleInitializedTransactions($orderId, $transaction, $transactions_count, $should_refund) {

@@ -165,7 +165,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="col-sm-2 control-label" for="input-enable-threeDSecure">{{ label_enable_three_d_secure }}</label>
+                <label class="col-sm-2 control-label" for="input-enable-threeDSecure"> {{ label_enable_three_d_secure }}</label>
                 <div class="col-sm-10 checkbox">
                   <label>
                     <input id="input-enable-threeDSecure" type="checkbox" name="payment_globalpayments_ucp_enable_three_d_secure"
@@ -179,6 +179,30 @@
                   <input type="text" name="payment_globalpayments_ucp_sort_order" value="{{ payment_globalpayments_ucp_sort_order }}" placeholder="{{ label_sort_order }}" id="input-sort-order" class="form-control" />
                 </div>
               </div>
+              {% if base_country == 'PL' and base_currency == 'PLN' %}
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-enabled-blik">{{ label_blik }}</label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-enabled-blik" type="checkbox" name="payment_globalpayments_ucp_enabled_blik"
+                           value="{{ payment_globalpayments_ucp_enabled_blik }}" {% if (payment_globalpayments_ucp_enabled_blik==1) %} checked{% endif %} /> {{ label_blik }}
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-enabled-openbanking"> {{ label_open_banking }}</label>
+                <div class="col-sm-10 checkbox">
+                  <label>
+                    <input id="input-enabled-openbanking" type="checkbox" name="payment_globalpayments_ucp_enabled_openbanking"
+                           value="{{ payment_globalpayments_ucp_enabled_openbanking }}" {% if (payment_globalpayments_ucp_enabled_openbanking==1) %} checked{% endif %} /> {{ label_open_banking }}
+                  </label>
+                </div>
+              </div>
+              {% else %}
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i> BLIK and Open Banking payment methods are only available for stores with base country set to Poland (PL) and base currency set to PLN.
+              </div>
+              {% endif %}
             </div>
             <div class="tab-pane" id="tab-payment">
               <div class="form-group">
@@ -248,11 +272,25 @@
 		}
 	}
 	$('#input-enabled').on('change', this.toggleCheckboxValue.bind(this));
+  {% if base_country == 'PL' and base_currency == 'PLN' %}
+  $('#input-enabled-blik').on('change', this.toggleCheckboxValue.bind(this));
+  $('#input-enabled-openbanking').on('change', this.toggleCheckboxValue.bind(this));
+  {% endif %}
 	$('#input-enable-threeDSecure').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-is_production').on('change', this.toggleCredentialsSettings.bind(this));
 	$('#input-debug').on('change', this.toggleCheckboxValue.bind(this));
 	$('#input-allow_card_saving').on('change', this.toggleCheckboxValue.bind(this));
+
+	// Reset all account dropdowns when any app id or app key changes
+	$('#input-sandbox_app_id, #input-sandbox_app_key').on('input keyup change', function() {
+		$('#input-sandbox_account_name').empty().val('').trigger('change');
+	});
+
+	// Reset all account dropdowns when any app id or app key changes
+	$('#input-app_id, #input-app_key').on('input keyup change', function() {
+		$('#input-account_name').empty().val('').trigger('change');
+	});
 
 	function isLiveMode() {
 		return $('#input-is_production').is(':checked');

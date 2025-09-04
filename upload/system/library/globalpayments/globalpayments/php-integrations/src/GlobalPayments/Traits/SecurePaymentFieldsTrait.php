@@ -65,15 +65,7 @@ SW;
 		$fields      = $this->securePaymentFieldsConfiguration();
 		$result      = array();
 
-		foreach ($fields as $key => $field) {
-			$result[$key] = sprintf(
-				$fieldFormat,
-				$this->gatewayId,
-				$field['class'],
-				$field['label'],
-				$field['messages']['validation']
-			);
-		}
+		$result['payment-form'] = sprintf($fieldFormat, $this->gatewayId, 'payment-form', '', '');
 
 		return $result;
 	}
@@ -93,7 +85,6 @@ SW;
 	public function securePaymentFieldHtmlFormat() {
 		return (
 		'<div class="globalpayments %1$s %2$s">
-            <label for="%1$s-%2$s">%3$s&nbsp;<span class="required">*</span></label>
             <div id="%1$s-%2$s"></div>
             <ul class="globalpayments-validation-error" style="display: none;">
                 <li>%4$s</li>
@@ -110,38 +101,9 @@ SW;
 	 */
 	public function securePaymentFieldsConfiguration() {
 		return array(
-			'card-number-field' => array(
-				'class'       => 'card-number',
-				'label'       => $this->textCardNumberLabel,
-				'placeholder' => '•••• •••• •••• ••••',
-				'messages'    => array(
-					'validation' => $this->errorCardNumber,
-				),
-			),
-			'card-expiry-field' => array(
-				'class'       => 'card-expiration',
-				'label'       => $this->textCardExpirationLabel,
-				'placeholder' => 'MM / YYYY',
-				'messages'    => array(
-					'validation' => $this->errorCardExpiration,
-				),
-			),
-			'card-cvv-field'    => array(
-				'class'       => 'card-cvv',
-				'label'       => $this->textCardCvvLabel,
-				'placeholder' => '•••',
-				'messages'    => array(
-					'validation' => $this->errorCardCvv,
-				),
-			),
-			'card-holder-field'    => array(
-				'class'       => 'card-holder',
-				'label'       => $this->textCardHolderLabel,
-				'placeholder' => 'Jane Smith',
-				'messages'    => array(
-					'validation' => $this->errorCardHolder,
-				),
-			),
+			'payment-form' => array(
+				'class'       => 'payment-form'
+			)
 		);
 	}
 

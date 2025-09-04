@@ -122,22 +122,34 @@ abstract class AbstractBuyNowPayLater extends AbstractPaymentMethod {
 	public function bnplReturn()
 	{
 		$currentUrl = $_SERVER['REQUEST_URI'];
-  	 	$queryString = $_SERVER['QUERY_STRING'];
-  	  	if (!empty($queryString) && strpos($queryString, 'bnplReturn&amp;?') !== false) {
+		$queryString = $_SERVER['QUERY_STRING'];
+		if (!empty($queryString) && strpos($queryString, 'bnplReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('bnplReturn&amp;?', 'processBnplReturn&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-	 		exit;
-  	  	}
+			
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
+		}
 	}
 
 	public function bnplCancel()
 	{
 		$currentUrl = $_SERVER['REQUEST_URI'];
-  	 	$queryString = $_SERVER['QUERY_STRING'];
-  	  	if (!empty($queryString) && strpos($queryString, 'bnplCancel&amp;?') !== false) {
+		$queryString = $_SERVER['QUERY_STRING'];
+		if (!empty($queryString) && strpos($queryString, 'bnplCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('bnplCancel&amp;?', 'processBnplCancel&', $currentUrl);
-			header('Location: ' . $modifiedUrl);
-	 		exit;
-  	  	}
+
+			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
+			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+				header('Location: ' . $sanitizedUrl);
+				exit;
+			} else {
+				throw new \Exception('Invalid redirect URL.');
+			}
+		}
 	}
 }

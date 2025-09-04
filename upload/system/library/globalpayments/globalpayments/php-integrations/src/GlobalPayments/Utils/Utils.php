@@ -78,6 +78,6 @@ class Utils {
 	}
 
 	public static function getJsLibVersion() {
-		return '3.0.11';
+		return '4.1.11';
 	}
 }

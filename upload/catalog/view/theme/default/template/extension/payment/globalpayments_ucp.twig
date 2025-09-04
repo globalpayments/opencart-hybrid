@@ -11,9 +11,6 @@
   {% endif %}
   <input type="hidden" name="{{ gateway.gatewayId }}[paymentType]" value="{{ payment_tab_option }}" id="tab-option" />
   <div class="globalpayments" style="width: 600px; margin: auto">
-  {% if not gateway.isProduction %}
-    {{ environment_indicator }}
-  {% endif %}
     <fieldset id="{{ gateway.gatewayId }}-payment-token"{% if payment_tab_option != 'saved' %} style="display: none"{% endif %}>
     {% for stored_payment_method in stored_payment_methods %}
       <div class="radio">
@@ -60,6 +57,30 @@
   .globalpayments-validation-error, .globalpayments-sandbox-warning {
     list-style:none outside;
   }
+
+  /* Styles for disabled div during AJAX calls */
+  .disabled-during-ajax {
+    position: relative !important;
+  }
+
+  .disabled-during-ajax * {
+    cursor: not-allowed !important;
+  }
+
+  #ajax-overlay {
+    cursor: wait !important;
+  }
+
+  /* Loading animation for better UX */
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+  }
+
+  .disabled-during-ajax {
+    animation: pulse 1.5s infinite;
+  }
 </style>
 <script type="text/javascript">
 	$('body').on('click', '.globalpayments-tab-link', function(event) {
@@ -86,6 +107,32 @@
 		'https://js.globalpay.com/{{ js_lib_version }}/globalpayments.js', function () {
 			$.getScript('catalog/view/javascript/globalpayments-3ds.min.js');
 			$.getScript('https://malsup.github.io/jquery.blockUI.js');
+
+			/**
+			 * Helper functions for managing div states during AJAX calls
+			 */
+			function disablePaymentForm() {
+				$('#globalpayments-payment-form').addClass('disabled-during-ajax');
+				$('#globalpayments-payment-form').css({
+					'pointer-events': 'none',
+					'opacity': '0.6',
+					'position': 'relative'
+				});
+
+				// Add overlay to prevent interactions
+				if (!$('#ajax-overlay').length) {
+					$('#globalpayments-payment-form').append('<div id="ajax-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.3); z-index: 1000; cursor: wait;"></div>');
+				}
+			}
+
+			function enablePaymentForm() {
+				$('#globalpayments-payment-form').removeClass('disabled-during-ajax');
+				$('#globalpayments-payment-form').css({
+					'pointer-events': 'auto',
+					'opacity': '1'
+				});
+				$('#ajax-overlay').remove();
+			}
 
 			/**
 			 * Frontend code for Global Payments
@@ -183,17 +230,57 @@
 				 * @returns
 				 */
 				renderPaymentFields: function () {
-					if ($('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0) {
-						console.log('Warning! Payment fields cannot be loaded.');
-						return;
+					if (!this.gatewayOptions.accessToken) {
+						if (
+							$('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0
+						) {
+							return;
+						}
 					}
 					if (!(window).GlobalPayments.configure) {
 						console.log('Warning! Payment fields cannot be loaded (JS).');
 						return;
 					}
 
+					var gatewayConfig = this.gatewayOptions;
 					if (this.gatewayOptions.error) {
 						this.showPaymentError(this.gatewayOptions.message);
+					}
+
+					let acceptBlik = (gatewayConfig.enableBlik === 1) ? true : false;
+					let acceptOpenBanking = (gatewayConfig.enableOpenbanking === 1) ? true : false;
+					let apmsEnabled = (acceptBlik || acceptOpenBanking) ? true : false;
+					console.log('{{base_currency}}','{{base_country}}');
+					var base_currency = '{{base_currency}}';
+					var base_country  = '{{base_country}}';
+					if (apmsEnabled) {
+						gatewayConfig.apms = {
+							currencyCode: base_currency,
+							countryCode: base_country,
+							allowedCardNetworks: [
+								GlobalPayments.enums.CardNetwork.Visa,
+								GlobalPayments.enums.CardNetwork.Mastercard,
+								GlobalPayments.enums.CardNetwork.Amex,
+								GlobalPayments.enums.CardNetwork.Discover
+							],
+							nonCardPayments: {
+								allowedPaymentMethods: [{
+									provider: GlobalPayments.enums.ApmProviders.Blik,
+									enabled: true
+								}]
+							}
+						};
+
+						// using push because Open Banking doesn't respect the 'enabled' property currently
+						if (acceptOpenBanking) {
+							gatewayConfig.apms.nonCardPayments.allowedPaymentMethods.push(
+								{
+								provider: GlobalPayments.enums.ApmProviders.OpenBanking,
+								enabled: acceptOpenBanking,
+								category: "TBD"
+								}
+							)
+						}
 					}
 
 					// ensure the submit button's parent is on the page as this is added
@@ -202,13 +289,283 @@
 						this.createSubmitButtonTarget(this.id);
 					}
 
-					(window).GlobalPayments.configure(this.gatewayOptions);
-					this.cardForm = (window).GlobalPayments.ui.form(
-						{
-							fields: this.getFieldConfiguration(),
-							styles: this.getStyleConfiguration()
+					(window).GlobalPayments.configure(gatewayConfig);
+					// Utilize Drop-in UI for GP API
+					if (gatewayConfig.accessToken) {
+						var formConfig = {
+							style: "gp-default"
+						};
+
+						// Only add amount and apms when BLIK is enabled
+						if (apmsEnabled) {
+							formConfig.amount = this.order.amount ? this.order.amount : '0';
+							formConfig.apms = [];
 						}
-					);
+						this.cardForm = GlobalPayments.creditCard.form(
+							'#' + this.id + '-' + this.fieldOptions['payment-form'].class,
+							formConfig
+						)
+					} else {
+						this.cardForm = GlobalPayments.ui.form(
+							{
+								fields: this.getFieldConfiguration(),
+								styles: this.getStyleConfiguration()
+							}
+						);
+					}
+
+						// To initiate blik transaction process
+					this.cardForm.on(GlobalPayments.enums.ApmEvents.PaymentMethodSelection, (paymentProviderData, event) => {
+							const {
+								provider,
+								countryCode,
+								currencyCode,
+								bankName,
+								acquirer
+							} = paymentProviderData;
+							console.log('Selected provider: ' + provider);
+
+							// Prevent any default form submission behavior for BLIK
+							if (provider === GlobalPayments.enums.ApmProviders.Blik) {
+								console.log('inside blik');
+								// Prevent default form submission if event is available
+								if (event) {
+									event.preventDefault();
+									event.stopPropagation();
+								}
+								// Also prevent any form submission on the page
+								$('form').off('submit.blik').on('submit.blik', function(e) {
+									console.log('Form submission prevented for BLIK payment');
+									e.preventDefault();
+									e.stopImmediatePropagation();
+									return false;
+								});
+							}
+
+							if (provider === GlobalPayments.enums.ApmProviders.OpenBanking) {
+								// Prevent default form submission if event is available
+								if (event) {
+									event.preventDefault();
+									event.stopPropagation();
+								}
+								// Also prevent any form submission on the page
+								$('form').off('submit.open-banking').on('submit.open-banking', function(e) {
+									console.log('Form submission prevented for Open Banking payment');
+									e.preventDefault();
+									e.stopImmediatePropagation();
+									return false;
+								});
+							}
+
+							let detail = {};
+
+							switch (provider) {
+								case GlobalPayments.enums.ApmProviders.Blik:
+									console.log('BLIK payment method selected');
+
+									// IMPORTANT: Do NOT call helper.placeOrder() here as it causes form submission
+									// Make AJAX call to process Blik transaction
+									var ajaxUrl = 'index.php?route=extension/payment/apm_middleware/confirm';
+									var ajaxData = {
+										payment_method: 'blik',
+										gateway_id: this.id,
+										action: 'initiate_sale'
+									};
+
+									// Add order data if available
+									if (this.order) {
+										if (this.order.amount) ajaxData.amount = this.order.amount;
+										if (this.order.currency) ajaxData.currency = this.order.currency;
+									}
+									console.log('BLIK AJAX Data:', ajaxData);
+
+									// Show AJAX loader and disable entire payment form
+									$('#globalpayments-loading').show();
+									disablePaymentForm();
+
+									$.ajax({
+										url: ajaxUrl,
+										type: 'POST',
+										dataType: 'json',
+										data: ajaxData,
+										success: function(response_data) {
+											var response = JSON.parse(JSON.stringify(response_data));
+											console.log(response);
+											if (response.success && response.redirect_url) {
+													// Create detail object with actual redirect URL from response
+													const detail = {
+														provider,
+														redirect_url: response.redirect_url,
+													};
+													// Dispatch the custom event with actual redirect URL
+													const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+														detail: detail
+													});
+													window.dispatchEvent(merchantCustomEventProvideDetails);
+
+													console.log('Redirecting to:', response.redirect_url);
+
+											} else {
+												// Handle error response
+												var errorMessage = 'Payment processing failed. Please try again.';
+												if (response.error_message) {
+													errorMessage = response.error_message;
+												} else if (response.message) {
+													errorMessage = response.message;
+												}
+
+												// Show error message using jQuery to create alert
+												var $form = $('#globalpayments-payment-form');
+												$('.globalpayments-checkout-error').remove();
+												$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + errorMessage + '</div>');
+												$('html, body').animate({
+													scrollTop: ($form.offset().top - 100)
+												}, 1000);
+
+												console.error('Payment Error:', response);
+											}
+										},error: function(xhr, status, error) {
+											// Handle AJAX error
+											var errorMessage = 'Connection error occurred. Please check your internet connection and try again.';
+											if (xhr.responseJSON && xhr.responseJSON.message) {
+												errorMessage = xhr.responseJSON.message;
+											}
+
+											// Show error message using jQuery to create alert
+											var $form = $('#globalpayments-payment-form');
+											$('.globalpayments-checkout-error').remove();
+											$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + errorMessage + '</div>');
+											$('html, body').animate({
+												scrollTop: ($form.offset().top - 100)
+											}, 1000);
+
+											console.error('AJAX Error:', xhr, status, error);
+										},
+										complete: function() {
+											// Hide AJAX loader and re-enable button
+											$('#globalpayments-loading').hide();
+											enablePaymentForm();
+										}
+									});
+
+									// Return early to prevent further processing
+									return;
+									break;
+								case GlobalPayments.enums.ApmProviders.OpenBanking:
+									console.log('bankName',bankName);
+									if(!bankName){
+										detail = {
+											provider,
+											redirect_url: "https://fluentlenium.com/",
+											countryCode,
+											currencyCode,
+										}
+									} else {
+
+											$('#globalpayments-loading').show();
+											disablePaymentForm();
+											// IMPORTANT: Do NOT call helper.placeOrder() here as it causes form submission
+											// Make AJAX call to process Open Banking transaction
+											var self = this;
+											var ajaxUrl = 'index.php?route=extension/payment/apm_middleware/confirm';
+											var ajaxData = {
+												payment_method: 'open_banking',
+												gateway_id: this.id,
+												action: 'initiate_sale'
+											};
+
+											// Add order data if available
+											if (this.order) {
+												if (this.order.amount) ajaxData.amount = this.order.amount;
+												if (this.order.currency) ajaxData.currency = this.order.currency;
+											}
+											ajaxData.bank = bankName;
+											console.log('Open Banking AJAX Data:', ajaxData);
+
+											$.ajax({
+												url: ajaxUrl,
+												type: 'POST',
+												dataType: 'json',
+												data: ajaxData,
+												success: function(response_data) {
+													
+													var response = JSON.parse(JSON.stringify(response_data));
+													console.log(response);
+										
+													if (response.success && response.redirect_url) {
+															// Create detail object with actual redirect URL from response
+															const detail = {
+																provider,
+																redirect_url: response.redirect_url,
+															};
+															// Dispatch the custom event with actual redirect URL
+															const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+																detail: detail
+															});
+															window.dispatchEvent(merchantCustomEventProvideDetails);
+
+															console.log('Redirecting to:', response.redirect_url);
+
+													} else {
+														// Handle error response
+														var errorMessage = 'Payment processing failed. Please try again.';
+														if (response.error_message) {
+															errorMessage = response.error_message;
+														} else if (response.message) {
+															errorMessage = response.message;
+														}
+
+														// Show error message using jQuery to create alert
+														var $form = $('#globalpayments-payment-form');
+														$('.globalpayments-checkout-error').remove();
+														$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + errorMessage + '</div>');
+														$('html, body').animate({
+															scrollTop: ($form.offset().top - 100)
+														}, 1000);
+
+														console.error('Payment Error:', response);
+													}
+												},
+												error: function(xhr, status, error) {
+													// Handle AJAX error
+													var errorMessage = 'Connection error occurred. Please check your internet connection and try again.';
+													if (xhr.responseJSON && xhr.responseJSON.message) {
+														errorMessage = xhr.responseJSON.message;
+													}
+
+													// Show error message using jQuery to create alert
+													var $form = $('#globalpayments-payment-form');
+													$('.globalpayments-checkout-error').remove();
+													$form.prepend('<div class="alert alert-danger globalpayments-checkout-error">' + errorMessage + '</div>');
+													$('html, body').animate({
+														scrollTop: ($form.offset().top - 100)
+													}, 1000);
+
+													console.error('AJAX Error:', xhr, status, error);
+												},
+												complete: function() {
+													// Hide AJAX loader and re-enable button
+													$('#globalpayments-loading').hide();
+													enablePaymentForm();
+												}
+											});
+									}
+									break;
+								default:
+									detail = {
+										"seconds_to_expire": "900",
+										"next_action": "REDIRECT_IN_FRAME",
+										"redirect_url": 'https://google.com/',
+										provider,
+									};
+									break;
+							}
+							const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+								detail: detail
+							});
+							if (!bankName) window.dispatchEvent(merchantCustomEventProvideDetails);
+							return 0;
+						});
 					this.cardForm.on('submit', 'click', this.blockOnSubmit.bind(this));
 					this.cardForm.on('token-success', this.handleResponse.bind(this));
 					this.cardForm.on('token-error', this.handleErrors.bind(this));
