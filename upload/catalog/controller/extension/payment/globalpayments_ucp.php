@@ -153,15 +153,37 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			//succesfull response, store payment method
 			if (isset($postRequestData->paymentType) && 'new' === $postRequestData->paymentType && $requestData->saveCard) {
 				$payment_token = json_decode($requestData->paymentTokenResponse);
-				$this->model_extension_payment_globalpayments_ucp->addCard(
-					$this->globalpayments->gateway->gatewayId,
+
+				// Duplicate card check
+				$existing_cards = $this->model_extension_payment_globalpayments_ucp->getCards(
 					$this->customer->getId(),
-					$gatewayResponse->token,
-					strtoupper($payment_token->details->cardType),
-					$payment_token->details->cardLast4,
-					$payment_token->details->expiryYear,
-					$payment_token->details->expiryMonth
+					$this->globalpayments->gateway->gatewayId
 				);
+				$already_saved = false;
+				foreach ($existing_cards as $card) {
+					if (
+						isset($card['card_last4'], $card['expiry_month'], $card['expiry_year']) &&
+						isset($payment_token->details->cardLast4, $payment_token->details->expiryMonth, $payment_token->details->expiryYear) &&
+						(string)$card['card_last4'] === (string)$payment_token->details->cardLast4 &&
+						(string)$card['expiry_month'] === (string)$payment_token->details->expiryMonth &&
+						(string)$card['expiry_year'] === (string)$payment_token->details->expiryYear
+					) {
+						$already_saved = true;
+						break;
+					}
+				}
+
+				if (!$already_saved) {
+					$this->model_extension_payment_globalpayments_ucp->addCard(
+						$this->globalpayments->gateway->gatewayId,
+						$this->customer->getId(),
+						$gatewayResponse->token,
+						strtoupper($payment_token->details->cardType),
+						$payment_token->details->cardLast4,
+						$payment_token->details->expiryYear,
+						$payment_token->details->expiryMonth
+					);
+				}
 			}
 
 			$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));

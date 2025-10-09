@@ -4,6 +4,11 @@
 
 # Changelog
 
+## Latest Version - v1.7.1 (09/10/25)
+### Bug Fixes:
+- Fixed bug causing transaction failures when using TransIT gateway
+- Includes the missing COF fields while card is being saved
+
 ## Latest Version - v1.7.0 (04/09/25)
 ### Enhancements:
 - Added Blik and open banking payment method functionality for Poland merchants

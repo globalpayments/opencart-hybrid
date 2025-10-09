@@ -3,6 +3,8 @@
 namespace GlobalPayments\PaymentGatewayProvider\Requests\Transactions;
 
 use GlobalPayments\Api\Entities\Enums\TransactionModifier;
+use GlobalPayments\Api\Entities\StoredCredential;
+use GlobalPayments\Api\Entities\Enums\StoredCredentialInitiator;
 use GlobalPayments\Api\PaymentMethods\CreditCardData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
@@ -29,6 +31,19 @@ class ChargeRequest extends AbstractRequest {
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
 		                         ->withRequestMultiUseToken((int)$this->requestData->saveCard)
 		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+
+		// Determine if this is a stored credential transaction
+		$is_stored_credential = !empty($this->requestData->saveCard) || !empty($paymentTokenInfo['token']);
+		if ($is_stored_credential) {
+			$is_first = empty($paymentTokenInfo['token']);
+
+			$storedCredential = new StoredCredential();
+			$storedCredential->initiator = StoredCredentialInitiator::PAYER;
+			$storedCredential->type = 'UNSCHEDULED';
+			$storedCredential->sequence = $is_first ? 'FIRST' : 'SUBSEQUENT';
+
+			$builder = $builder->withStoredCredential($storedCredential);
+		}
 
 		if (!empty($this->requestData->mobileType)) {
 			$builder = $builder->withModifier(TransactionModifier::ENCRYPTED_MOBILE);
