@@ -154,6 +154,11 @@ class GpApiGateway extends AbstractGateway {
 	 * @var bool
 	 */
 	public $enableThreeDSecure = true;
+	
+	/**
+	 * @var string
+	 */
+	public $integrationType;
 
 	/**
      * States whether the Blik payment method should be enabled

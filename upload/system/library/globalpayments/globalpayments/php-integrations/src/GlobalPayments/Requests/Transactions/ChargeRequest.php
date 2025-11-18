@@ -22,6 +22,10 @@ class ChargeRequest extends AbstractRequest {
 		if (!empty($this->requestData->threeDSecure)) {
 			$paymentMethod->threeDSecure = $this->requestData->threeDSecure;
 		}
+		
+		if (empty($this->requestData->saveCard)) {
+			$this->requestData->saveCard = false;
+		}
 
 		$builder = $paymentMethod->charge($this->requestData->order->amount)
 		                         ->withCurrency($this->requestData->order->currency)

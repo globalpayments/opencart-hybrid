@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.7.1';
+	const VERSION = '1.8.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -35,6 +35,8 @@ class GlobalPayments {
 	public $gateway;
 
 	public $paymentMethod;
+	
+	public $integrationType;
 
 	protected $registry;
 
@@ -112,6 +114,7 @@ class GlobalPayments {
 		$this->gateway->txnDescriptor      = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		$this->gateway->baseUrl            = $this->url->link('extension/payment/', '', true);
 		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure')==1;
+		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type');
 		$this->gateway->language           = $this->language->get('code');
 
 		$this->load->model('localisation/country');
@@ -232,6 +235,7 @@ class GlobalPayments {
 		$this->gateway->sandboxApiSecret         = $this->config->get('payment_globalpayments_txnapi_sandbox_api_secret');
 		$this->gateway->accountCredential        = $this->config->get('payment_globalpayments_txnapi_account_credential');
 		$this->gateway->sandboxAccountCredential = $this->config->get('payment_globalpayments_txnapi_sandbox_account_credential');
+		$this->gateway->integrationType          = $this->config->get('payment_globalpayments_ucp_integration_type');
 		$this->gateway->debug                    = $this->config->get('payment_globalpayments_txnapi_debug');
 		$this->gateway->logDirectory             = DIR_LOGS;
 	}

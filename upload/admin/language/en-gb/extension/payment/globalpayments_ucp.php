@@ -39,6 +39,7 @@ $_['label_payment_action']        = 'Payment Action';
 $_['label_allow_card_saving']     = 'Allow Card Saving';
 $_['label_txn_descriptor']        = 'Order Transaction Descriptor';
 $_['label_enable_three_d_secure'] = 'Enable 3DSecure';
+$_['label_integration_type']      = 'Integration Type';
 $_['label_sort_order']            = 'Sort Order';
 $_['label_blik']                  = 'Enable Blik Payment';
 $_['label_open_banking']          = 'Enable Open Banking Payment';
@@ -57,6 +58,7 @@ $_['help_allow_card_saving']     = 'Note: to use the card saving feature, you mu
 $_['help_txn_descriptor']        = 'During a Capture or Authorize payment action, this value will be passed along as the transaction-specific descriptor listed on the customer\'s bank account (maxLength: 25).';
 $_['help_txn_descriptor_note']   = 'Please contact <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">support</a> with any questions regarding this option.';
 $_['help_account_name']          = 'Specify which account to use when processing a transaction. Default account will be used if this is not specified. <br>For assistance locating your account name, please contact our <a href="https://developer.globalpay.com/support/integration-support" target="_blank">Integration Support</a> Team based on location';
+$_['help_integration_type']      = 'Select whether your payment form appears on the checkout page or redirects to a hosted page (hosted simplifies enablement of Apple and Google pay).';
 
 // Entry
 $_['entry_enabled']                  = 'Enable Gateway';
@@ -66,6 +68,8 @@ $_['entry_debug']                    = 'Enable Logging';
 $_['entry_payment_action_authorize'] = 'Authorize only';
 $_['entry_payment_action_charge']    = 'Authorize + Capture';
 $_['entry_allow_card_saving']        = 'Allow Card Saving';
+$_['entry_integration_type_dropin_ui'] = 'Drop-in UI';
+$_['entry_integration_type_hosted_payment'] = 'Hosted Payment Page';
 
 // Placeholder
 $_['placeholder_title'] = 'Credit or Debit Card';

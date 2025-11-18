@@ -9,41 +9,53 @@
     </ul>
   </div>
   {% endif %}
-  <input type="hidden" name="{{ gateway.gatewayId }}[paymentType]" value="{{ payment_tab_option }}" id="tab-option" />
-  <div class="globalpayments" style="width: 600px; margin: auto">
-    <fieldset id="{{ gateway.gatewayId }}-payment-token"{% if payment_tab_option != 'saved' %} style="display: none"{% endif %}>
-    {% for stored_payment_method in stored_payment_methods %}
-      <div class="radio">
-        <label>
-          <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}"
-          {% if stored_payment_method.is_default %}
-            checked="checked"
-          {% endif %}>
-          {{ stored_payment_method.card_type }} {{ text_ending_in }} {{ stored_payment_method.card_last4 }} ({{ text_expires }} {{ stored_payment_method.expiry_month }}/{{ stored_payment_method.expiry_year }})
-        </label>
-      </div>
-    {% endfor %}
-    </fieldset>
-    <fieldset id="{{ gateway.gatewayId }}-card"{% if payment_tab_option != 'new' %} style="display: none"{% endif %}>
-      <!-- Target for the credit card form -->
-      {% for field in secure_payment_fields %}
-        {{ field }}
-      {% endfor %}
-      {% if customer_is_logged and gateway.allowCardSaving %}
-      <div class="checkbox">
-        <label>
-          <input type="checkbox" id="{{ gateway.gatewayId }}-save_card" value="1" name="{{ gateway.gatewayId }}[saveCard]" /> {{ entry_allow_card_saving }}
-        </label>
-      </div>
-      {% endif %}
-    </fieldset>
-  </div>
-    <div class="buttons clearfix">
-      <div class="pull-right">
-        <input type="button" value="{{ button_confirm }}" id="button-confirm" style="width: 300px" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
-      </div>
+  
+  {% if gateway.integrationType == 'hosted_payment' %}
+    <div class="hpp" style="width: 600px; margin: auto">
+      <a type="button" href="{{ hpp_link }}" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" class="btn btn-primary" >Order Now</a>
     </div>
-</form>
+  {% endif %}
+  
+  {% if gateway.integrationType == 'dropin_ui' %}
+	  
+	  <input type="hidden" name="{{ gateway.gatewayId }}[paymentType]" value="{{ payment_tab_option }}" id="tab-option" />
+	  <div class="globalpayments" style="width: 600px; margin: auto">
+	    <fieldset id="{{ gateway.gatewayId }}-payment-token"{% if payment_tab_option != 'saved' %} style="display: none"{% endif %}>
+	    {% for stored_payment_method in stored_payment_methods %}
+	      <div class="radio">
+		<label>
+		  <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}"
+		  {% if stored_payment_method.is_default %}
+		    checked="checked"
+		  {% endif %}>
+		  {{ stored_payment_method.card_type }} {{ text_ending_in }} {{ stored_payment_method.card_last4 }} ({{ text_expires }} {{ stored_payment_method.expiry_month }}/{{ stored_payment_method.expiry_year }})
+		</label>
+	      </div>
+	    {% endfor %}
+	    </fieldset>
+	    <fieldset id="{{ gateway.gatewayId }}-card"{% if payment_tab_option != 'new' %} style="display: none"{% endif %}>
+	      <!-- Target for the credit card form -->
+	      {% for field in secure_payment_fields %}
+		{{ field }}
+	      {% endfor %}
+	      {% if customer_is_logged and gateway.allowCardSaving %}
+	      <div class="checkbox">
+		<label>
+		  <input type="checkbox" id="{{ gateway.gatewayId }}-save_card" value="1" name="{{ gateway.gatewayId }}[saveCard]" /> {{ entry_allow_card_saving }}
+		</label>
+	      </div>
+	      {% endif %}
+	    </fieldset>
+	  </div>
+	    <div class="buttons clearfix">
+	      <div class="pull-right">
+		<input type="button" value="{{ button_confirm }}" id="button-confirm" style="width: 300px" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+	      </div>
+	    </div>
+	</form>
+
+{% endif %}
+  
 <style>
   .globalpayments iframe {
     min-height: 5rem;

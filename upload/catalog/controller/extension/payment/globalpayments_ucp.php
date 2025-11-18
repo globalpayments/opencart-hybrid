@@ -5,6 +5,25 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\AbstractGateway;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 
+// Requiremets for HPP
+use GlobalPayments\Api\Builders\HPPBuilder;
+use GlobalPayments\Api\Entities\{Address, PayerDetails, PhoneNumber, Transaction};
+use GlobalPayments\Api\Entities\Enums\{
+    AddressType,
+    CaptureMode,
+    ChallengeRequestIndicator,
+    Channel,
+    Environment,
+    ExemptStatus,
+    HPPStorageModes,
+    PhoneNumberType
+};
+use GlobalPayments\Api\PaymentMethods\TransactionReference;
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
+use GlobalPayments\Api\Services\HostedPaymentPageService;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Utils\CountryUtils;
+
 class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	public function __construct( $registry ) {
 		parent::__construct( $registry );
@@ -22,6 +41,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['action'] = $this->url->link('extension/payment/globalpayments_ucp/confirm', '', true);
 
 		$data['gateway'] = $this->globalpayments->gateway;
+
+		$data['hpp_link'] = $this->buildHPP();
 
 		$data['payment_tab_option'] = 'new';
 		if ($this->customer->isLogged()) {
@@ -193,6 +214,68 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 	}
 
+	public function confirmHosted(){
+
+		$validation_result = $this->validate_request($_POST['gateway_response'] ?? '', $_POST['X-GP-Signature'] ?? false);
+
+		if (!$validation_result) {
+			http_response_code(403);
+			die("Invalid Request");
+		}
+		$payment_data = json_decode($_POST['gateway_response'] ?? '{}', true);
+
+		try{
+			$this->session->data['order_id'] = $payment_data['link_data']['name'];
+			$this->setOrder();
+			$this->load->model('checkout/order');
+			$comment = [
+				$this->language->get('text_comment_txn_id') . ' ' . $payment_data['id'],
+				$this->language->get('text_comment_auth_code') . ' ' . $payment_data['action']['result_code'],
+				$this->language->get('text_comment_reference_no') . ' ' . substr($payment_data['link_data']['url'], strpos($payment_data['link_data']['url'], 'redirect/') + 9),
+				$this->language->get('text_comment_response_status') . ' ' . $payment_data['status'],
+				$this->language->get('text_comment_amount') . ' ' . $this->order->amount,
+				$this->language->get('text_comment_currency') . ' ' . $this->order->currency,
+			];
+			$comment = implode('<br/>', $comment);
+
+			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 2, $comment);
+
+			// create a new transaciton object for payment model_checkout_order
+
+			$gatewayResponse = new Transaction();
+			$gatewayResponse->transactionReference = new TransactionReference();
+
+			$gatewayResponse->transactionReference->transactionId = $payment_data['id'];
+			$gatewayResponse->responseCode = $payment_data['action']['result_code'];
+			$gatewayResponse->responseMessage = $payment_data['status'];
+			$gatewayResponse->transactionReference->clientTransactionId = substr($payment_data['link_data']['url'], strpos($payment_data['link_data']['url'], 'redirect/') + 9);
+			$gatewayResponse->timestamp = $payment_data['time_created'];
+
+			$this->load->model('extension/payment/globalpayments_ucp');
+			$this->model_extension_payment_globalpayments_ucp->addTransaction(
+				$this->order->orderReference,
+				$this->globalpayments->gateway->gatewayId,
+				$this->globalpayments->gateway->paymentAction,
+				$this->order->amount,
+				$this->order->currency,
+				$gatewayResponse
+			);
+
+			if ($payment_data['action']['result_code'] == 'SUCCESS'){
+				$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
+			} else {
+				$this->log->write($payment_data['id'] . " " . $payment_data['status']);
+				$this->log->write($payment_data['payment_method']['message']);
+				$this->response->redirect($this->url->link( 'checkout/failure', '', true));
+			}
+		} catch (\Exception $e) {
+			$this->session->data['error'] = $e->getMessage();
+			$this->log->write($this->session->data['error']);
+			$this->response->redirect($this->url->link( 'checkout/failure', '', true));
+		}
+	}
+
+
 	private function setOrder() {
 		if (empty($this->session->data['order_id'])) {
 			throw new \Exception($this->language->get('error_order_processing'));
@@ -229,5 +312,134 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$order->addressMatchIndicator = $order->billingAddress == $order->shippingAddress;
 
 		$this->order = $order;
+	}
+
+	function validate_request($gateway_response_json, $GP_signature) {
+		if (!$gateway_response_json || !$GP_signature) {
+			return false;
+		}
+
+		$parsed_data = json_decode($gateway_response_json, true);
+		if (!$parsed_data) {
+			error_log("Failed to parse gateway response JSON");
+		return false;
+		}
+
+		if(isset($gateway_response_json['X-GP-Signature'])) {
+			unset($gateway_response_json['X-GP-Signature']);
+		}
+		$minified_input = json_encode($parsed_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return hash("sha512", $minified_input . "ALiN55xYMwbVsCla") === $GP_signature;
+	}
+
+
+	public function buildHPP() {
+
+		$uri = str_replace("index.php", "", $_SERVER['SCRIPT_URI']) . "catalog/controller/extension/payment/";
+
+		try{
+			$config = new GpApiConfig();
+
+			if ($this->globalpayments->gateway->isProduction == 1){
+				$config->appId = $this->globalpayments->gateway->appId;
+				$config->appKey = $this->globalpayments->gateway->appKey;
+				$config->environment = Environment::PRODUCTION;
+			} else {
+				$config->appId = $this->globalpayments->gateway->sandboxAppId;
+				$config->appKey = $this->globalpayments->gateway->sandboxAppKey;
+				$config->environment = Environment::TEST;
+			}
+
+			$config->country = $this->globalpayments->gateway->country;
+			$config->channel = Channel::CardNotPresent;
+
+			ServicesContainer::configureService($config);
+
+			$this->load->model( 'checkout/order' );
+			$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+
+			// Classes for HPPBuilder
+			$payerDetails = new PayerDetails();
+			$payerDetails->firstName = $order_info['firstname'];
+			$payerDetails->lastName = $order_info['lastname'];
+			$payerDetails->email = $order_info['email'];
+			$payerDetails->status = 'ACTIVE';
+
+			$phoneNumber = new PhoneNumber(CountryUtils::getPhoneCodesByCountry(
+        $order_info['payment_iso_code_2'])[0], $order_info['telephone'], PhoneNumberType::HOME);
+
+			$billingAddress = New Address();
+			$billingAddress->__set("type", AddressType::BILLING);
+			$billingAddress->__set("streetAddress1", $order_info['payment_address_1']);
+			$billingAddress->__set("streetAddress2", $order_info['payment_address_2']);
+			$billingAddress->__set("city", $order_info['payment_city']);
+			$billingAddress->__set("state", substr($order_info['payment_zone_code'], 0, 3));
+			$billingAddress->__set("postalCode", $order_info['payment_postcode']);
+			$billingAddress->__set("country", $order_info['payment_country']);
+			$billingAddress->__set("countryCode", $order_info['payment_iso_code_2']);
+
+			$shippingAddress = New Address();
+			$shippingAddress->__set("type", AddressType::SHIPPING);
+			$shippingAddress->__set("streetAddress1", $order_info['shipping_address_1']);
+			$shippingAddress->__set("streetAddress2", $order_info['shipping_address_2']);
+			$shippingAddress->__set("city", $order_info['shipping_city']);
+			$shippingAddress->__set("state", substr($order_info['shipping_zone_code'], 0, 3));
+			$shippingAddress->__set("postalCode", $order_info['shipping_postcode']);
+			$shippingAddress->__set("country", $order_info['shipping_iso_code_2']);
+			$shippingAddress->__set("countryCode", $order_info['shipping_iso_code_2']);
+
+			$payerDetails->billingAddress = $billingAddress;
+			$payerDetails->shippingAddress = $shippingAddress;
+
+			if ($this->currency->convert($order_info['total'], 'EUR', $order_info['currency_code']) > 30){
+				$ecommercePayment = HPPBuilder::create()
+						->withName($this->session->data['order_id'])
+						->withReference('ORDER-' . time())
+						->withExpirationDate((new DateTime('+7 days'))->format('Y-m-d\TH:i:s\Z'))
+						->withPayer($payerDetails)
+						->withPayerPhone($phoneNumber)
+						->withBillingAddress($billingAddress)
+						->withShippingAddress($shippingAddress)
+						->withShippingPhone($phoneNumber)
+						->withAmount($this->order->amount, $this->order->currency)
+						->withOrderReference($this->session->data['order_id'] . '-' . time())
+						->withTransactionConfig(Channel::CardNotPresent, 'GB', CaptureMode::AUTO)
+						->withApm(true, true)
+						->withPaymentMethodConfig(HPPStorageModes::PROMPT)
+						->withNotifications($uri . 'globalpayments_return_url.php', $uri . 'globalpayments_status_url.php', $uri . 'globalpayments_cancel_url.php')
+						->withCurrency($order_info['currency_code'])
+						->withAddressMatchIndicator(false)
+						->withDigitalWallets(["googlepay", "applepay"])
+
+						->execute();
+			} else {
+				$ecommercePayment = HPPBuilder::create()
+						->withName($this->session->data['order_id'])
+						->withReference('ORDER-' . time())
+						->withExpirationDate((new DateTime('+7 days'))->format('Y-m-d\TH:i:s\Z'))
+						->withPayer($payerDetails)
+						->withPayerPhone($phoneNumber)
+						->withBillingAddress($billingAddress)
+						->withShippingAddress($shippingAddress)
+						->withShippingPhone($phoneNumber)
+						->withAmount($this->order->amount, $this->order->currency)
+						->withOrderReference($this->session->data['order_id'] . '-' . time())
+						->withTransactionConfig(Channel::CardNotPresent, 'GB', CaptureMode::AUTO)
+						->withApm('true', 'true')
+						->withPaymentMethodConfig(HPPStorageModes::PROMPT)
+						->withNotifications($uri . 'return_url.php', $uri . 'status_url.php', $uri . 'cancel_url.php')
+						->withCurrency($order_info['currency_code'])
+						->withAddressMatchIndicator(false)
+						->withAuthentication(ChallengeRequestIndicator::CHALLENGE_PREFERRED,ExemptStatus::LOW_VALUE, true)
+						->withDigitalWallets(["googlepay", "applepay"])
+
+						->execute();
+			}
+
+			return $ecommercePayment->payByLinkResponse->url;
+		} catch (\Exception $e) {
+			$this->session->data['error'] = $e->getMessage();
+			$this->log->write($this->session->data['error']);
+		}
 	}
 }

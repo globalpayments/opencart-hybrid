@@ -4,29 +4,33 @@
 
 # Changelog
 
-## Latest Version - v1.7.1 (09/10/25)
+## Latest Version - v1.8.0 (11/18/25)
+### Enhancements:
+ - Added support for GPAPI Hosted Payment Page (HPP)
+
+## v1.7.1 (09/10/25)
 ### Bug Fixes:
 - Fixed bug causing transaction failures when using TransIT gateway
 - Includes the missing COF fields while card is being saved
 
-## Latest Version - v1.7.0 (04/09/25)
+## v1.7.0 (04/09/25)
 ### Enhancements:
 - Added Blik and open banking payment method functionality for Poland merchants
 - Various security updates
 ### Bug Fixes:
 - Fixed gateway request format error
 
-## Latest Version - v1.6.8 (16/07/25)
+## v1.6.8 (16/07/25)
 ### Bug Fixes:
 - UI error and GPAPI portal link in admin
 
-## Latest Version - v1.6.7 (14/07/25)
+## v1.6.7 (14/07/25)
 - Added dropdown for mandatory AccountNames in admin configuration
 
-## Latest Version - v1.6.6 (05/01/25)
+## v1.6.6 (05/01/25)
 - Added translation for spanish (MX)
 
-## Latest Version - v1.6.5 (03/31/25)
+## v1.6.5 (03/31/25)
 - Fixed PHP deprecated warnings
 
 ## v1.6.4 (10/08/24)

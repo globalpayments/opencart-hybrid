@@ -173,6 +173,18 @@
                   </label>
                 </div>
               </div>
+	      <div class="form-group">
+		<label class="col-sm-2 control-label" for="input-integration_type">
+		  <span data-toggle="tooltip" title="{{ help_integration_type }}">{{ label_integration_type }}</span>
+		</label>
+	        <div class="col-sm-10">
+	          <select name="payment_globalpayments_ucp_integration_type" id="input-integration_type" class="form-control">
+		    <option value="dropin_ui" {{ payment_globalpayments_ucp_integration_type == 'dropin_ui' ? 'selected' : '' }}>{{ entry_integration_type_dropin_ui }}</option>
+		    <option value="hosted_payment" {{ payment_globalpayments_ucp_integration_type == 'hosted_payment' ? 'selected' : '' }}>{{ entry_integration_type_hosted_payment }}</option>
+	          </select>
+	        <br/>
+	        </div>
+	      </div>
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-sort-order">{{ label_sort_order }}</label>
                 <div class="col-sm-10">

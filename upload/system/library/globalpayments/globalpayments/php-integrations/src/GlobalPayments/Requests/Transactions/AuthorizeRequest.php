@@ -20,6 +20,10 @@ class AuthorizeRequest extends AbstractRequest {
 		if (!empty($this->requestData->threeDSecure)) {
 			$paymentMethod->threeDSecure = $this->requestData->threeDSecure;
 		}
+		
+		if (empty($this->requestData->saveCard)) {
+			$this->requestData->saveCard = false;
+		}
 
 		$builder = $paymentMethod->authorize($this->requestData->order->amount)
 		                         ->withCurrency($this->requestData->order->currency)
