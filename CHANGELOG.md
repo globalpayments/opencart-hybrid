@@ -4,7 +4,11 @@
 
 # Changelog
 
-## Latest Version - v1.8.0 (11/18/25)
+## Latest Version - v1.8.1 (12/04/25)
+### Enhancements:
+ - Enhanced redirect url & webhooks status update functionality with x-gp-signature validaition
+
+## v1.8.0 (11/18/25)
 ### Enhancements:
  - Added support for GPAPI Hosted Payment Page (HPP)
 

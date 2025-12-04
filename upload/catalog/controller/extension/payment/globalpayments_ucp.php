@@ -12,6 +12,7 @@ use GlobalPayments\Api\Entities\Enums\{
     AddressType,
     CaptureMode,
     ChallengeRequestIndicator,
+	PaymentMethodUsageMode,
     Channel,
     Environment,
     ExemptStatus,
@@ -334,8 +335,17 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 
 	public function buildHPP() {
-
-		$uri = str_replace("index.php", "", $_SERVER['SCRIPT_URI']) . "catalog/controller/extension/payment/";
+		// Build base URI properly, handling cases where SCRIPT_URI might not be set
+		$script_uri = $_SERVER['SCRIPT_URI'] ?? '';
+		if (empty($script_uri)) {
+			// Fallback to constructing URI from available server variables
+			$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+			$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+			$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+			$script_uri = $protocol . $host . $script_name;
+		}
+		$uri = str_replace("index.php", "", $script_uri) . "catalog/controller/extension/payment/";
+		$baseurl = str_replace("index.php", "", $script_uri);
 
 		try{
 			$config = new GpApiConfig();
@@ -364,6 +374,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$payerDetails->lastName = $order_info['lastname'];
 			$payerDetails->email = $order_info['email'];
 			$payerDetails->status = 'ACTIVE';
+			$payerDetails->language = strtoupper(substr($this->config->get('config_language'), 0, 2 ))?? "EN";
 
 			$phoneNumber = new PhoneNumber(CountryUtils::getPhoneCodesByCountry(
         $order_info['payment_iso_code_2'])[0], $order_info['telephone'], PhoneNumberType::HOME);
@@ -391,6 +402,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$payerDetails->billingAddress = $billingAddress;
 			$payerDetails->shippingAddress = $shippingAddress;
 
+			$store_country_id = $this->config->get('config_country_id');
+			$this->load->model('localisation/country');
+			$country_info = $this->model_localisation_country->getCountry($store_country_id);
+			$store_country_iso = isset($country_info['iso_code_2']) ? $country_info['iso_code_2'] : '';
+
 			if ($this->currency->convert($order_info['total'], 'EUR', $order_info['currency_code']) > 30){
 				$ecommercePayment = HPPBuilder::create()
 						->withName($this->session->data['order_id'])
@@ -403,10 +419,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 						->withShippingPhone($phoneNumber)
 						->withAmount($this->order->amount, $this->order->currency)
 						->withOrderReference($this->session->data['order_id'] . '-' . time())
-						->withTransactionConfig(Channel::CardNotPresent, 'GB', CaptureMode::AUTO)
+						->withTransactionConfig(
+							Channel::CardNotPresent,
+							$store_country_iso,
+							CaptureMode::AUTO,
+							["BLIK","BANK_PAYMENT","CARD"],
+							PaymentMethodUsageMode::SINGLE
+						)
 						->withApm(true, true)
 						->withPaymentMethodConfig(HPPStorageModes::PROMPT)
-						->withNotifications($uri . 'globalpayments_return_url.php', $uri . 'globalpayments_status_url.php', $uri . 'globalpayments_cancel_url.php')
+						->withNotifications(
+							$baseurl . '?route=extension/payment/hpp/redirect&&action=hpp_redirect_handler',
+							$baseurl . '?route=extension/payment/hpp/webhook&action=hpp_status_handler',
+							$baseurl . '?route=checkout/cart'
+						)
 						->withCurrency($order_info['currency_code'])
 						->withAddressMatchIndicator(false)
 						->withDigitalWallets(["googlepay", "applepay"])
@@ -424,10 +450,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 						->withShippingPhone($phoneNumber)
 						->withAmount($this->order->amount, $this->order->currency)
 						->withOrderReference($this->session->data['order_id'] . '-' . time())
-						->withTransactionConfig(Channel::CardNotPresent, 'GB', CaptureMode::AUTO)
+						->withTransactionConfig(
+							Channel::CardNotPresent,
+							$store_country_iso,
+							CaptureMode::AUTO,
+							["BLIK","BANK_PAYMENT","CARD"],
+							PaymentMethodUsageMode::SINGLE
+						)
 						->withApm('true', 'true')
 						->withPaymentMethodConfig(HPPStorageModes::PROMPT)
-						->withNotifications($uri . 'return_url.php', $uri . 'status_url.php', $uri . 'cancel_url.php')
+						->withNotifications(
+							$baseurl . '?route=extension/payment/hpp/redirect&&action=hpp_redirect_handler',
+							$baseurl . '?route=extension/payment/hpp/webhook&action=hpp_status_handler',
+							$baseurl . '?route=checkout/cart'
+						)
 						->withCurrency($order_info['currency_code'])
 						->withAddressMatchIndicator(false)
 						->withAuthentication(ChallengeRequestIndicator::CHALLENGE_PREFERRED,ExemptStatus::LOW_VALUE, true)
