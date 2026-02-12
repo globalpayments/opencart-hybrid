@@ -4,7 +4,11 @@
 
 # Changelog
 
-## Latest Version - v1.8.1 (12/04/25)
+## Latest Version - v1.8.2 (02/12/26)
+### Enhancements:
+- TSYS to Global payments rebranding
+
+## v1.8.1 (12/04/25)
 ### Enhancements:
  - Enhanced redirect url & webhooks status update functionality with x-gp-signature validaition
 
