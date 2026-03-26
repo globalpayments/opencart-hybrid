@@ -77,10 +77,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['base_currency'] = $store_currency;
 		$data['base_country']  = $store_country_iso;
 
-		$data['environment_indicator']                             = $this->globalpayments->gateway->getEnvironmentIndicator('alert alert-danger');
-		$data['secure_payment_fields']                             = $this->globalpayments->gateway->getCreditCardFormatFields();
-		$data['globalpayments_secure_payment_fields_params']       = $this->globalpayments->gateway->securePaymentFieldsParams();
-		$data['globalpayments_secure_payment_threedsecure_params'] = $this->globalpayments->gateway->securePaymentFieldsThreeDSecureParams($this->order);
+		$data['sandbox_account_name'] = $this->config->get('payment_globalpayments_ucp_sandbox_account_name');
+		$data['account_name']         = $this->config->get('payment_globalpayments_ucp_account_name');
+		$data['is_production']        = $this->config->get('payment_globalpayments_ucp_is_production');
+		$data['allow_card_saving']    = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
+		$data['enable_installments']  = $this->config->get('payment_globalpayments_ucp_enable_installments');
+
+		$data['environment_indicator']                             = $this->globalpayments
+			->gateway->getEnvironmentIndicator('alert alert-danger');
+		$data['secure_payment_fields']                             = $this->globalpayments
+			->gateway->getCreditCardFormatFields();
+		$data['globalpayments_secure_payment_fields_params']       = $this->globalpayments
+			->gateway->securePaymentFieldsParams();
+		$data['globalpayments_secure_payment_threedsecure_params'] = $this->globalpayments
+			->gateway->securePaymentFieldsThreeDSecureParams($this->order);
 
 		return $this->load->view('extension/payment/globalpayments_ucp', $data);
 	}
@@ -139,12 +149,40 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				'shared_text' => $this->load->language('extension/payment/globalpayments_shared_text'),
 			];
 
+			$store_currency = $this->config->get('config_currency');
+			$store_country_id = $this->config->get('config_country_id');
+
+			// Get country ISO code from country ID
+			$this->load->model('localisation/country');
+			$country_info = $this->model_localisation_country->getCountry($store_country_id);
+			$store_country_iso = isset($country_info['iso_code_2']) ? $country_info['iso_code_2'] : '';
+
+			// Set base country and currency in the gateway before getting secure payment params
+			$this->globalpayments->gateway->baseCountry = $store_country_iso;
+			$this->globalpayments->gateway->baseCurrency = $store_currency;
+
+			// Extract installment data from paymentTokenResponse
+			if (!empty($requestData->paymentTokenResponse)) {
+
+				$tokenData          = json_decode($requestData->paymentTokenResponse);
+				$processInstallment = (!empty($tokenData->installment->id) || !empty($tokenData->installment->reference));
+				if (isset($tokenData->installment) && $processInstallment) {
+					$requestData->installments = (object) [
+						'id'        => $tokenData->installment->id ?? null,
+						'reference' => $tokenData->installment->reference ?? null
+					];
+
+				}
+				$requestData = $this->updateContractReference($requestData);
+			}
+
 			if (isset($postRequestData->paymentType)
 			    && 'saved' === $postRequestData->paymentType
 			    && isset($postRequestData->paymentTokenId)
 			    && 'new' !== $postRequestData->paymentTokenId) {
 				$this->load->model('extension/payment/globalpayments_ucp');
 				$requestData->paymentToken = $this->model_extension_payment_globalpayments_ucp->getCard($postRequestData->paymentTokenId);
+				$requestData = $this->updateContractReference($requestData);
 			}
 			$requestData->requestType           = AbstractGateway::getRequestType($this->globalpayments->gateway->paymentAction);
 
@@ -159,6 +197,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$this->language->get('text_comment_currency') . ' ' . $this->order->currency,
 				$this->language->get('text_comment_pmt_method') . ' ' . $gatewayResponse->cardType . ' ' . $gatewayResponse->cardLast4,
 			];
+			
+
+			// Add installment details if present
+			if (!empty($gatewayResponse->installment)) {
+				$installmentInfo = 'Installment ID: ' . ($gatewayResponse->installment->id ?? 'N/A');
+				if (!empty($gatewayResponse->installment->mode)) {
+					$installmentInfo .= ' | Mode: ' . $gatewayResponse->installment->mode;
+				}
+				if (!empty($gatewayResponse->installment->count)) {
+					$installmentInfo .= ' | Terms: ' . $gatewayResponse->installment->count;
+				}
+				$comment[] = $installmentInfo;
+			}
+			
 			$comment = implode('<br/>', $comment);
 			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 2, $comment);
 
@@ -213,6 +265,21 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$this->session->data['error'] = $e->getMessage();
 			$this->response->redirect($this->url->link( 'checkout/checkout', '', true));
 		}
+	}
+
+	public function updateContractReference($requestData) {
+
+		if($this->globalpayments->gateway->allowCardSaving
+			&& $this->globalpayments->gateway->baseCountry === 'MX'
+			&& $this->globalpayments->gateway->baseCurrency === 'MXN') {
+				$orderData      = $requestData->order;
+				$orderReference = (isset($orderData->orderReference)) ? $orderData->orderReference : $orderData->reference;
+				$requestData->contactReference = $orderReference;
+		}else{
+			$requestData->contactReference = "";
+		}
+
+		return $requestData;
 	}
 
 	public function confirmHosted(){

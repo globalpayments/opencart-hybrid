@@ -27,12 +27,19 @@ class AuthorizeRequest extends AbstractRequest {
 
 		$builder = $paymentMethod->authorize($this->requestData->order->amount)
 		                         ->withCurrency($this->requestData->order->currency)
-		                         ->withClientTransactionId($this->requestData->order->reference)
-		                         ->withDescription($this->requestData->order->description)
+		                         ->withClientTransactionId($this->requestData->order->reference ?? '')
+		                         ->withDescription($this->requestData->order->description ?? '')
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
 		                         ->withRequestMultiUseToken($this->requestData->saveCard)
 		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+
+		// Add installment data if present (pass as plain object with id/reference)
+		if (!empty($this->requestData->installments)) {
+			// Directly assign installment object to builder property
+			// The SDK will serialize this object as-is to the API request
+			$builder->installment = $this->requestData->installments;
+		}
 
 		if (!empty($this->requestData->mobileType)) {
 			$builder = $builder->withModifier(TransactionModifier::ENCRYPTED_MOBILE);

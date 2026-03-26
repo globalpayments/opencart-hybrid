@@ -8,6 +8,7 @@ use GlobalPayments\Api\Entities\Enums\StoredCredentialInitiator;
 use GlobalPayments\Api\PaymentMethods\CreditCardData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
+use GlobalPayments\Api\Entities\InstallmentData;
 
 class ChargeRequest extends AbstractRequest {
 	public function execute() {
@@ -29,12 +30,20 @@ class ChargeRequest extends AbstractRequest {
 
 		$builder = $paymentMethod->charge($this->requestData->order->amount)
 		                         ->withCurrency($this->requestData->order->currency)
-		                         ->withClientTransactionId($this->requestData->order->reference)
-		                         ->withDescription($this->requestData->order->description)
+		                         ->withClientTransactionId($this->requestData->order->reference ?? '')
+		                         ->withDescription($this->requestData->order->description ?? '')
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
 		                         ->withRequestMultiUseToken((int)$this->requestData->saveCard)
 		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+
+		// Add installment data if present
+		if (!empty($this->requestData->installments)) {
+			$installmentData = new InstallmentData();
+			$installmentData->id = $this->requestData->installments->id ?? null;
+			$installmentData->reference = $this->requestData->installments->reference ?? null;
+			$builder->installment = $installmentData;
+		}
 
 		// Determine if this is a stored credential transaction
 		$is_stored_credential = !empty($this->requestData->saveCard) || !empty($paymentTokenInfo['token']);
@@ -43,8 +52,11 @@ class ChargeRequest extends AbstractRequest {
 
 			$storedCredential = new StoredCredential();
 			$storedCredential->initiator = StoredCredentialInitiator::PAYER;
-			$storedCredential->type = 'UNSCHEDULED';
+			$storedCredential->type = (!empty($this->requestData->installments)) ? 'INSTALLMENT' : 'UNSCHEDULED';
 			$storedCredential->sequence = $is_first ? 'FIRST' : 'SUBSEQUENT';
+			if (!empty($this->requestData->contactReference)) {
+				$storedCredential->contract_reference =  "CART#".$this->requestData->contactReference;
+			}
 
 			$builder = $builder->withStoredCredential($storedCredential);
 		}

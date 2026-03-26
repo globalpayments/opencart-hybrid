@@ -16,6 +16,11 @@ class GetAccessTokenRequest extends AbstractRequest {
 			$this->config['permissions'] = [
 				'PMT_POST_Create_Single',
 			];
+			
+			// Add installment permissions only if Installments is enabled
+			if (!empty($this->config['enable_installments'])) {
+				array_push($this->config['permissions'], 'INS_POST_Query', 'BIN_GET_Details', 'PMT_POST_Create');
+			}
 		}
 		// @TODO: Currently we request an access token every time we load hosted fields.
 		// @TODO: Should we set access token expiration?

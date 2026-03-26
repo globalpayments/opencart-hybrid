@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.8.2';
+	const VERSION = '1.9.0';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -116,6 +116,7 @@ class GlobalPayments {
 		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure')==1;
 		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type');
 		$this->gateway->language           = $this->language->get('code');
+		$this->gateway->enableInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments') == 1;
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');

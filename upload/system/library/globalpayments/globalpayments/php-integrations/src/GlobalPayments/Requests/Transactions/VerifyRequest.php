@@ -14,7 +14,7 @@ class VerifyRequest extends AbstractRequest {
 
 		return $paymentMethod->verify()
 		                     ->withCurrency($this->requestData->order->currency)
-		                     ->withClientTransactionId($this->requestData->order->reference)
+		                     ->withClientTransactionId($this->requestData->order->reference ?? '')
 		                     ->withRequestMultiUseToken(true)
 		                     ->withPaymentMethodUsageMode(PaymentMethodUsageMode::SINGLE)
 		                     ->execute();

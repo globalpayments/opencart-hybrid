@@ -4,7 +4,12 @@
 
 # Changelog
 
-## Latest Version - v1.8.2 (02/12/26)
+## Latest Version - v1.9.0 (03/26/26)
+### Enhancements:
+- Added Support for Installment Payment Plans for LATAM Market
+
+
+## v1.8.2 (02/12/26)
 ### Enhancements:
 - TSYS to Global payments rebranding
 

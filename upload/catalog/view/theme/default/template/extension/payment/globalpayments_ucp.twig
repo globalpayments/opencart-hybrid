@@ -1,7 +1,7 @@
 <form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
   <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
   <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
-  {% if customer_is_logged and stored_payment_methods %}
+  {% if customer_is_logged and stored_payment_methods and allow_card_saving %}
   <div id="globalpayments-choose" class="form-horizontal">
     <ul class="nav nav-tabs">
       <li role="presentation" id="tab-saved"{% if payment_tab_option == 'saved' %} class="active"{% endif %}><a href="#" class="globalpayments-tab-link globalpayments-button" id="saved-link">{{ entry_saved_methods }}</a></li>
@@ -29,6 +29,9 @@
 		    checked="checked"
 		  {% endif %}>
 		  {{ stored_payment_method.card_type }} {{ text_ending_in }} {{ stored_payment_method.card_last4 }} ({{ text_expires }} {{ stored_payment_method.expiry_month }}/{{ stored_payment_method.expiry_year }})
+			{% if enable_installments %}
+				<i class="fa fa-question-circle saved-card-installment-description" title="{{saved_card_installment_description}}"></i>
+			{% endif %}
 		</label>
 	      </div>
 	    {% endfor %}
@@ -57,6 +60,12 @@
 {% endif %}
   
 <style>
+  .saved-card-installment-description{
+	font-family: FontAwesome;
+	color: #1E91CF;
+	margin-left: 4px;
+  }
+
   .globalpayments iframe {
     min-height: 5rem;
     width: 100%;
@@ -295,6 +304,22 @@
 						}
 					}
 
+					// Add installments configuration only for Mexico with MXN, dropin_ui, and Installments enabled
+					if (
+						base_country === 'MX' &&
+						base_currency === 'MXN' &&
+						gatewayConfig.integrationType === 'dropin_ui' &&
+						gatewayConfig.enableInstallments
+					) {
+						gatewayConfig.installments = {
+							accountName: "{{ is_production ? account_name : sandbox_account_name }}",
+							country: "MX",
+							currency: "MXN",
+							allowedCardNetworks: [
+								GlobalPayments.enums.CardNetwork.Visa
+							]
+						};
+					}
 					// ensure the submit button's parent is on the page as this is added
 					// only after the initial page load
 					if ($(this.getSubmitButtonTargetSelector(this.id)).length === 0) {
@@ -310,10 +335,17 @@
 
 						// Only add amount and apms when BLIK is enabled
 						if (apmsEnabled) {
-							formConfig.amount = this.order.amount ? this.order.amount : '0';
-							formConfig.apms = [];
-						}
-						this.cardForm = GlobalPayments.creditCard.form(
+						formConfig.amount = this.order.amount ? this.order.amount : '0';
+						formConfig.apms = [];
+					}
+					if (
+						base_country === 'MX' &&
+						base_currency === 'MXN' &&
+						gatewayConfig.integrationType === 'dropin_ui' &&
+						gatewayConfig.enableInstallments
+					) {
+						formConfig.amount = this.order.amount ? this.order.amount : '0';
+					}						this.cardForm = GlobalPayments.creditCard.form(
 							'#' + this.id + '-' + this.fieldOptions['payment-form'].class,
 							formConfig
 						)
@@ -724,6 +756,13 @@
 							cardholderName: response.details.cardholderName,
 						},
 						paymentReference: response.paymentReference
+					}
+
+					if (response.installment) {
+							responseDetails.installment = {
+							id : response.installment.installmentId,
+							reference : response.installment.installmentReference,
+						}
 					}
 
 					this.paymentTokenResponse = JSON.stringify(responseDetails);

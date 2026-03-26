@@ -50,6 +50,13 @@ class GpApiGateway extends AbstractGateway {
 	public $supportsDCC = true;
 
 	/**
+	 * Enable Installments feature
+	 *
+	 * @var bool
+	 */
+	public $enableInstallments = false;
+
+	/**
 	 * Sandbox App ID.
 	 *
 	 * @var string
@@ -220,6 +227,8 @@ class GpApiGateway extends AbstractGateway {
 			'enableBlik' => $enableBlik,
 			'enableOpenbanking' => $enableOpenbanking,
 			'language' => $this->language,
+			'integrationType' => $this->integrationType,
+			'enableInstallments' => $this->enableInstallments ?? false,
 		);
 	}
 
@@ -244,6 +253,7 @@ class GpApiGateway extends AbstractGateway {
 			'debug'                    => $this->debug,
 			'logDirectory'             => $this->logDirectory,
 			'dynamicHeaders'           => $this->dynamicHeaders,
+			'enable_installments'      => $this->enableInstallments ?? false,
 		);
 	}
 

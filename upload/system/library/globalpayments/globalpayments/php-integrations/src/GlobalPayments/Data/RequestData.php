@@ -95,6 +95,16 @@ class RequestData {
 
 	public $requestType;
 
+	public $contactReference;
+
+	/**
+	 * Installment data for payment transactions.
+	 * Contains installment id and reference from tokenization.
+	 *
+	 * @var object
+	 */
+	public $installments;
+
 	/**
 	 * Used for adding extra data
 	 *
