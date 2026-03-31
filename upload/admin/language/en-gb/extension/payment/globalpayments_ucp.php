@@ -26,6 +26,8 @@ $_['text_unselect_all']       = 'Unselect All';
 $_['label_enabled']               = 'Enable/Disable';
 $_['label_title']                 = 'Title';
 $_['label_is_production']         = 'Live Mode';
+$_['label_region']                = 'Transaction Region';
+$_['label_service_url']           = 'API Endpoint';
 $_['label_app_id']                = 'Live App Id';
 $_['label_app_key']               = 'Live App Key';
 $_['label_account_name']          = 'Live Account Name';
@@ -50,6 +52,7 @@ $_['help_title']                 = 'This controls the title which the user sees 
 $_['help_is_production']         = 'Get your App Id and App Key from your <a href="https://developer.globalpay.com/user/register" target="_blank">Global Payments Developer Account</a>. ' .
                                  'Please follow the instructions provided in the plugin description.<br/>' .
                                  'When you are ready for Live, please contact <a href="mailto:%s?Subject=OpenCart%%20Live%%20Credentials">support</a> to get you live credentials.';
+$_['help_region']                = 'Select where transactions are processed. This controls the GP API host for sandbox and live transactions.';
 $_['help_for_credentials_check'] = 'Please note that Payment Methods will not appear on checkout if the credentials are not correct.';
 $_['help_credentials_check']     = 'Make a request to the Unified Payments server to check App Id and App Key credentials.';
 $_['help_debug']                 = 'Log all request to and from gateway. This can also log private data and should only be enabled in a development or stage environment.';
@@ -65,6 +68,8 @@ $_['help_enable_installments']   = 'Enable Installments payment option for eligi
 // Entry
 $_['entry_enabled']                  = 'Enable Gateway';
 $_['entry_is_production']            = 'Live Mode';
+$_['entry_region_global']            = 'Global (default)';
+$_['entry_region_europe']            = 'Europe';
 $_['entry_credentials_check']        = 'Credentials Check';
 $_['entry_debug']                    = 'Enable Logging';
 $_['entry_payment_action_authorize'] = 'Authorize only';

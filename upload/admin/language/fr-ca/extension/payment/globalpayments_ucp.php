@@ -26,6 +26,7 @@ $_['text_unselect_all']       = 'Tout désélectionner';
 $_['label_enabled']               = 'Activer/désactiver';
 $_['label_title']                 = 'Titre';
 $_['label_is_production']         = 'Mode En ligne';
+$_['label_region']                = 'Région de transaction';
 $_['label_app_id']                = 'ID d\'appli En ligne';
 $_['label_app_key']               = 'Clé d\'appli En ligne';
 $_['label_account_name']          = 'Nom de compte En ligne';
@@ -46,6 +47,7 @@ $_['help_title']                 = 'Cela contrôle le titre que voit l\'utilisat
 $_['help_is_production']         = 'Obtenez votre ID d\'appli et votre clé d\'appli de votre <a href="https://developer.globalpay.com/user/register" target="_blank">Compte de développeur Global Payments</a>. ' .
                                  'Veuillez suivre les instructions de la description du plugiciel.<br/>' .
                                  'Pour passer en mode En ligne, veuillez contacter <a href="mailto:%s?Subject=OpenCart%%20Live%%20Credentials">le Soutien</a> pour obtenir vos identifiants.';
+$_['help_region']                = 'Sélectionnez l’endroit où les transactions sont traitées. Cela contrôle l’hôte GP API pour le sandbox et le live.';
 $_['help_for_credentials_check'] = 'Veuillez noter que les méthodes de paiement n\'apparaîtront pas lors du paiement si les identifiants sont incorrects.';
 $_['help_credentials_check']     = 'Demander au serveur Unified Payments de vérifier les identifiants d\'ID d\'appli et de clé d\'appli.';
 $_['help_debug']                 = 'Enregistrer toutes les demandes entrantes et sortantes de la passerelle. Les données privées peuvent également être enregistrées. Cela ne peut être activé que dans un environnement de développement.';
@@ -59,6 +61,8 @@ $_['help_account_name']          = 'Spécifiez quel compte utiliser lorsque vous
 // Entry
 $_['entry_enabled']                  = 'Activer la passerelle';
 $_['entry_is_production']            = 'Mode En ligne';
+$_['entry_region_global']             = 'Global (par défaut)';
+$_['entry_region_europe']             = 'Europe';
 $_['entry_credentials_check']        = 'Vérification des identifiants';
 $_['entry_debug']                    = 'Activer l\'enregistrement';
 $_['entry_payment_action_authorize'] = 'Autoriser seulement';

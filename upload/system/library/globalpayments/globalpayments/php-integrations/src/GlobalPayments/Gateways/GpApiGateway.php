@@ -106,6 +106,20 @@ class GpApiGateway extends AbstractGateway {
 	public $country;
 
 	/**
+	 * Merchant region.
+	 *
+	 * @var string
+	 */
+	public $region;
+
+	/**
+	 * GP API service URL.
+	 *
+	 * @var string
+	 */
+	public $serviceUrl;
+
+	/**
 	 * Merchant defined Contact URL.
 	 *
 	 * @var string
@@ -215,7 +229,17 @@ class GpApiGateway extends AbstractGateway {
 		$enableBlik = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledBlik : 0;
 		$enableOpenbanking = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledOpenbanking : 0;
 		
-		return array(
+		// Determine data residency based on region
+		// Check for EU/Europe region (case-insensitive)
+		$dataResidency = 'NONE';
+		if (!empty($this->region)) {
+			$regionLower = strtolower(trim($this->region));
+			if (in_array($regionLower, ['europe', 'eu'])) {
+				$dataResidency = 'EU';
+			}
+		}
+		
+		$options = array(
 			'accessToken'           => $this->getAccessToken(),
 			'apiVersion'            => GpApiConnector::GP_API_VERSION,
 			'env'                   => $this->isProduction ? parent::ENVIRONMENT_PRODUCTION : parent::ENVIRONMENT_SANDBOX,
@@ -229,7 +253,16 @@ class GpApiGateway extends AbstractGateway {
 			'language' => $this->language,
 			'integrationType' => $this->integrationType,
 			'enableInstallments' => $this->enableInstallments ?? false,
+			'dataResidency' => $dataResidency,
 		);
+		
+		// MUST set serviceUrl for frontend JavaScript library to use correct regional endpoint
+		// The JS library requires explicit serviceUrl even when dataResidency is set
+		if (!empty($this->serviceUrl)) {
+			$options['serviceUrl'] = $this->serviceUrl;
+		}
+		
+		return $options;
 	}
 
 	/**
@@ -238,7 +271,17 @@ class GpApiGateway extends AbstractGateway {
 	 * @return array|Array
 	 */
 	public function getBackendGatewayOptions() {
-		return array(
+		// Determine data residency based on region
+		// Check for EU/Europe region (case-insensitive)
+		$dataResidency = 'NONE';
+		if (!empty($this->region)) {
+			$regionLower = strtolower(trim($this->region));
+			if (in_array($regionLower, ['europe', 'eu'])) {
+				$dataResidency = 'EU';
+			}
+		}
+		
+		$backendOptions = array(
 			'gatewayProvider'          => $this->gatewayProvider,
 			'gatewayId'                => $this->gatewayId,
 			'appId'                    => $this->getCredentialSetting('appId'),
@@ -254,7 +297,10 @@ class GpApiGateway extends AbstractGateway {
 			'logDirectory'             => $this->logDirectory,
 			'dynamicHeaders'           => $this->dynamicHeaders,
 			'enable_installments'      => $this->enableInstallments ?? false,
+			'dataResidency'            => $dataResidency,
 		);
+
+		return $backendOptions;
 	}
 
 	/**

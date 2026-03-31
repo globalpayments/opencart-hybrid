@@ -26,6 +26,7 @@ $_['text_unselect_all']       = 'Deseleccionar todo';
 $_['label_enabled']               = 'Activar/Desactivar';
 $_['label_title']                 = 'Título';
 $_['label_is_production']         = 'Modo en vivo';
+$_['label_region']                = 'Región de transacciones';
 $_['label_app_id']                = 'ID de aplicación en vivo';
 $_['label_app_key']               = 'Clave de aplicación en vivo';
 $_['label_account_name']          = 'Nombre de cuenta';
@@ -46,6 +47,7 @@ $_['help_title']                 = 'Esto controla el título que ve el usuario d
 $_['help_is_production']         = 'Obtenga su ID de aplicación y clave de aplicación de su <a href="https://developer.globalpay.com/user/register target"_blank">Cuenta de desarrollador de Global Payments</a>. ' .
                                  'Siga las instrucciones proporcionadas en la descripción del complemento.<br/>'.
                                  "Cuando esté listo para Live, comuníquese con <a href='mailto:%s?Subject=OpenCart%%20Live%%20Credentials>soporte</a> para obtener sus credenciales Live.";
+$_['help_region']                = 'Seleccione dónde se procesan las transacciones. Esto controla el host de la API de GP para sandbox y producción.';
 $_['help_for_credentials_check'] = 'Tenga en cuenta que los métodos de pago no aparecerán al finalizar la compra si las credenciales no son correctas.';
 $_['help_credentials_check']     = 'Realice una solicitud al servidor de Unified Payments para verificar las credenciales de ID de aplicación y clave de aplicación.';
 $_['help_debug']                 = 'Registre todas las solicitudes hacia y desde la puerta de enlace. Esto también puede registrar datos privados y sólo debe habilitarse en un entorno de desarrollo o etapa.';
@@ -59,6 +61,8 @@ $_['help_account_name']          = 'Especifique qué cuenta usar al procesar una
 // Entry
 $_['entry_enabled']                  = 'Habilitar puerta de enlace';
 $_['entry_is_production']            = 'Modo en vivo';
+$_['entry_region_global']             = 'Global (predeterminado)';
+$_['entry_region_europe']             = 'Europa';
 $_['entry_credentials_check']        = 'Verificación de credenciales';
 $_['entry_debug']                    = 'Habilitar registro';
 $_['entry_payment_action_authorize'] = 'Autorizar sólo';

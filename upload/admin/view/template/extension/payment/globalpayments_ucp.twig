@@ -7,6 +7,49 @@
 			$(event.target).val(0);
 		}
 	}
+
+	// Service URL mapping based on region and environment
+	var serviceUrls = {
+		'global': {
+			'production': 'https://apis.globalpay.com/ucp',
+			'sandbox': 'https://apis.sandbox.globalpay.com/ucp'
+		},
+		'europe': {
+			'production': 'https://apis.eu.globalpay.com/ucp',
+			'sandbox': 'https://apis.sandbox.eu.globalpay.com/ucp'
+		}
+	};
+
+	function updateServiceUrl() {
+		var region = $('#input-region').val() || 'global';
+		var isProduction = $('#input-is_production').is(':checked');
+		var environment = isProduction ? 'production' : 'sandbox';
+		var url = serviceUrls[region] ? serviceUrls[region][environment] : '';
+		// Remove /ucp suffix for display purposes only
+		var displayUrl = url.replace(/\/ucp$/, '');
+		$('#input-service-url').text(displayUrl);
+	}
+
+  function resetAccountNameDropdown(selector) {
+    $(selector).empty();
+  }
+
+	$(document).ready(function() {
+		// Update service URL on page load
+		updateServiceUrl();
+
+		// Update service URL when region changes and clear account name fields
+		$('#input-region').on('change', function() {
+			updateServiceUrl();
+      resetAccountNameDropdown('#input-account_name');
+      resetAccountNameDropdown('#input-sandbox_account_name');
+		});
+
+		// Update service URL when live mode checkbox changes
+		$('#input-is_production').on('change', function() {
+			updateServiceUrl();
+		});
+	});
 </script>
 {{ column_left }}
 <div id="content">
@@ -73,6 +116,18 @@
                   <p>{{ help_is_production }}</p>
                 </div>
               </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-region"><span data-toggle="tooltip" title="{{ help_region }}">{{ label_region }}</span></label>
+                <div class="col-sm-10">
+                  <select name="payment_globalpayments_ucp_region" id="input-region" class="form-control">
+                    <option value="global" {{ payment_globalpayments_ucp_region == 'global' ? 'selected' : '' }}>{{ entry_region_global }}</option>
+                    <option value="europe" {{ payment_globalpayments_ucp_region == 'europe' ? 'selected' : '' }}>{{ entry_region_europe }}</option>
+                  </select>
+                  <div style="margin-top: 8px;">
+                    <span>{{ label_service_url }}: <span id="input-service-url" style="color: #006bb4;"></span></span>
+                  </div>
+                </div>
+              </div>
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-app_id">{{ label_app_id }}</label>
                 <div class="col-sm-10">
@@ -96,7 +151,7 @@
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-account_name">{{ label_account_name }}</label>
                 <div class="col-sm-10">
-                  <select name="payment_globalpayments_ucp_account_name" id="input-account_name" title="{{ help_account_name }}" class="form-control"></select>
+                  <select name="payment_globalpayments_ucp_account_name" id="input-account_name" title="{{ help_account_name|striptags|e }}" class="form-control"></select>
                   {% if error_live_credentials_account_name %}
                     <div class="text-danger">{{ error_live_credentials_account_name }}</div>
                   {% endif %}
@@ -128,7 +183,7 @@
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-sandbox_account_name">{{ label_sandbox_account_name }}</label>
                 <div class="col-sm-10">
-                <select name="payment_globalpayments_ucp_sandbox_account_name" id="input-sandbox_account_name" title="{{ help_credentials_check }}" class="form-control"></select>
+                <select name="payment_globalpayments_ucp_sandbox_account_name" id="input-sandbox_account_name" title="{{ help_credentials_check|striptags|e }}" class="form-control"></select>
                   {% if error_sandbox_credentials_account_name %}
                     <div class="text-danger">{{ error_sandbox_credentials_account_name }}</div>
                   {% endif %}
@@ -320,13 +375,15 @@
 	$('#input-integration_type').on('change', this.toggleInstallments.bind(this));
 
 	// Reset all account dropdowns when any app id or app key changes
-	$('#input-sandbox_app_id, #input-sandbox_app_key').on('input keyup change', function() {
-		$('#input-sandbox_account_name').empty().val('').trigger('change');
+  $('#input-sandbox_app_id, #input-sandbox_app_key').on('input keyup change', function() {
+    resetAccountNameDropdown('#input-sandbox_account_name');
+    $('#input-sandbox_account_name').trigger('change');
 	});
 
 	// Reset all account dropdowns when any app id or app key changes
-	$('#input-app_id, #input-app_key').on('input keyup change', function() {
-		$('#input-account_name').empty().val('').trigger('change');
+  $('#input-app_id, #input-app_key').on('input keyup change', function() {
+    resetAccountNameDropdown('#input-account_name');
+    $('#input-account_name').trigger('change');
 	});
 
 	function isLiveMode() {
@@ -347,6 +404,7 @@
 		var gateway_app_id = getGatewaySetting('app_id');
 		var gateway_app_key = getGatewaySetting('app_key');
 		var environment = 0;
+		var region = $('#input-region').val() || 'global';
 
 		if(!gateway_app_id || !gateway_app_key) {
 			alert( "{{ alert_credentials_check }}" );
@@ -355,6 +413,10 @@
 		if (isLiveMode())  {
 			environment = 1;
 		}
+		
+		// Get the correct service URL based on region and environment
+		var serviceUrl = serviceUrls[region] ? serviceUrls[region][environment == 1 ? 'production' : 'sandbox'] : '';
+		
 		var clicked_button = $(this);
 
 		$.ajax({
@@ -364,6 +426,8 @@
 				app_id: gateway_app_id,
 				app_key: gateway_app_key,
 				environment: environment,
+				region: region,
+				service_url: serviceUrl,
 			},
 			dataType: 'json',
 			beforeSend: function () {
@@ -380,7 +444,7 @@
             var accountSelected = '{{ payment_globalpayments_ucp_sandbox_account_name}}';
         }
         if(environment == 1){
-          $('#input-account_name').empty();
+          resetAccountNameDropdown('#input-account_name');
           $.each(json.accountNames,function(a,values){
             $('#input-account_name').append($('<option >', { value: values, text: values }));
           });
@@ -389,7 +453,7 @@
               $('#input-account_name').val(accountSelected);
           }
         }else{
-          $('#input-sandbox_account_name').empty();
+          resetAccountNameDropdown('#input-sandbox_account_name');
           $.each(json.accountNames,function(a,values){
             $('#input-sandbox_account_name').append($('<option >', { value: values, text: values }));
           });

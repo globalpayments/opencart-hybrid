@@ -83,6 +83,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['allow_card_saving']    = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
 		$data['enable_installments']  = $this->config->get('payment_globalpayments_ucp_enable_installments');
 
+		$data['js_lib_version'] = \GlobalPayments\PaymentGatewayProvider\Utils\Utils::getJsLibVersion();
 		$data['environment_indicator']                             = $this->globalpayments
 			->gateway->getEnvironmentIndicator('alert alert-danger');
 		$data['secure_payment_fields']                             = $this->globalpayments
@@ -356,6 +357,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$order->amount         = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
 		$order->currency       = $order_info['currency_code'];
 		$order->orderReference = $this->session->data['order_id'];
+		$order->reference      = 'opencart_' . $this->session->data['order_id'] . '_' . time();
+		$order->description    = 'Order #' . $this->session->data['order_id'];
 
 		$order->customerEmail = $order_info['email'];
 

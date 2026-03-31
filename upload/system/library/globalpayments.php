@@ -27,7 +27,13 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.9.0';
+	const VERSION = '1.10.0';
+
+	/**
+	 * GP API regions.
+	 */
+	const GP_API_REGION_GLOBAL = 'global';
+	const GP_API_REGION_EUROPE = 'europe';
 
 	/**
 	 * @var GlobalPayments\PaymentGatewayProvider\Gateways\GatewayInterface
@@ -57,6 +63,24 @@ class GlobalPayments {
 				$this->setTransactionApiGateway();
 				break;
 		}
+	}
+
+	/**
+	 * Get GP API service URLs from SDK constants.
+	 *
+	 * @return array
+	 */
+	private static function getGpApiServiceUrls(): array {
+		return [
+			self::GP_API_REGION_GLOBAL => [
+				'production' => \GlobalPayments\Api\Entities\Enums\ServiceEndpoints::GP_API_PRODUCTION,
+				'sandbox' => \GlobalPayments\Api\Entities\Enums\ServiceEndpoints::GP_API_TEST,
+			],
+			self::GP_API_REGION_EUROPE => [
+				'production' => \GlobalPayments\Api\Entities\Enums\ServiceEndpoints::GP_API_PRODUCTION_EU,
+				'sandbox' => \GlobalPayments\Api\Entities\Enums\ServiceEndpoints::GP_API_TEST_EU,
+			],
+		];
 	}
 
 	public function setPaymentMethod($paymentMethodId) {
@@ -101,6 +125,9 @@ class GlobalPayments {
 		$this->gateway->enabledOpenbanking = $this->config->get('payment_globalpayments_ucp_enabled_openbanking');
 		$this->gateway->title              = $this->config->get('payment_globalpayments_ucp_title');
 		$this->gateway->isProduction       = $this->config->get('payment_globalpayments_ucp_is_production');
+		$region = self::normalizeGpApiRegion($this->config->get('payment_globalpayments_ucp_region'));
+		$this->gateway->region             = $region;
+		$this->gateway->serviceUrl         = self::resolveGpApiServiceUrl($region, (bool)$this->gateway->isProduction);
 		$this->gateway->appId              = $this->config->get('payment_globalpayments_ucp_app_id');
 		$this->gateway->appKey             = $this->config->get('payment_globalpayments_ucp_app_key');
 		$this->gateway->accountName        = $this->config->get('payment_globalpayments_ucp_account_name');
@@ -325,5 +352,42 @@ class GlobalPayments {
 		);
 
 		$this->gateway->setSecurePaymentFieldsStyles($securePaymentFieldsStyles);
+	}
+
+	/**
+	 * Resolve the GP API service URL based on region and environment.
+	 *
+	 * @param string|null $region
+	 * @param bool $isProduction
+	 *
+	 * @return string
+	 */
+	public static function resolveGpApiServiceUrl(?string $region, bool $isProduction): string {
+		$normalizedRegion = self::normalizeGpApiRegion($region);
+		$environmentKey = $isProduction ? 'production' : 'sandbox';
+		$serviceUrls = self::getGpApiServiceUrls();
+
+		return $serviceUrls[$normalizedRegion][$environmentKey];
+	}
+
+	/**
+	 * Normalize the GP API region with a safe fallback.
+	 *
+	 * @param string|null $region
+	 *
+	 * @return string
+	 */
+	protected static function normalizeGpApiRegion(?string $region): string {
+		$normalizedRegion = '';
+		if (is_string($region)) {
+			$normalizedRegion = strtolower(trim($region));
+		}
+
+		$serviceUrls = self::getGpApiServiceUrls();
+		if (!array_key_exists($normalizedRegion, $serviceUrls)) {
+			return self::GP_API_REGION_GLOBAL;
+		}
+
+		return $normalizedRegion;
 	}
 }

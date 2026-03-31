@@ -67,11 +67,15 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 		}
 
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_openbanking_currencies'])) {
-			$data['payment_globalpayments_openbanking_currencies'] = explode(',', $this->request->post['payment_globalpayments_openbanking_currencies']);
+			$currencies = $this->request->post['payment_globalpayments_openbanking_currencies'];
+			$data['payment_globalpayments_openbanking_currencies'] = is_array($currencies) 
+				? $currencies : explode(',', $currencies);
 		} elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_openbanking_currencies'] = '';
 		} else {
-			$data['payment_globalpayments_openbanking_currencies'] = explode(',', $this->config->get('payment_globalpayments_openbanking_currencies'));
+			$config_value = $this->config->get('payment_globalpayments_openbanking_currencies');
+			$data['payment_globalpayments_openbanking_currencies'] = is_array($config_value)
+				? $config_value : explode(',', $config_value);
 		}
 
 		if (isset($this->request->post['payment_globalpayments_openbanking_sort_order'])) {

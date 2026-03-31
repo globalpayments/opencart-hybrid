@@ -61,11 +61,15 @@ class ControllerExtensionPaymentGlobalPaymentsClickToPay extends Controller {
 			$data['payment_globalpayments_clicktopay_wrapper'] = $this->config->get('payment_globalpayments_clicktopay_wrapper');
 		}
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_clicktopay_accepted_cards'])) {
-			$data['payment_globalpayments_clicktopay_accepted_cards'] = explode(',', $this->request->post['payment_globalpayments_clicktopay_accepted_cards']);
+			$accepted_cards = $this->request->post['payment_globalpayments_clicktopay_accepted_cards'];
+			$data['payment_globalpayments_clicktopay_accepted_cards'] = is_array($accepted_cards) 
+				? $accepted_cards : explode(',', $accepted_cards);
 		} elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_clicktopay_accepted_cards'] = '';
 		} else {
-			$data['payment_globalpayments_clicktopay_accepted_cards'] = explode(',', $this->config->get('payment_globalpayments_clicktopay_accepted_cards'));
+			$config_value = $this->config->get('payment_globalpayments_clicktopay_accepted_cards');
+			$data['payment_globalpayments_clicktopay_accepted_cards'] = is_array($config_value) 
+				? $config_value : explode(',', $config_value);
 		}
 		if (isset($this->request->post['payment_globalpayments_clicktopay_sort_order'])) {
 			$data['payment_globalpayments_clicktopay_sort_order'] = $this->request->post['payment_globalpayments_clicktopay_sort_order'];

@@ -189,6 +189,12 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_is_production'] = $this->config->get('payment_globalpayments_ucp_is_production');
 		}
+		if (isset($this->request->post['payment_globalpayments_ucp_region'])) {
+			$data['payment_globalpayments_ucp_region'] = $this->request->post['payment_globalpayments_ucp_region'];
+		} else {
+			$data['payment_globalpayments_ucp_region'] =
+				$this->config->get('payment_globalpayments_ucp_region') ?: 'global';
+		}
 		if (isset($this->request->post['payment_globalpayments_ucp_app_id'])) {
 			$data['payment_globalpayments_ucp_app_id'] = $this->request->post['payment_globalpayments_ucp_app_id'];
 		} else {
@@ -290,6 +296,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['help_is_production']       = sprintf($this->language->get('help_is_production'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
 		$data['help_allow_card_saving']   = sprintf($this->language->get('help_allow_card_saving'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
 		$data['help_txn_descriptor_note'] = sprintf($this->language->get('help_txn_descriptor_note'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
+		$data['help_region']              = $this->language->get('help_region');
 
 		$data['alerts'] = $this->alert;
 
@@ -620,6 +627,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$ajaxData['appId'] = $this->request->post['app_id'];
 		$ajaxData['appKey'] = $this->request->post['app_key'];
 		$ajaxData['environment'] = $environment;
+
+		// Set service URL if provided (based on region)
+		if (!empty($this->request->post['service_url'])) {
+			$ajaxData['serviceUrl'] = $this->request->post['service_url'];
+		}
 
 		$accountNames = [];
 		try {
