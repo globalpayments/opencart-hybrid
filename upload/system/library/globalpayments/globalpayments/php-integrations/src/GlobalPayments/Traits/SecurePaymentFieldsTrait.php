@@ -318,9 +318,13 @@ SW;
 		try {
 			return $this->getFrontendGatewayOptions();
 		} catch (\Exception $e) {
+			// Log the actual error for debugging purposes
+			error_log('GlobalPayments Frontend Configuration Error: ' . $e->getMessage());
+			
+			// Return generic error message to prevent information leakage
 			return array(
 				'error'    => true,
-				'message'  => $e->getMessage(),
+				'message'  => 'Payment configuration error. Please contact support.',
 			);
 		}
 	}

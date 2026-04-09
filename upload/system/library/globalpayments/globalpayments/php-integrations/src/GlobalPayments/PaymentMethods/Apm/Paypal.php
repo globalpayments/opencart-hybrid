@@ -88,8 +88,14 @@ class Paypal extends AbstractPaymentMethod {
 		if (!empty($queryString) && strpos($queryString, 'paypalReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('paypalReturn&amp;?', 'processPaypalReturn&', $currentUrl);
 			
+			// Validate URL is relative (no scheme/host) to prevent open redirect
+			$parsedUrl = parse_url($modifiedUrl);
+			if ($parsedUrl === false || isset($parsedUrl['scheme']) || isset($parsedUrl['host'])) {
+				throw new \Exception('Invalid redirect URL.');
+			}
+			
 			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
-			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+			if ($sanitizedUrl && strpos($sanitizedUrl, '/') === 0) {
 				header('Location: ' . $sanitizedUrl);
 				exit;
 			} else {
@@ -105,8 +111,14 @@ class Paypal extends AbstractPaymentMethod {
 		if (!empty($queryString) && strpos($queryString, 'paypalCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('paypalCancel&amp;?', 'processPaypalCancel&', $currentUrl);
 			
+			// Validate URL is relative (no scheme/host) to prevent open redirect
+			$parsedUrl = parse_url($modifiedUrl);
+			if ($parsedUrl === false || isset($parsedUrl['scheme']) || isset($parsedUrl['host'])) {
+				throw new \Exception('Invalid redirect URL.');
+			}
+			
 			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
-			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+			if ($sanitizedUrl && strpos($sanitizedUrl, '/') === 0) {
 				header('Location: ' . $sanitizedUrl);
 				exit;
 			} else {

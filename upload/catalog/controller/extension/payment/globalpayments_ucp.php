@@ -261,7 +261,14 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				}
 			}
 
-			$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
+			// Validate order_id is numeric to prevent manipulation
+			if (!is_numeric($this->session->data['order_id'])) {
+				throw new \Exception($this->language->get('error_order_processing'));
+			}
+
+			$this->response->redirect(
+				$this->url->link('checkout/success', ['order_id' => (int)$this->session->data['order_id']], true)
+			);
 		} catch (\Exception $e) {
 			$this->session->data['error'] = $e->getMessage();
 			$this->response->redirect($this->url->link( 'checkout/checkout', '', true));
@@ -330,8 +337,15 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 				$gatewayResponse
 			);
 
+			// Validate order_id is numeric to prevent manipulation
+			if (!is_numeric($this->session->data['order_id'])) {
+				throw new \Exception('Invalid order ID');
+			}
+
 			if ($payment_data['action']['result_code'] == 'SUCCESS'){
-				$this->response->redirect($this->url->link('checkout/success', ['order_id' => $this->session->data['order_id']], true));
+				$this->response->redirect(
+					$this->url->link('checkout/success', ['order_id' => (int)$this->session->data['order_id']], true)
+				);
 			} else {
 				$this->log->write($payment_data['id'] . " " . $payment_data['status']);
 				$this->log->write($payment_data['payment_method']['message']);

@@ -116,8 +116,14 @@ class OpenBanking extends AbstractPaymentMethod
 		if (!empty($queryString) && strpos($queryString, 'openBankingReturn&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingReturn&amp;?', 'processOpenBankingReturn&', $currentUrl);
 
+			// Validate URL is relative (no scheme/host) to prevent open redirect
+			$parsedUrl = parse_url($modifiedUrl);
+			if ($parsedUrl === false || isset($parsedUrl['scheme']) || isset($parsedUrl['host'])) {
+				throw new \Exception('Invalid redirect URL.');
+			}
+			
 			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
-			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+			if ($sanitizedUrl && strpos($sanitizedUrl, '/') === 0) {
 				header('Location: ' . $sanitizedUrl);
 				exit;
 			} else {
@@ -133,8 +139,14 @@ class OpenBanking extends AbstractPaymentMethod
 		if (!empty($queryString) && strpos($queryString, 'openBankingCancel&amp;?') !== false) {
 			$modifiedUrl = str_replace('openBankingCancel&amp;?', 'processOpenBankingCancel&', $currentUrl);
 
+			// Validate URL is relative (no scheme/host) to prevent open redirect
+			$parsedUrl = parse_url($modifiedUrl);
+			if ($parsedUrl === false || isset($parsedUrl['scheme']) || isset($parsedUrl['host'])) {
+				throw new \Exception('Invalid redirect URL.');
+			}
+			
 			$sanitizedUrl = filter_var($modifiedUrl, FILTER_SANITIZE_URL);
-			if (filter_var($sanitizedUrl, FILTER_VALIDATE_URL)) {
+			if ($sanitizedUrl && strpos($sanitizedUrl, '/') === 0) {
 				header('Location: ' . $sanitizedUrl);
 				exit;
 			} else {

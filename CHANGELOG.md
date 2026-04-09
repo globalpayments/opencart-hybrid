@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.0 (03/31/26)
+## Latest Version - v1.10.1 (04/09/26)
+### Enhancements:
+- Fixed Security vulnerabilities
+
+## v1.10.0 (03/31/26)
 ### Enhancements:
 - Added Support for EU GP API endpoint
 
