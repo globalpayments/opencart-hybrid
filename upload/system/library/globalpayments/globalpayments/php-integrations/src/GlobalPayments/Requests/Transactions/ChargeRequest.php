@@ -34,8 +34,7 @@ class ChargeRequest extends AbstractRequest {
 		                         ->withDescription($this->requestData->order->description ?? '')
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
-		                         ->withRequestMultiUseToken((int)$this->requestData->saveCard)
-		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+		                         ->withRequestMultiUseToken((int)$this->requestData->saveCard);
 
 		// Add installment data if present
 		if (!empty($this->requestData->installments)) {

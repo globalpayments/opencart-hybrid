@@ -31,8 +31,7 @@ class AuthorizeRequest extends AbstractRequest {
 		                         ->withDescription($this->requestData->order->description ?? '')
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
 		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
-		                         ->withRequestMultiUseToken($this->requestData->saveCard)
-		                         ->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+		                         ->withRequestMultiUseToken($this->requestData->saveCard);
 
 		// Add installment data if present (pass as plain object with id/reference)
 		if (!empty($this->requestData->installments)) {

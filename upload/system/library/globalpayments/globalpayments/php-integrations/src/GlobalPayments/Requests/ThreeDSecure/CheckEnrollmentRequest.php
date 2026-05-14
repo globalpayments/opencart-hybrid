@@ -32,8 +32,9 @@ class CheckEnrollmentRequest extends AbstractRequest {
 			return $response;
 		}
 		if (Secure3dVersion::TWO === $threeDSecureData->getVersion()) {
-			$response['methodUrl']   = $threeDSecureData->issuerAcsUrl;
-			$response['methodData']  = $threeDSecureData->payerAuthenticationRequest;
+			// Skip method step to avoid 3DS processing issues
+			$response['methodUrl'] = null;
+			$response['methodData'] = null;
 			$response['messageType'] = $threeDSecureData->messageType;
 
 			return $response;

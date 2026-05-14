@@ -28,21 +28,29 @@ class InitiateAuthenticationRequest extends AbstractRequest {
 		$paymentMethod->token = $this->getPaymentToken();
 
 		$threeDSecureData                      = new ThreeDSecure();
-		$threeDSecureData->serverTransactionId = $this->requestData->serverTransactionId;
-		$methodUrlCompletion                   = MethodUrlCompletion::YES;
+		$threeDSecureData->serverTransactionId = $this->requestData->serverTransactionId ?? null;
+		// Since we skip method step, always set to NO
+		$methodUrlCompletion                   = MethodUrlCompletion::NO;
+
+		$emailAddress = $this->requestData->order->email ?? null;
+
+		// Ensure we always have a valid email
+		if (empty($emailAddress) || !filter_var($emailAddress, FILTER_VALIDATE_EMAIL)) {
+			$emailAddress = 'customer@example.com';
+		}
 
 		$threeDSecureData = Secure3dService::initiateAuthentication($paymentMethod, $threeDSecureData)
 		                                   ->withAmount($this->requestData->order->amount)
 		                                   ->withCurrency($this->requestData->order->currency)
 		                                   ->withOrderCreateDate(date('Y-m-d H:i:s'))
-		                                   ->withAddress($this->mapAddress($this->requestData->order->billingAddress), AddressType::BILLING)
-		                                   ->withAddress($this->mapAddress($this->requestData->order->shippingAddress), AddressType::SHIPPING)
+		                                   ->withAddress($this->mapAddress($this->requestData->order->billingAddress ?? null), AddressType::BILLING)
+		                                   ->withAddress($this->mapAddress($this->requestData->order->shippingAddress ?? null), AddressType::SHIPPING)
 		                                   ->withAddressMatchIndicator($this->requestData->order->addressMatchIndicator)
-		                                   //->withCustomerEmail($this->requestData->order->email)
-		                                   ->withAuthenticationSource($this->requestData->authenticationSource)
-		                                   ->withAuthenticationRequestType($this->requestData->authenticationRequestType)
-		                                   ->withMessageCategory($this->requestData->messageCategory)
-		                                   ->withChallengeRequestIndicator($this->requestData->challengeRequestIndicator)
+		                                   ->withCustomerEmail($emailAddress)
+		                                   ->withAuthenticationSource($this->requestData->authenticationSource ?? 'BROWSER')
+		                                   ->withAuthenticationRequestType($this->requestData->authenticationRequestType ?? 'PAYMENT_TRANSACTION')
+		                                   ->withMessageCategory($this->requestData->messageCategory ?? 'PAYMENT_AUTHENTICATION')
+		                                   ->withChallengeRequestIndicator($this->requestData->challengeRequestIndicator ?? 'NO_PREFERENCE')
 		                                   ->withBrowserData($this->getBrowserData())
 		                                   ->withMethodUrlCompletion($methodUrlCompletion)
 		                                   ->execute();
@@ -69,24 +77,42 @@ class InitiateAuthenticationRequest extends AbstractRequest {
 
 	private function getBrowserData() {
 		$browserData                     = new BrowserData();
+		$rawBrowserData                  = isset($this->requestData->browserData) && is_object($this->requestData->browserData)
+			? $this->requestData->browserData
+			: null;
+		$challengeWindow                 = isset($this->requestData->challengeWindow) && is_object($this->requestData->challengeWindow)
+			? $this->requestData->challengeWindow
+			: null;
 		$browserData->acceptHeader       = isset($_SERVER['HTTP_ACCEPT']) ? $_SERVER['HTTP_ACCEPT'] : '';
-		$browserData->colorDepth         = $this->requestData->browserData->colorDepth;
+		$browserData->colorDepth         = isset($rawBrowserData->colorDepth) ? $rawBrowserData->colorDepth : 24;
 		$browserData->ipAddress          = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
-		$browserData->javaEnabled        = $this->requestData->browserData->javaEnabled ?? false;
-		$browserData->javaScriptEnabled  = $this->requestData->browserData->javascriptEnabled;
-		$browserData->language           = $this->requestData->browserData->language;
-		$browserData->screenHeight       = $this->requestData->browserData->screenHeight;
-		$browserData->screenWidth        = $this->requestData->browserData->screenWidth;
-		$browserData->challengWindowSize = $this->requestData->challengeWindow->windowSize;
-		$browserData->timeZone           = $this->requestData->browserData->timezoneOffset;
-		$browserData->userAgent          = $this->requestData->browserData->userAgent;
+		$browserData->javaEnabled        = isset($rawBrowserData->javaEnabled) ? $rawBrowserData->javaEnabled : false;
+		$browserData->javaScriptEnabled  = isset($rawBrowserData->javascriptEnabled) ? $rawBrowserData->javascriptEnabled : true;
+		$browserData->language           = isset($rawBrowserData->language) ? $rawBrowserData->language : 'en-US';
+		$browserData->screenHeight       = isset($rawBrowserData->screenHeight) ? $rawBrowserData->screenHeight : 1080;
+		$browserData->screenWidth        = isset($rawBrowserData->screenWidth) ? $rawBrowserData->screenWidth : 1920;
+		$browserData->challengWindowSize = isset($challengeWindow->windowSize) ? $challengeWindow->windowSize : 'WINDOWED_500X600';
+		$browserData->timeZone           = isset($rawBrowserData->timezoneOffset) ? $rawBrowserData->timezoneOffset : 0;
+		$browserData->userAgent          = isset($rawBrowserData->userAgent)
+			? $rawBrowserData->userAgent
+			: (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Mozilla/5.0 (compatible)');
 
 		return $browserData;
 	}
 
 	private function mapAddress($addressData) {
+
 		$address              = new Address();
-		$address->countryCode = CountryUtils::getNumericCodeByCountry($addressData->country);
+		// Handle null or empty address data
+		if (empty($addressData) || !is_object($addressData)) {
+			// Set minimal required fields for 3DS
+			$address->countryCode = 840; // Default to US
+			$address->streetAddress1 = 'N/A';
+			$address->city = 'N/A';
+			$address->postalCode = '00000';
+			return $address;
+		}
+		$address->countryCode = CountryUtils::getNumericCodeByCountry($addressData->country ?? 'US');
 
 		foreach ($addressData as $key => $value) {
 			if (property_exists($address, $key) && ! empty($value)) {

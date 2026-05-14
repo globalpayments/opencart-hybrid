@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.10.1';
+	const VERSION = '1.10.2';
 
 	/**
 	 * GP API regions.
@@ -163,10 +163,12 @@ class GlobalPayments {
 			return;
 		}
 
-		$this->gateway->checkEnrollmentUrl        = $this->url->link('extension/payment/globalpayments_ucp/threeDSecureCheckEnrollment', '', true);
-		$this->gateway->methodNotificationUrl     = $this->url->link('extension/payment/globalpayments_ucp/threeDSecureMethodNotification', '', true);
-		$this->gateway->initiateAuthenticationUrl = $this->url->link('extension/payment/globalpayments_ucp/threeDSecureInitiateAuthentication', '', true);
-		$this->gateway->challengeNotificationUrl  = $this->url->link('extension/payment/globalpayments_ucp/threeDSecureChallengeNotification', '', true);
+		$security_token = $this->generate_3ds_security_token();
+		$this->gateway->threeDSSecuritySalt      = defined('SECRET_KEY') ? SECRET_KEY : md5($this->config->get('config_name') . $this->config->get('config_url'));
+		$this->gateway->checkEnrollmentUrl        = $this->get_secured_3ds_url('extension/payment/globalpayments_ucp/threeDSecureCheckEnrollment', $security_token, (bool)$this->gateway->isProduction);
+		$this->gateway->methodNotificationUrl     = $this->getValidNotificationUrl('extension/payment/globalpayments_ucp/threeDSecureMethodNotification', (bool)$this->gateway->isProduction);
+		$this->gateway->initiateAuthenticationUrl = $this->get_secured_3ds_url('extension/payment/globalpayments_ucp/threeDSecureInitiateAuthentication', $security_token, (bool)$this->gateway->isProduction);
+		$this->gateway->challengeNotificationUrl  = $this->getValidNotificationUrl('extension/payment/globalpayments_ucp/threeDSecureChallengeNotification', (bool)$this->gateway->isProduction);
 
 		$this->gateway->threeDSLibPath = 'catalog/view/javascript/globalpayments-3ds.min.js';
 
@@ -389,5 +391,75 @@ class GlobalPayments {
 		}
 
 		return $normalizedRegion;
+	}
+
+	/**
+	 * Build a valid callback URL for 3DS notifications.
+	 * In sandbox/test mode, localhost URLs are rewritten to a public-looking HTTPS host.
+	 */
+	private function getValidNotificationUrl(string $route, bool $isProduction): string {
+		$url = $this->url->link($route, '', true);
+
+		if (!$isProduction) {
+			if (strpos($url, 'localhost') !== false || strpos($url, '127.0.0.1') !== false) {
+				$url = str_replace(['localhost', '127.0.0.1'], 'sandbox-webhook.example.com', $url);
+				$url = str_replace('http://', 'https://', $url);
+			}
+		}
+
+		if (!filter_var($url, FILTER_VALIDATE_URL)) {
+			$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'sandbox-webhook.example.com';
+			if (!$isProduction && ($host === 'localhost' || $host === '127.0.0.1')) {
+				$host = 'sandbox-webhook.example.com';
+			}
+
+			$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+			if (!$isProduction) {
+				$scheme = 'https';
+			}
+
+			$url = sprintf('%s://%s/index.php?route=%s', $scheme, $host, $route);
+		}
+
+		return $url;
+	}
+
+	private function get_client_ip_for_token(): string {
+		$ip_headers = array('HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR');
+
+		foreach ($ip_headers as $header) {
+			if (!empty($_SERVER[$header])) {
+				$ip = (string)$_SERVER[$header];
+
+				if (strpos($ip, ',') !== false) {
+					$ips = explode(',', $ip);
+					$ip = trim($ips[0]);
+				}
+
+				if (filter_var($ip, FILTER_VALIDATE_IP)) {
+					return $ip;
+				}
+			}
+		}
+
+		return '0.0.0.0';
+	}
+
+	private function generate_3ds_security_token(): string {
+		$timestamp = time();
+		$client_ip = $this->get_client_ip_for_token();
+		$secret_salt = defined('SECRET_KEY') ? SECRET_KEY : md5($this->config->get('config_name') . $this->config->get('config_url'));
+		$ip_hash = substr(md5($client_ip . $secret_salt), 0, 16);
+		$data = 'gp3ds_' . $timestamp . '_' . $ip_hash;
+		$signature = hash_hmac('sha256', $data, $secret_salt);
+
+		return $timestamp . ':' . $ip_hash . ':' . $signature;
+	}
+
+	private function get_secured_3ds_url(string $route, string $token, bool $isProduction): string {
+		$url = $this->url->link($route, '', true);
+		$separator = (strpos($url, '?') !== false) ? '&' : '?';
+
+		return $url . $separator . 'gp3ds_token=' . urlencode($token);
 	}
 }

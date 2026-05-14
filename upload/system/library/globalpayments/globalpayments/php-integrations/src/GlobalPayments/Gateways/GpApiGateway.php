@@ -147,6 +147,13 @@ class GpApiGateway extends AbstractGateway {
 	 */
 	public $initiateAuthenticationUrl;
 
+	/**
+	 * Shared 3DS security salt from platform config.
+	 *
+	 * @var string
+	 */
+	public $threeDSSecuritySalt = '';
+
 
 	/**
 	 * 3DS Challenge notification endpoint.
@@ -328,6 +335,16 @@ class GpApiGateway extends AbstractGateway {
 	 *
 	 */
 	public function threeDSecureCheckEnrollment(RequestData $requestData) {
+		$security_check = $this->verify_threedsecure_request_security();
+		if (true !== $security_check) {
+			AbstractRequest::sendJsonResponse([
+				'error'    => true,
+				'message'  => $security_check['message'],
+				'enrolled' => CheckEnrollmentRequest::NO_RESPONSE,
+			]);
+			return;
+		}
+
 		try {
 			$response = $this->processRequest(CheckEnrollmentRequest::class, $requestData);
 		} catch (ApiException $e) {
@@ -371,6 +388,15 @@ MNR;
 	}
 
 	public function threeDSecureInitiateAuthentication(RequestData $requestData) {
+		$security_check = $this->verify_threedsecure_request_security();
+		if (true !== $security_check) {
+			AbstractRequest::sendJsonResponse([
+				'error'   => true,
+				'message' => $security_check['message'],
+			]);
+			return;
+		}
+
 		try {
 			$response = $this->processRequest(InitiateAuthenticationRequest::class, $requestData);
 		} catch (\Exception $e) {
@@ -447,5 +473,191 @@ CNR;
 			return ($this->baseCountry === 'PL' && $this->baseCurrency === 'PLN');
 		}
 		return false;
+	}
+
+	/**
+	 * Verify request security for 3DS endpoints.
+	 *
+	 * @return bool|array
+	 */
+	private function verify_threedsecure_request_security() {
+		$token = isset($_GET['gp3ds_token']) ? trim((string)$_GET['gp3ds_token']) : '';
+
+		if ($token === '') {
+			return $this->buildThreeDSError('missing_token', 'Security token missing. Please refresh the page and try again.');
+		}
+
+		$parts = explode(':', $token);
+		if (count($parts) !== 3) {
+			return $this->buildThreeDSError('invalid_token', 'Invalid security token. Please refresh the page and try again.');
+		}
+
+		$timestampPart = $parts[0];
+		$tokenIpHash = $parts[1];
+		$providedSignature = $parts[2];
+
+		if (!ctype_digit((string)$timestampPart)) {
+			return $this->buildThreeDSError('invalid_token', 'Invalid security token. Please refresh the page and try again.');
+		}
+
+		$timestamp = (int)$timestampPart;
+		$tokenAge = time() - $timestamp;
+		if ($tokenAge > 300 || $tokenAge < 0) {
+			return $this->buildThreeDSError('token_expired', 'Security token expired. Please refresh the page and try again.');
+		}
+
+		$clientIp = $this->get_client_ip();
+		$secretSalt = (string)$this->threeDSSecuritySalt;
+		if ($secretSalt === '') {
+			return $this->buildThreeDSError('misconfigured_security', 'Security verification failed. Please refresh the page and try again.');
+		}
+
+		$currentIpHash = substr(md5($clientIp . $secretSalt), 0, 16);
+		if (!hash_equals($tokenIpHash, $currentIpHash)) {
+			return $this->buildThreeDSError('ip_mismatch', 'Security verification failed. Please refresh the page and try again.');
+		}
+
+		$expectedData = 'gp3ds_' . $timestamp . '_' . $tokenIpHash;
+		$expectedSignature = hash_hmac('sha256', $expectedData, $secretSalt);
+		if (!hash_equals($expectedSignature, $providedSignature)) {
+			return $this->buildThreeDSError('invalid_signature', 'Security verification failed. Please refresh the page and try again.');
+		}
+
+		$tokenHash = md5($token);
+		$ipHash = md5($clientIp);
+
+		$usageKey = 'gp_3ds_usage_' . $tokenHash;
+		$usageCount = $this->get_transient_counter($usageKey);
+		if ($usageCount >= 2) {
+			return $this->buildThreeDSError('token_exhausted', 'Security token exhausted. Please refresh the page and try again.');
+		}
+
+		$minuteKey = 'gp_3ds_rate_' . $ipHash;
+		$minuteCount = $this->get_transient_counter($minuteKey);
+		if ($minuteCount >= 2) {
+			return $this->buildThreeDSError('rate_limited', 'Too many requests. Please wait a moment before trying again.');
+		}
+		$this->set_transient_counter($minuteKey, $minuteCount + 1, 60);
+
+		$hourlyKey = 'gp_3ds_hourly_' . $ipHash;
+		$hourCount = $this->get_transient_counter($hourlyKey);
+		if ($hourCount >= 10) {
+			return $this->buildThreeDSError('hourly_limit', 'Request limit reached. Please try again later.');
+		}
+		$this->set_transient_counter($hourlyKey, $hourCount + 1, 3600);
+
+		$remainingTtl = max(1, 300 - $tokenAge);
+		$this->set_transient_counter($usageKey, $usageCount + 1, $remainingTtl);
+
+		return true;
+	}
+
+	/**
+	 * @param string $key
+	 *
+	 * @return int
+	 */
+	private function get_transient_counter(string $key): int {
+		$filePath = $this->get_transient_file_path($key);
+		if (!is_file($filePath) || !is_readable($filePath)) {
+			return 0;
+		}
+
+		$raw = file_get_contents($filePath);
+		if ($raw === false || $raw === '') {
+			return 0;
+		}
+
+		$data = json_decode($raw, true);
+		if (!is_array($data) || !isset($data['expires']) || !isset($data['value'])) {
+			@unlink($filePath);
+			return 0;
+		}
+
+		if ((int)$data['expires'] < time()) {
+			@unlink($filePath);
+			return 0;
+		}
+
+		return (int)$data['value'];
+	}
+
+	/**
+	 * @param string $key
+	 * @param int $value
+	 * @param int $ttlSeconds
+	 *
+	 * @return void
+	 */
+	private function set_transient_counter(string $key, int $value, int $ttlSeconds): void {
+		if ($ttlSeconds <= 0) {
+			return;
+		}
+
+		$filePath = $this->get_transient_file_path($key);
+		$directory = dirname($filePath);
+		if (!is_dir($directory)) {
+			@mkdir($directory, 0775, true);
+		}
+
+		$payload = [
+			'value' => $value,
+			'expires' => time() + $ttlSeconds,
+		];
+
+		file_put_contents($filePath, json_encode($payload), LOCK_EX);
+	}
+
+	/**
+	 * @param string $key
+	 *
+	 * @return string
+	 */
+	private function get_transient_file_path(string $key): string {
+		if (defined('DIR_STORAGE')) {
+			$basePath = rtrim((string)DIR_STORAGE, '/\\') . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR;
+		} elseif (defined('DIR_CACHE')) {
+			$basePath = rtrim((string)DIR_CACHE, '/\\') . DIRECTORY_SEPARATOR;
+		} else {
+			$basePath = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR;
+		}
+
+		return $basePath . 'gp_3ds_transient_' . md5($key) . '.json';
+	}
+
+	/**
+	 * @param string $code
+	 * @param string $message
+	 *
+	 * @return array
+	 */
+	private function buildThreeDSError(string $code, string $message): array {
+		return [
+			'code' => $code,
+			'message' => $message,
+		];
+	}
+
+	/**
+	 * @return string
+	 */
+	private function get_client_ip(): string {
+		$ipHeaders = array('HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR');
+
+		foreach ($ipHeaders as $header) {
+			if (!empty($_SERVER[$header])) {
+				$ip = (string)$_SERVER[$header];
+				if (strpos($ip, ',') !== false) {
+					$ips = explode(',', $ip);
+					$ip = trim($ips[0]);
+				}
+
+				if (filter_var($ip, FILTER_VALIDATE_IP)) {
+					return $ip;
+				}
+			}
+		}
+
+		return '0.0.0.0';
 	}
 }

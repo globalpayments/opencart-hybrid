@@ -66,7 +66,7 @@ class BlikPayment
             $config->country = 'PL';
             $config->appId = $settings["appId"];
             $config->appKey = $settings["appKey"];
-            $config->serviceUrl = $settings["environment"] === 'PRODUCTION' ?
+            $config->serviceUrl = $settings["isProduction"] ?
                 ServiceEndpoints::GP_API_PRODUCTION : ServiceEndpoints::GP_API_TEST;
             $config->channel = $settings["channel"];
 
@@ -156,13 +156,20 @@ class BlikPayment
     private static function getBlikSettings(object $config): array
     {
         // Default settings - you can modify these or get from OpenCart configuration
+        $isProduction = (bool)$config->get('payment_globalpayments_ucp_is_production');
+
         return [
-            'appId' => $config->get('payment_globalpayments_ucp_sandbox_app_id'),
-            'appKey' => $config->get('payment_globalpayments_ucp_sandbox_app_key'),
-            'environment' => $config->get('payment_globalpayments_ucp_is_production')
-                ?: 'sandbox',
+            'appId' => $isProduction
+                ? $config->get('payment_globalpayments_ucp_app_id')
+                : $config->get('payment_globalpayments_ucp_sandbox_app_id'),
+            'appKey' => $isProduction
+                ? $config->get('payment_globalpayments_ucp_app_key')
+                : $config->get('payment_globalpayments_ucp_sandbox_app_key'),
+            'isProduction' => $isProduction,
             'channel' => Channel::CardNotPresent,
-            'accountName' => $config->get('payment_globalpayments_ucp_sandbox_account_name')
+            'accountName' => $isProduction
+                ? $config->get('payment_globalpayments_ucp_account_name')
+                : $config->get('payment_globalpayments_ucp_sandbox_account_name')
         ];
     }
 
@@ -174,7 +181,7 @@ class BlikPayment
      */
     public static function validateConfiguration(array $settings): bool
     {
-        $required_fields = ['appId', 'appKey', 'environment', 'channel'];
+        $required_fields = ['appId', 'appKey', 'channel'];
 
         foreach ($required_fields as $field) {
             if (empty($settings[$field])) {

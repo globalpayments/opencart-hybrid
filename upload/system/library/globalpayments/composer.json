@@ -9,7 +9,8 @@
     }
   ],
   "require": {
-    "globalpayments/php-sdk": "14.1.6",
+    "php": ">=8.0",
+    "globalpayments/php-sdk": "14.1.12",
     "psr/log": "^1.1"
   },
   "autoload": {

@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "315aa68965cb35a9d054c1dd2c232c8d",
+    "content-hash": "fc80be883dcd8f07158389c184d580e8",
     "packages": [
         {
             "name": "globalpayments/php-sdk",
-            "version": "14.1.2",
+            "version": "14.1.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/globalpayments/php-sdk.git",
-                "reference": "8a055887ed30053113cc0c628d769c78c9f6479a"
+                "reference": "dcb8de123672d2c63f491e584731b30afc254232"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/8a055887ed30053113cc0c628d769c78c9f6479a",
-                "reference": "8a055887ed30053113cc0c628d769c78c9f6479a",
+                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/dcb8de123672d2c63f491e584731b30afc254232",
+                "reference": "dcb8de123672d2c63f491e584731b30afc254232",
                 "shasum": ""
             },
             "require": {
@@ -55,9 +55,9 @@
             "homepage": "https://developer.heartlandpaymentsystems.com/documentation",
             "support": {
                 "issues": "https://github.com/globalpayments/php-sdk/issues",
-                "source": "https://github.com/globalpayments/php-sdk/tree/14.1.2"
+                "source": "https://github.com/globalpayments/php-sdk/tree/14.1.12"
             },
-            "time": "2026-02-12T13:17:26+00:00"
+            "time": "2026-04-23T12:42:33+00:00"
         },
         {
             "name": "psr/log",
@@ -116,7 +116,9 @@
     "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
+    "platform": {
+        "php": ">=8.0"
+    },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

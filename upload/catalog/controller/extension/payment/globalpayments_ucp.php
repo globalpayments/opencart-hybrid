@@ -8,6 +8,7 @@ use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 // Requiremets for HPP
 use GlobalPayments\Api\Builders\HPPBuilder;
 use GlobalPayments\Api\Entities\{Address, PayerDetails, PhoneNumber, Transaction};
+use GlobalPayments\Api\Entities\GpApi\AccessTokenInfo;
 use GlobalPayments\Api\Entities\Enums\{
     AddressType,
     CaptureMode,
@@ -433,8 +434,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		try{
 			$config = new GpApiConfig();
+			$isProduction = (int)$this->globalpayments->gateway->isProduction === 1;
 
-			if ($this->globalpayments->gateway->isProduction == 1){
+			if ($isProduction) {
 				$config->appId = $this->globalpayments->gateway->appId;
 				$config->appKey = $this->globalpayments->gateway->appKey;
 				$config->environment = Environment::PRODUCTION;
@@ -446,6 +448,16 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 			$config->country = $this->globalpayments->gateway->country;
 			$config->channel = Channel::CardNotPresent;
+
+			// Set the correct account name so GP API uses the HPP-enabled account.
+			$hppAccountName = $isProduction
+				? $this->globalpayments->gateway->accountName
+				: $this->globalpayments->gateway->sandboxAccountName;
+			if (!empty($hppAccountName)) {
+				$accessTokenInfo = new AccessTokenInfo();
+				$accessTokenInfo->transactionProcessingAccountName = $hppAccountName;
+				$config->accessTokenInfo = $accessTokenInfo;
+			}
 
 			ServicesContainer::configureService($config);
 

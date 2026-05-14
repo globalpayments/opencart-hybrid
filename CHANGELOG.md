@@ -3,9 +3,17 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.1 (04/09/26)
+## Latest Version - v1.10.2 (05/14/26)
+### Bug fix
+- 3ds issue fixed
+- add patch to pass live credentials for live mode
+- Fixed Cart error after switching from HPP to Drop‑in UI
+
+## v1.10.1 (04/09/26)
 ### Enhancements:
 - Fixed Security vulnerabilities
+### Bug fix
+- Removed problematic withPaymentMethodUsageMode method
 
 ## v1.10.0 (03/31/26)
 ### Enhancements:
