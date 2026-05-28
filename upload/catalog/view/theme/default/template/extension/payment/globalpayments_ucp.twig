@@ -12,8 +12,37 @@
   
   {% if gateway.integrationType == 'hosted_payment' %}
     <div class="hpp" style="width: 600px; margin: auto">
-      <a type="button" href="{{ hpp_link }}" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" class="btn btn-primary" >Order Now</a>
+			{% if hpp_link %}
+			<a type="button" href="{{ hpp_link }}" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" class="btn btn-primary" >Order Now</a>
+			{% else %}
+			<a type="button" href="javascript:void(0);" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" data-hpp-error="{{ hpp_error|e('html_attr') }}" class="btn btn-primary hpp-order-disabled" >Order Now</a>
+			{% endif %}
     </div>
+
+		{% if not hpp_link and hpp_error %}
+		<script type="text/javascript">
+			$('body').off('click.hppDisabledOrderNow', '#button-order.hpp-order-disabled');
+			$('body').on('click.hppDisabledOrderNow', '#button-order.hpp-order-disabled', function(e) {
+				e.preventDefault();
+				var hppErrorMessage = $(this).data('hpp-error');
+				if (hppErrorMessage) {
+					var $alert = $('#globalpayments-alert');
+					var $breadcrumb = $('.breadcrumb').first();
+
+					if ($breadcrumb.length) {
+						$breadcrumb.after($alert);
+					} else {
+						$('#globalpayments-payment-form').prepend($alert);
+					}
+
+					$alert.text(hppErrorMessage).show();
+					$('html, body').animate({
+						scrollTop: ($alert.offset().top - 100)
+					}, 300);
+				}
+			});
+		</script>
+		{% endif %}
   {% endif %}
   
   {% if gateway.integrationType == 'dropin_ui' %}
@@ -251,6 +280,11 @@
 				 * @returns
 				 */
 				renderPaymentFields: function () {
+					// HPP does not render secure card field targets; skip Drop-in/UI initialization.
+					if (this.gatewayOptions.integrationType === 'hosted_payment') {
+						return;
+					}
+
 					if (!this.gatewayOptions.accessToken) {
 						if (
 							$('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0

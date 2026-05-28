@@ -36,6 +36,24 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	public function index() {
 		$this->load->language('extension/payment/globalpayments_ucp');
 
+		// 1. Migrate any legacy SDK error into the namespaced HPP error bucket.
+		if (
+    		$this->globalpayments->gateway->integrationType === 'hosted_payment'
+    		&& isset($this->session->data['error'])
+    		&& strpos($this->session->data['error'], 'action_type - LINK_CREATE') !== false
+		) {
+    		$this->session->data['globalpayments_hpp_error'] = $this->session->data['error'];
+    		unset($this->session->data['error']);
+		}
+
+		// Prevent stale HPP prebuild errors from leaking into Drop-in UI checkout.
+		if (
+    		$this->globalpayments->gateway->integrationType !== 'hosted_payment'
+    		&& isset($this->session->data['globalpayments_hpp_error'])
+		) {
+    		unset($this->session->data['globalpayments_hpp_error']);
+		}
+
 		$this->setOrder();
 		$this->globalpayments->setSecurePaymentFieldsTranslations();
 		$this->globalpayments->setSecurePaymentFieldsStyles();
@@ -44,7 +62,16 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 		$data['gateway'] = $this->globalpayments->gateway;
 
-		$data['hpp_link'] = $this->buildHPP();
+		$data['hpp_link'] = '';
+		$data['hpp_error'] = '';
+		if ($this->globalpayments->gateway->integrationType === 'hosted_payment') {
+			$data['hpp_link'] = $this->buildHPP();
+
+			if (empty($data['hpp_link']) && isset($this->session->data['globalpayments_hpp_error'])) {
+				$data['hpp_error'] = $this->session->data['globalpayments_hpp_error'];
+				unset($this->session->data['globalpayments_hpp_error']);
+			}
+		}
 
 		$data['payment_tab_option'] = 'new';
 		if ($this->customer->isLogged()) {
@@ -386,13 +413,17 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			'country'        => $order_info['payment_iso_code_2'],
 		);
 
+		$hasShippingAddress = !empty($order_info['shipping_address_1'])
+			&& !empty($order_info['shipping_city'])
+			&& !empty($order_info['shipping_iso_code_2']);
+
 		$order->shippingAddress = array(
-			'streetAddress1' => $order_info['shipping_address_1'],
-			'streetAddress2' => $order_info['shipping_address_2'],
-			'city'           => $order_info['shipping_city'],
-			'state'          => $order_info['shipping_zone_code'],
-			'postalCode'     => $order_info['shipping_postcode'],
-			'country'        => $order_info['shipping_iso_code_2'],
+			'streetAddress1' => $hasShippingAddress ? $order_info['shipping_address_1'] : $order_info['payment_address_1'],
+			'streetAddress2' => $hasShippingAddress ? $order_info['shipping_address_2'] : $order_info['payment_address_2'],
+			'city'           => $hasShippingAddress ? $order_info['shipping_city'] : $order_info['payment_city'],
+			'state'          => $hasShippingAddress ? $order_info['shipping_zone_code'] : $order_info['payment_zone_code'],
+			'postalCode'     => $hasShippingAddress ? $order_info['shipping_postcode'] : $order_info['payment_postcode'],
+			'country'        => $hasShippingAddress ? $order_info['shipping_iso_code_2'] : $order_info['payment_iso_code_2'],
 		);
 
 		$order->addressMatchIndicator = $order->billingAddress == $order->shippingAddress;
@@ -485,15 +516,42 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$billingAddress->__set("country", $order_info['payment_country']);
 			$billingAddress->__set("countryCode", $order_info['payment_iso_code_2']);
 
+			$hasShippingAddress = !empty($order_info['shipping_address_1'])
+				&& !empty($order_info['shipping_city'])
+				&& !empty($order_info['shipping_iso_code_2']);
+
+			$shippingStreet1 = $hasShippingAddress ? $order_info['shipping_address_1'] : $order_info['payment_address_1'];
+			$shippingStreet2 = $hasShippingAddress ? $order_info['shipping_address_2'] : $order_info['payment_address_2'];
+			$shippingCity = $hasShippingAddress ? $order_info['shipping_city'] : $order_info['payment_city'];
+			$shippingZoneCode = $hasShippingAddress ? $order_info['shipping_zone_code'] : $order_info['payment_zone_code'];
+			$shippingPostcode = $hasShippingAddress ? $order_info['shipping_postcode'] : $order_info['payment_postcode'];
+			$shippingCountry = $hasShippingAddress
+				? (!empty($order_info['shipping_country']) ? $order_info['shipping_country'] : $order_info['payment_country'])
+				: $order_info['payment_country'];
+			$shippingCountryCode = $hasShippingAddress ? $order_info['shipping_iso_code_2'] : $order_info['payment_iso_code_2'];
+
+			$normalize = function($value) {
+				return strtolower(trim((string)$value));
+			};
+
+			$addressMatchIndicator =
+				$normalize($order_info['payment_address_1']) === $normalize($shippingStreet1)
+				&& $normalize($order_info['payment_address_2']) === $normalize($shippingStreet2)
+				&& $normalize($order_info['payment_city']) === $normalize($shippingCity)
+				&& $normalize($order_info['payment_zone_code']) === $normalize($shippingZoneCode)
+				&& $normalize($order_info['payment_postcode']) === $normalize($shippingPostcode)
+				&& $normalize($order_info['payment_country']) === $normalize($shippingCountry)
+				&& $normalize($order_info['payment_iso_code_2']) === $normalize($shippingCountryCode);
+
 			$shippingAddress = New Address();
 			$shippingAddress->__set("type", AddressType::SHIPPING);
-			$shippingAddress->__set("streetAddress1", $order_info['shipping_address_1']);
-			$shippingAddress->__set("streetAddress2", $order_info['shipping_address_2']);
-			$shippingAddress->__set("city", $order_info['shipping_city']);
-			$shippingAddress->__set("state", substr($order_info['shipping_zone_code'], 0, 3));
-			$shippingAddress->__set("postalCode", $order_info['shipping_postcode']);
-			$shippingAddress->__set("country", $order_info['shipping_iso_code_2']);
-			$shippingAddress->__set("countryCode", $order_info['shipping_iso_code_2']);
+			$shippingAddress->__set("streetAddress1", $shippingStreet1);
+			$shippingAddress->__set("streetAddress2", $shippingStreet2);
+			$shippingAddress->__set("city", $shippingCity);
+			$shippingAddress->__set("state", substr($shippingZoneCode, 0, 3));
+			$shippingAddress->__set("postalCode", $shippingPostcode);
+			$shippingAddress->__set("country", $shippingCountry);
+			$shippingAddress->__set("countryCode", $shippingCountryCode);
 
 			$payerDetails->billingAddress = $billingAddress;
 			$payerDetails->shippingAddress = $shippingAddress;
@@ -530,7 +588,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 							$baseurl . '?route=checkout/cart'
 						)
 						->withCurrency($order_info['currency_code'])
-						->withAddressMatchIndicator(false)
+						->withAddressMatchIndicator($addressMatchIndicator)
 						->withDigitalWallets(["googlepay", "applepay"])
 
 						->execute();
@@ -561,7 +619,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 							$baseurl . '?route=checkout/cart'
 						)
 						->withCurrency($order_info['currency_code'])
-						->withAddressMatchIndicator(false)
+						->withAddressMatchIndicator($addressMatchIndicator)
 						->withAuthentication(ChallengeRequestIndicator::CHALLENGE_PREFERRED,ExemptStatus::LOW_VALUE, true)
 						->withDigitalWallets(["googlepay", "applepay"])
 
@@ -570,8 +628,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 			return $ecommercePayment->payByLinkResponse->url;
 		} catch (\Exception $e) {
-			$this->session->data['error'] = $e->getMessage();
-			$this->log->write($this->session->data['error']);
+			$this->session->data['globalpayments_hpp_error'] = $e->getMessage();
+			$this->log->write($this->session->data['globalpayments_hpp_error']);
 		}
 	}
 }

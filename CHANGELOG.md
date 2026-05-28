@@ -3,7 +3,13 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.2 (05/14/26)
+## Latest Version - v1.10.3 (05/28/26)
+### Bug fix
+- Fixed HPP not Displayed for items without a delivery option
+- Fixed Unexpected message during MX installment checkout
+- Fixed Console error for HPP on checkout
+
+## v1.10.2 (05/14/26)
 ### Bug fix
 - 3ds issue fixed
 - add patch to pass live credentials for live mode
@@ -22,7 +28,6 @@
 ## v1.9.0 (03/26/26)
 ### Enhancements:
 - Added Support for Installment Payment Plans for LATAM Market
-
 
 ## v1.8.2 (02/12/26)
 ### Enhancements:

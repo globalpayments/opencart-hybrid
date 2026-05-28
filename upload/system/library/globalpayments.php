@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.10.2';
+	const VERSION = '1.10.3';
 
 	/**
 	 * GP API regions.
