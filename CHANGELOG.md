@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.3 (05/28/26)
+## Latest Version - v1.10.4 (06/04/26)
+### Enhancements: 
+- Added support to Traditional Chinese and Simplified Chinese language
+
+## v1.10.3 (05/28/26)
 ### Bug fix
 - Fixed HPP not Displayed for items without a delivery option
 - Fixed Unexpected message during MX installment checkout
