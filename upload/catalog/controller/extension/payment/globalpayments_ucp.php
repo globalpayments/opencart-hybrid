@@ -105,6 +105,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$data['base_currency'] = $store_currency;
 		$data['base_country']  = $store_country_iso;
 
+		if (empty($this->session->data['apm_csrf_token'])) {
+			$this->session->data['apm_csrf_token'] = bin2hex(random_bytes(32));
+		}
+		$data['apm_csrf_token'] = $this->session->data['apm_csrf_token'];
+
 		$data['sandbox_account_name'] = $this->config->get('payment_globalpayments_ucp_sandbox_account_name');
 		$data['account_name']         = $this->config->get('payment_globalpayments_ucp_account_name');
 		$data['is_production']        = $this->config->get('payment_globalpayments_ucp_is_production');

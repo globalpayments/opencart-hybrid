@@ -447,7 +447,8 @@
 									var ajaxData = {
 										payment_method: 'blik',
 										gateway_id: this.id,
-										action: 'initiate_sale'
+										action: 'initiate_sale',
+										token: '{{ apm_csrf_token }}'
 									};
 
 									// Add order data if available
@@ -549,7 +550,8 @@
 											var ajaxData = {
 												payment_method: 'open_banking',
 												gateway_id: this.id,
-												action: 'initiate_sale'
+												action: 'initiate_sale',
+												token: '{{ apm_csrf_token }}'
 											};
 
 											// Add order data if available

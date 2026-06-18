@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.4 (06/04/26)
+## Latest Version - v1.10.5 (06/18/26)
+### Enhancements: 
+- Fixed BLIK and PayU threw an error on the first click in DropinUI
+
+## v1.10.4 (06/04/26)
 ### Enhancements: 
 - Added support to Traditional Chinese and Simplified Chinese language
 
