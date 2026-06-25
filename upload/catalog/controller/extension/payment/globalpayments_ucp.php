@@ -566,6 +566,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			$country_info = $this->model_localisation_country->getCountry($store_country_id);
 			$store_country_iso = isset($country_info['iso_code_2']) ? $country_info['iso_code_2'] : '';
 
+			// Get DCC setting
+			$enableDCC = (bool) $this->globalpayments->gateway->allowDCC;
+
 			if ($this->currency->convert($order_info['total'], 'EUR', $order_info['currency_code']) > 30){
 				$ecommercePayment = HPPBuilder::create()
 						->withName($this->session->data['order_id'])
@@ -594,6 +597,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 						)
 						->withCurrency($order_info['currency_code'])
 						->withAddressMatchIndicator($addressMatchIndicator)
+						->withCurrencyConversionMode($enableDCC)
 						->withDigitalWallets(["googlepay", "applepay"])
 
 						->execute();
@@ -625,6 +629,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 						)
 						->withCurrency($order_info['currency_code'])
 						->withAddressMatchIndicator($addressMatchIndicator)
+						->withCurrencyConversionMode($enableDCC)
 						->withAuthentication(ChallengeRequestIndicator::CHALLENGE_PREFERRED,ExemptStatus::LOW_VALUE, true)
 						->withDigitalWallets(["googlepay", "applepay"])
 

@@ -43,6 +43,7 @@ $_['label_txn_descriptor']        = 'Order Transaction Descriptor';
 $_['label_enable_three_d_secure'] = 'Enable 3DSecure';
 $_['label_integration_type']      = 'Integration Type';
 $_['label_enable_installments']   = 'Enable Installments';
+$_['label_enable_dcc']            = 'Enable DCC';
 $_['label_sort_order']            = 'Sort Order';
 $_['label_blik']                  = 'Enable Blik Payment';
 $_['label_open_banking']          = 'Enable Open Banking Payment';
@@ -64,6 +65,7 @@ $_['help_txn_descriptor_note']   = 'Please contact <a href="mailto:%s?Subject=Op
 $_['help_account_name']          = 'Specify which account to use when processing a transaction. Default account will be used if this is not specified. <br>For assistance locating your account name, please contact our <a href="https://developer.globalpay.com/support/integration-support" target="_blank">Integration Support</a> Team based on location';
 $_['help_integration_type']      = 'Select whether your payment form appears on the checkout page or redirects to a hosted page (hosted simplifies enablement of Apple and Google pay).';
 $_['help_enable_installments']   = 'Enable Installments payment option for eligible transactions.';
+$_['help_enable_dcc']            = 'Enable or disable Dynamic Currency Conversion (DCC) for transactions processed through Global Payments. Only available with Hosted Payment Page integration.';
 
 // Entry
 $_['entry_enabled']                  = 'Enable Gateway';

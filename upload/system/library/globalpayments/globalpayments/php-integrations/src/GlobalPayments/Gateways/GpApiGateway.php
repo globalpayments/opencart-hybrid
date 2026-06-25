@@ -50,6 +50,15 @@ class GpApiGateway extends AbstractGateway {
 	public $supportsDCC = true;
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * Control of Platform's DCC support.
+	 *
+	 * @var bool
+	 */
+	public $allowDCC = false;
+
+	/**
 	 * Enable Installments feature
 	 *
 	 * @var bool
@@ -304,6 +313,8 @@ class GpApiGateway extends AbstractGateway {
 			'logDirectory'             => $this->logDirectory,
 			'dynamicHeaders'           => $this->dynamicHeaders,
 			'enable_installments'      => $this->enableInstallments ?? false,
+			'allowDCC'                 => $this->allowDCC ?? false,
+			'integrationType'          => $this->integrationType ?? null,
 			'dataResidency'            => $dataResidency,
 		);
 

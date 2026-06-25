@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.10.5 (06/18/26)
+## Latest Version - v1.11.0 (06/25/26)
+### Enhancements:
+- Added support for DCC(Dynamic currency conversion)
+
+## v1.10.5 (06/18/26)
 ### Enhancements: 
 - Fixed BLIK and PayU threw an error on the first click in DropinUI
 

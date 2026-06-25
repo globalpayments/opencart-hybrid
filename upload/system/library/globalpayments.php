@@ -27,7 +27,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.10.5';
+	const VERSION = '1.11.0';
 
 	/**
 	 * GP API regions.
@@ -144,6 +144,7 @@ class GlobalPayments {
 		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type');
 		$this->gateway->language           = $this->language->get('code');
 		$this->gateway->enableInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments') == 1;
+		$this->gateway->allowDCC           = $this->config->get('payment_globalpayments_ucp_enable_dcc') == 1;
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');

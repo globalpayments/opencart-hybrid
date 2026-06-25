@@ -21,6 +21,16 @@ class GetAccessTokenRequest extends AbstractRequest {
 			if (!empty($this->config['enable_installments'])) {
 				array_push($this->config['permissions'], 'INS_POST_Query', 'BIN_GET_Details', 'PMT_POST_Create');
 			}
+
+			// Add DCC permissions if DCC is enabled and integration type is hosted payment page
+			if (
+				!empty($this->config['allowDCC'])
+				&& $this->config['allowDCC'] === true
+				&& ($this->config['integrationType'] ?? null) === 'hosted_payment'
+			) {
+				array_push($this->config['permissions'], 'CCS_POST_DCC', 'PMT_POST_Create');
+				$this->config['permissions'] = array_values(array_unique($this->config['permissions']));
+			}
 		}
 		// @TODO: Currently we request an access token every time we load hosted fields.
 		// @TODO: Should we set access token expiration?

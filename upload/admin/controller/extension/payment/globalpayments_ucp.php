@@ -256,6 +256,13 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_enable_installments'] = $this->config->get('payment_globalpayments_ucp_enable_installments');
 		}
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_dcc'])) {
+			$data['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enable_dcc'] = 0;
+		} else {
+			$data['payment_globalpayments_ucp_enable_dcc'] = $this->config->get('payment_globalpayments_ucp_enable_dcc');
+		}
 		if (isset($this->request->post['payment_globalpayments_ucp_sort_order'])) {
 			$data['payment_globalpayments_ucp_sort_order'] = $this->request->post['payment_globalpayments_ucp_sort_order'];
 		} else {
