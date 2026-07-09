@@ -3,7 +3,11 @@
 </a>
 
 # Changelog
-## Latest Version - v1.11.0 (06/25/26)
+## Latest Version - v1.11.1 (07/09/26)
+### Enhancements:
+- Updated PHP SDK version to 14.2.0
+
+## v1.11.0 (06/25/26)
 ### Enhancements:
 - Added support for DCC(Dynamic currency conversion)
 
