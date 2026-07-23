@@ -1,25 +1,17 @@
 <?php
 
-// Load GlobalPayments API autoloader first
-if (file_exists(DIR_SYSTEM . 'library/globalpayments/vendor/autoload.php')) {   
-    require_once(DIR_SYSTEM . 'library/globalpayments/vendor/autoload.php');
-} elseif (file_exists(DIR_SYSTEM . 'library/globalpayments/globalpayments/php-sdk/autoload.php')) {
-    require_once(DIR_SYSTEM . 'library/globalpayments/globalpayments/php-sdk/autoload.php');
-} elseif (file_exists(DIR_SYSTEM . 'library/globalpayments/autoload.php')) {
-    require_once(DIR_SYSTEM . 'library/globalpayments/autoload.php');
-}
-
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
-
-
-// Include our custom BLIK payment class
-require_once(DIR_SYSTEM . 'library/globalpayments/globalpayments/php-integrations/src/GlobalPayments/Gateways/DiUiApms/BlikPayment.php');
-require_once(DIR_SYSTEM . 'library/globalpayments/globalpayments/php-integrations/src/GlobalPayments/Gateways/DiUiApms/OpenBankingPayment.php');
 use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment;
 use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment;
 
 class ControllerExtensionPaymentApmMiddleware extends Controller
 {
+
+
+	public function __construct( $registry ) {
+		parent::__construct( $registry );
+		$this->load->library('globalpayments');
+	}
     public function confirm(): void
     {
 		ob_start();

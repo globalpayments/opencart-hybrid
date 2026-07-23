@@ -13,6 +13,8 @@ if (is_readable($autoloader)) {
 
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\PaymentGatewayProvider\Gateways\GeniusGateway;
+use GlobalPayments\PaymentGatewayProvider\Gateways\TransitGateway;
 use GlobalPayments\PaymentGatewayProvider\Gateways\TransactionApiGateway;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ClickToPay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\DigitalWallets\ApplePay;
@@ -27,7 +29,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	const VERSION = '1.11.1';
+	 const VERSION = '2.0.0';
 
 	/**
 	 * GP API regions.
@@ -41,8 +43,10 @@ class GlobalPayments {
 	public $gateway;
 
 	public $paymentMethod;
-	
+
 	public $integrationType;
+
+	public $enableThreeDSecure;
 
 	protected $registry;
 
@@ -62,8 +66,15 @@ class GlobalPayments {
 			case GatewayId::TRANSACTION_API:
 				$this->setTransactionApiGateway();
 				break;
+			case GatewayId::TRANSIT:
+				$this->setTransitGateway();
+				break;
+			case GatewayId::GENIUS:
+				$this->setGeniusGateway();
+				break;
 		}
 	}
+
 
 	/**
 	 * Get GP API service URLs from SDK constants.
@@ -125,9 +136,6 @@ class GlobalPayments {
 		$this->gateway->enabledOpenbanking = $this->config->get('payment_globalpayments_ucp_enabled_openbanking');
 		$this->gateway->title              = $this->config->get('payment_globalpayments_ucp_title');
 		$this->gateway->isProduction       = $this->config->get('payment_globalpayments_ucp_is_production');
-		$region = self::normalizeGpApiRegion($this->config->get('payment_globalpayments_ucp_region'));
-		$this->gateway->region             = $region;
-		$this->gateway->serviceUrl         = self::resolveGpApiServiceUrl($region, (bool)$this->gateway->isProduction);
 		$this->gateway->appId              = $this->config->get('payment_globalpayments_ucp_app_id');
 		$this->gateway->appKey             = $this->config->get('payment_globalpayments_ucp_app_key');
 		$this->gateway->accountName        = $this->config->get('payment_globalpayments_ucp_account_name');
@@ -140,10 +148,19 @@ class GlobalPayments {
 		$this->gateway->allowCardSaving    = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
 		$this->gateway->txnDescriptor      = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		$this->gateway->baseUrl            = $this->url->link('extension/payment/', '', true);
-		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure')==1;
-		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type');
+		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type') ?: "dropin_ui";
 		$this->gateway->language           = $this->language->get('code');
 		$this->gateway->enableInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments') == 1;
+		$region = self::normalizeGpApiRegion($this->config->get('payment_globalpayments_ucp_region'));
+		$this->gateway->region             = $region;
+		$this->gateway->serviceUrl         = self::resolveGpApiServiceUrl($region, (bool)$this->gateway->isProduction);
+		
+		$this->gateway->hppInstallmentsType = $this->config->get('payment_globalpayments_ucp_hpp_installments_plan_type');
+		$this->gateway->hppInstallmentsDuration = $this->config->get('payment_globalpayments_ucp_hpp_installments_plan_duration');
+		$this->gateway->hppInstallmentsTheshold = $this->config->get('payment_globalpayments_ucp_hpp_installments_threshold');
+		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure') ?? $this->threeDSecureRequired();
+
+
 		$this->gateway->allowDCC           = $this->config->get('payment_globalpayments_ucp_enable_dcc') == 1;
 
 		$this->load->model('localisation/country');
@@ -271,6 +288,70 @@ class GlobalPayments {
 		$this->gateway->logDirectory             = DIR_LOGS;
 	}
 
+
+	public function setTransitGateway() {
+		$this->gateway = new TransitGateway([
+			'merchant_id' => $this->config->get('payment_globalpayments_transit_merchant_id'),
+			'user_id' => $this->config->get('payment_globalpayments_transit_user_id'),
+			'password' => $this->config->get('payment_globalpayments_transit_password'),
+			'device_id' => $this->config->get('payment_globalpayments_transit_device_id'),
+			'tsep_device_id' => $this->config->get('payment_globalpayments_transit_tsep_device_id'),
+			'transaction_key' => $this->config->get('payment_globalpayments_transit_transaction_key'),
+			'sandbox_merchant_id' => $this->config->get('payment_globalpayments_transit_sandbox_merchant_id'),
+			'sandbox_user_id' => $this->config->get('payment_globalpayments_transit_sandbox_user_id'),
+			'sandbox_password' => $this->config->get('payment_globalpayments_transit_sandbox_password'),
+			'sandbox_device_id' => $this->config->get('payment_globalpayments_transit_sandbox_device_id'),
+			'sandbox_tsep_device_id' => $this->config->get('payment_globalpayments_transit_sandbox_tsep_device_id'),
+			'sandbox_transaction_key' => $this->config->get('payment_globalpayments_transit_sandbox_transaction_key'),
+			'is_production' => $this->config->get('payment_globalpayments_transit_is_production'),
+			'debug' => $this->config->get('payment_globalpayments_transit_debug')
+		]);
+
+		$this->gateway->enabled = $this->config->get('payment_globalpayments_transit_status');
+		$this->gateway->title = $this->config->get('payment_globalpayments_transit_title');
+		$this->gateway->paymentAction = $this->config->get('payment_globalpayments_transit_payment_action');
+		$this->gateway->allowCardSaving = $this->config->get('payment_globalpayments_transit_allow_card_saving');
+		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_transit_txn_descriptor');
+		$this->gateway->baseUrl = $this->url->link('extension/payment/', '', true);
+
+		$this->load->language('extension/payment/globalpayments_transit');
+		$this->gateway->errorTransactionStatusDeclined = $this->language->get('error_txn_declined');
+		$this->gateway->errorGatewayResponse = $this->language->get('error_txn_error');
+		$this->gateway->errorThreeDSecure = $this->language->get('error_threedsecure');
+		$this->gateway->errorThreeDSecureNoLiabilityShift = $this->language->get('error_threedsecure_no_liability');
+	}
+
+	public function setGeniusGateway() {
+		$live_mode = $this->config->get('payment_globalpayments_genius_live_mode');
+
+		$this->gateway = new GeniusGateway([
+			'merchant_name' => $this->config->get('payment_globalpayments_genius_live_merchant_name'),
+			'merchant_site_id' => $this->config->get('payment_globalpayments_genius_live_merchant_site_id'),
+			'merchant_key' => $this->config->get('payment_globalpayments_genius_live_merchant_key'),
+			'web_api_key' => $this->config->get('payment_globalpayments_genius_live_web_api_key'),
+			'sandbox_merchant_name' => $this->config->get('payment_globalpayments_genius_sandbox_merchant_name'),
+			'sandbox_merchant_site_id' => $this->config->get('payment_globalpayments_genius_sandbox_merchant_site_id'),
+			'sandbox_merchant_key' => $this->config->get('payment_globalpayments_genius_sandbox_merchant_key'),
+			'sandbox_web_api_key' => $this->config->get('payment_globalpayments_genius_sandbox_web_api_key'),
+			'is_production' => $live_mode,
+		]);
+
+		$this->gateway->enabled = $this->config->get('payment_globalpayments_genius_status');
+		$this->gateway->title = $this->config->get('payment_globalpayments_genius_title');
+		$this->gateway->paymentAction = $this->config->get('payment_globalpayments_genius_payment_action');
+		$this->gateway->allowCardSaving = $this->config->get('payment_globalpayments_genius_allow_card_saving');
+		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_genius_txn_descriptor');
+		$this->gateway->checkAVSCVN = $this->config->get('payment_globalpayments_genius_check_avs_cvn');
+		$this->gateway->avsRejectConditions = $this->config->get('payment_globalpayments_genius_avs_reject_conditions');
+		$this->gateway->cvnRejectConditions = $this->config->get('payment_globalpayments_genius_cvn_reject_conditions');
+		$this->gateway->baseUrl = $this->url->link('extension/payment/', '', true);
+
+		$this->load->language('extension/payment/globalpayments_genius');
+		$this->gateway->errorTransactionStatusDeclined = $this->language->get('error_txn_declined');
+		$this->gateway->errorGatewayResponse = $this->language->get('error_txn_error');
+	}
+
+	
 	public function setOpenBankingPaymentMethod() {
 		$this->paymentMethod                = new OpenBanking($this->gateway);
 		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_openbanking_enabled');
@@ -394,6 +475,7 @@ class GlobalPayments {
 		return $normalizedRegion;
 	}
 
+
 	/**
 	 * Build a valid callback URL for 3DS notifications.
 	 * In sandbox/test mode, localhost URLs are rewritten to a public-looking HTTPS host.
@@ -462,5 +544,28 @@ class GlobalPayments {
 		$separator = (strpos($url, '?') !== false) ? '&' : '?';
 
 		return $url . $separator . 'gp3ds_token=' . urlencode($token);
+	}
+
+	public function threeDSecureRequired(){
+		$this->load->model('localisation/country');
+		$store_country_id = $this->config->get('config_country_id');
+		$store_country    = $this->model_localisation_country->getCountry($store_country_id);
+
+		$three_d_secure_required_countries = array(
+			"AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU",
+			"IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES",
+			"SE","EU","IS","LI","NO","CH","AL","BA","MD","ME","MK","RS","TR",
+			"UA","AD","BY","MC","RU","SM","GB","VA","JP","IN"
+		);
+		return in_array($store_country['iso_code_2'], $three_d_secure_required_countries );
+	}
+
+	/**
+	 * Returns display text for 3DS option
+	 */
+	public function getThreeDSecureDisplayText(){
+		return sprintf(($this->threeDSecureRequired()) ?
+		$this->language->get('three_d_secure_required_display_text') :
+		$this->language->get('three_d_secure_not_required_display_text') );
 	}
 }

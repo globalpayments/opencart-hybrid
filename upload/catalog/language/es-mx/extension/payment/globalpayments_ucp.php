@@ -44,4 +44,6 @@ $_['text_order_notification_return']  = 'Gracias. Su orden ha sido recibida, per
 
 // Placeholder
 $_['placeholder_title'] = 'Tarjeta de crédito o débito.';
+$_['installment_id'] = 'ID de pago a plazos';
+$_['installment_reference'] = 'Referencia de cuotas';
 $_['saved_card_installment_description'] = 'Para opciones de pago a Meses sin Intereses por favor ingresa abajo la información de la tarjeta';

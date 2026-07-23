@@ -3,7 +3,7 @@
 $_['heading_title'] = 'GlobalPayments - API de transaction';
 
 // Text
-$_['text_globalpayments_txnapi'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://developer.globalpay.com/static/media/logo.dab7811d.svg" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
+$_['text_globalpayments_txnapi'] = '<a href="https://developer.globalpay.com" target="_blank"><img src="https://avatars.githubusercontent.com/u/25797248?s=200&v=4" width="40px" height="40px" alt="Global Payments" title="Global Payments" style="border: 1px solid #EEEEEE;"></a>';
 
 // Label
 $_['label_enabled']           = 'Activer/désactiver';

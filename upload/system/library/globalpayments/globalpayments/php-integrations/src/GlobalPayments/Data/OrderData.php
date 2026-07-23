@@ -70,4 +70,7 @@ class OrderData {
 	 * @var string
 	 */
 	public $addressMatchIndicator;
+
+
+	public string $items;
 }

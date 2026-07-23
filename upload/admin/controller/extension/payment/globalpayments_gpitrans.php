@@ -333,7 +333,10 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 			}
 
 			$this->load->model('extension/payment/globalpayments_gpitrans');
-			$this->model_extension_payment_globalpayments_gpitrans->addTransaction($this->request->post['order_id'], $this->request->post['gateway_id'], $this->request->post['transaction_type'], $requestData->order->amount, $requestData->order->currency, $gatewayResponse);
+			$this->model_extension_payment_globalpayments_gpitrans->addTransaction($this->request->post['order_id'], 
+				$this->request->post['gateway_id'], $this->request->post['transaction_type'], 
+				$requestData->order->amount, $requestData->order->currency, $gatewayResponse);
+				
 			unset($response['error']);
 		} catch (Exception $e) {
 			unset($response['success']);

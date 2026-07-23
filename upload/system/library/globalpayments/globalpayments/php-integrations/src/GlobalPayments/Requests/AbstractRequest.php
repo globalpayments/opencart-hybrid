@@ -26,7 +26,7 @@ abstract class AbstractRequest implements RequestInterface {
 	 * @param array $config
 	 * @param RequestData|null $requestData
 	 */
-	public function __construct(array $config = array(), RequestData $requestData = null) {
+	public function __construct(array $config = array(), ?RequestData $requestData = null) {
 		$this->config      = $config;
 		$this->requestData = $requestData;
 	}
@@ -73,11 +73,21 @@ abstract class AbstractRequest implements RequestInterface {
 		return $tokenResponse->paymentReference;
 	}
 
+	// public function getCardHolderName() {
+	// 	$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
+	//
+	// 	return $tokenResponse->details->cardholderName ?? null;
+	// }
 	public function getCardHolderName() {
-		$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
+		if ($this->requestData->paymentTokenResponse){
+			$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
 
-		return $tokenResponse->details->cardholderName ?? null;
+			return $tokenResponse->details->cardholderName;
+		}
+
+		return null;
 	}
+
 
 	public static function getPostRequestData() {
 		if (('POST' !== $_SERVER['REQUEST_METHOD'])) {
@@ -90,7 +100,7 @@ abstract class AbstractRequest implements RequestInterface {
 		return $_POST;
 	}
 
-	public static function sendJsonResponse(array $response, int $responseCode = null) {
+	public static function sendJsonResponse(array $response, ?int $responseCode = null) {
 		header('Content-Type: application/json');
 		if ($responseCode) {
 		    http_response_code($responseCode);

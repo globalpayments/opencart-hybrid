@@ -45,3 +45,6 @@ $_['text_order_notification_return']  = 'Merci. Votre commande a été reçue, m
 
 // Placeholder
 $_['placeholder_title'] = 'Carte de crédit ou de débit';
+$_['installment_id'] = 'ID de versement';
+$_['installment_reference'] = 'Référence de versement';
+$_['saved_card_installment_description'] = 'Pour les options de paiement échelonné par carte, veuillez saisir les informations de votre carte.';

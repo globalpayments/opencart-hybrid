@@ -21,6 +21,9 @@ $_['text_edit']               = 'Edit GlobalPayments - Unified Payments';
 $_['text_success']            = 'Success: You have modified GlobalPayments - Unified Payments account details!';
 $_['text_select_all']         = 'Select All';
 $_['text_unselect_all']       = 'Unselect All';
+$_['text_hpp_installments_title'] = 'Installments Payment Options';
+$_['text_hpp_installments_subtitle'] = 'Installments may appear during payment when supported by your Global Payments account and the customer\'s card.</br>Hosted Payment Page Installments is an account‑level feature. This payment option will only display during checkout if it has been enabled on your Global Payments account.</br><b>Contact Global Payments support to learn more about enabling Installments.</b>';
+$_['text_hpp_installments_filtering_title'] = "Installments Payment Filtering Options";
 
 // Label
 $_['label_enabled']               = 'Enable/Disable';
@@ -47,6 +50,9 @@ $_['label_enable_dcc']            = 'Enable DCC';
 $_['label_sort_order']            = 'Sort Order';
 $_['label_blik']                  = 'Enable Blik Payment';
 $_['label_open_banking']          = 'Enable Open Banking Payment';
+$_['label_hpp_installments_plan_types'] = 'Shown Installments Plan Types';
+$_['label_hpp_installments_plan_duration'] = 'Shown Installment Plans Maxium duration (Only applicable for Merchant funded Installment plans)';
+$_['label_hpp_installments_plan_threshold'] = 'Installments Amount Threshold';
 
 // Help
 $_['help_title']                 = 'This controls the title which the user sees during checkout.';
@@ -65,6 +71,16 @@ $_['help_txn_descriptor_note']   = 'Please contact <a href="mailto:%s?Subject=Op
 $_['help_account_name']          = 'Specify which account to use when processing a transaction. Default account will be used if this is not specified. <br>For assistance locating your account name, please contact our <a href="https://developer.globalpay.com/support/integration-support" target="_blank">Integration Support</a> Team based on location';
 $_['help_integration_type']      = 'Select whether your payment form appears on the checkout page or redirects to a hosted page (hosted simplifies enablement of Apple and Google pay).';
 $_['help_enable_installments']   = 'Enable Installments payment option for eligible transactions.';
+$_['help_hpp_wallets']           = 'HPP Wallets and APMs';
+$_['help_hpp_wallets_description'] = 'Select the digital wallets and alternative payment methods you want to accept via Hosted Payment Page. These options are only available when using Hosted Payment Page integration type.';
+$_['help_hpp_installments_plan_types'] = 'Limit Shown Plans By Type';
+$_['help_hpp_installments_plan_types_tooltip'] = 'Used to filter installment plans based on plan type. MERCHANT_FUNDED (if sent, will return merchant funded plans only) CONSUMER_FUNDED (if sent, will return consumer funded plans only) HYBRID_FUNDED (if sent, will return both merchant and consumer funded plans) BILATERAL (if sent, will return BILATERAL plans only) ANY (if sent, will return all available plans) (default) Note: If not present, request will be sent with default value.';
+$_['help_hpp_installments_plan_duration'] = 'Used to retrieve installment plans with specific tenure. Applicable to merchant-funded plans only.';
+$_['help_hpp_installments_plan_duration_tooltip'] = 'Used to retrieve installment plans with specific tenure. Applicable to merchant-funded plans only. Example: max_term_months_merchant_funded = 12 — Means that only plans with tenure ≤ 12 months will be retrieved. Merchant-funded plans with tenure > 12 months will not be returned. Default: 1000 Note: If not present, request will be sent with default value. Used to determine whether to return the longest or shortest tenure/duration plans depending on the amount sent.';
+$_['help_hpp_installments_plan_threshold'] = 'Used to determine whether to return the longest or shortest tenure/duration plans depending on the amount sent. Setting 0 or nothing will disable this feature and plans will be shown in default sort order
+The amount should be sent in the smallest unit of the required currency. Example: 2000 = £20.00.';
+$_['help_hpp_installments_plan_threshold_tooltip'] = 'The amount should be sent in the smallest unit of the required currency. Example: 2000 = €20.00 Ex value sent 50000 will mean that: For transactions with an amount less or equal than €500.00, the plans with the shortest tenure will be displayed first. For transactions with an amount greater than €500.00, the plans with the longest tenure will be displayed first. Note: If not present, request will be sent with default value: plans with the longest tenure.';
+
 $_['help_enable_dcc']            = 'Enable or disable Dynamic Currency Conversion (DCC) for transactions processed through Global Payments. Only available with Hosted Payment Page integration.';
 
 // Entry
@@ -79,6 +95,19 @@ $_['entry_payment_action_charge']    = 'Authorize + Capture';
 $_['entry_allow_card_saving']        = 'Allow Card Saving';
 $_['entry_integration_type_dropin_ui'] = 'Drop-in UI';
 $_['entry_integration_type_hosted_payment'] = 'Hosted Payment Page';
+$_['entry_hpp_installments_plan_type_any'] = 'Show All Plans';
+$_['entry_hpp_installments_plan_type_customer_funded'] = 'Only Show Customer Funded Installment Plans';
+$_['entry_hpp_installments_plan_type_merchant_funded'] = 'Only Show Merchant Funded Installment Plans';
+$_['entry_hpp_installments_plan_type_hybrid_funded'] = 'Only Show Hybrid Funded Installment Plans';
+$_['entry_hpp_installments_plan_type_bilateral'] = 'Only Show Bilateral Funded Installment Plans';
+$_['entry_hpp_installments_plan_duration_any'] = 'Show All plans';
+$_['entry_hpp_installments_plan_duration_6_month'] = 'Only Show 6 Months plans';
+$_['entry_hpp_installments_plan_duration_12_month'] = 'Only Show 12 Months plans';
+$_['entry_hpp_installments_plan_duration_24_month'] = 'Only Show 24 Months plans';
+$_['entry_hpp_installments_plan_duration_32_month'] = 'Only Show 32 Months plans';
+
+// Label
+$_['label_hpp_wallets'] = 'Accepted Wallets and APMs';
 
 // Placeholder
 $_['placeholder_title'] = 'Credit or Debit Card';
@@ -107,3 +136,7 @@ $_['alert_credentials_check'] = 'Please be sure that you have filled AppId and A
 $_['text_success_full_refund']               = 'Payment fully refunded successfully!';
 $_['text_success_partial_refund']            = 'Payment partially refunded successfully!';
 $_['text_refunded_comment']                  = 'Order has been fully refunded .';
+
+// 3D secure
+$_['three_d_secure_required_display_text']      = '3D Secure is required in your country and is enabled automatically';
+$_['three_d_secure_not_required_display_text']  = '3D Secure is optional in your country';

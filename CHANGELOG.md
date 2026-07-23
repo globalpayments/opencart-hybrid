@@ -3,41 +3,57 @@
 </a>
 
 # Changelog
-## Latest Version - v1.11.1 (07/09/26)
-### Enhancements:
-- Updated PHP SDK version to 14.2.0
 
-## v1.11.0 (06/25/26)
-### Enhancements:
-- Added support for DCC(Dynamic currency conversion)
+## Latest Version - v2.0.0 (07/23/26)
 
-## v1.10.5 (06/18/26)
-### Enhancements: 
-- Fixed BLIK and PayU threw an error on the first click in DropinUI
+#Fixed 
+ - Account Name admin dropdown box not populating with correct name in live mode
+ - PHP deprication (8.4) issues with saved card function 
+ - Code cleanup 
 
-## v1.10.4 (06/04/26)
-### Enhancements: 
-- Added support to Traditional Chinese and Simplified Chinese language
+#Added
+ - HPPAllowedPaymentMethods to Enum to HPPBuilder
+ - Updated composer files to SDK v14.2.0
 
-## v1.10.3 (05/28/26)
-### Bug fix
-- Fixed HPP not Displayed for items without a delivery option
-- Fixed Unexpected message during MX installment checkout
-- Fixed Console error for HPP on checkout
+ - Added 3DS fix (PR10)
+ - Added Drop in UI fix (PR16)
+ - Updated composer files to SDK v14.1.12
 
-## v1.10.2 (05/14/26)
-### Bug fix
-- 3ds issue fixed
-- add patch to pass live credentials for live mode
-- Fixed Cart error after switching from HPP to Drop‑in UI
+  Major rebuild of codebase.  Brought Takepayments branch up to date with v1.10.1
+  Merged all closed pull requests (1-9, 11, 12, 13)
+  Outstanding pull requests (10, 14, 15, 16) will need to be updated to work with this new codebase.
 
-## v1.10.1 (04/09/26)
-### Enhancements:
-- Fixed Security vulnerabilities
+#Fixed
+
+- Broken logo images
+- Refund functionality for HPP transactions
+- Blink and Payu work with Live credeintials
+- Various bug fixes and codecleanup
+- Removed problematic withPaymentMethodUsageMode method
+- 3DS option not saving
+- Rebuilt HPP signature validation to avoid problematic getallheaders function
+- Reduced the amount of HPP logs (HPP Logs will only log if debug mode is enabled)
+- Removed BANK_PAYMENT from HPP request, this is not valid
+- _ucp_ payment form will now only show if the unified payments option is enabled
+
+#Added
+
+- 3DS recommendation for countries where it is a legal requirement
+- Alternative payment method toggle for HPP in admin page
+- PHP 8.4 combatibilty on _ucp files
+- PSR-12 compliance
+- Added Spanish translations for Genius and Transit gateways
+- Refactored Admin JS
+- environment_indicator to HPP twig file
+- vendor folder from the marketplace version, composer no longer required
+
+
+## Version - v1.10.1 (04/23/26)
 ### Bug fix
 - Removed problematic withPaymentMethodUsageMode method
 
-## v1.10.0 (03/31/26)
+
+##  Version - v1.10.0 (03/31/26)
 ### Enhancements:
 - Added Support for EU GP API endpoint
 

@@ -1,6 +1,15 @@
+<style>
+ .globalpayments-validation-error, .globalpayments-sandbox-warning {
+    list-style:none outside;
+  }
+</style>
 <form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
   <div id="globalpayments-alert" class="alert alert-danger" style="display:none;"></div>
   <div id="globalpayments-loading" style="text-align: center"><i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i> <span>{{ text_loading }}</span></div>
+  {% if environment_indicator and is_production == false %}
+   {{environment_indicator}}
+  {% endif %}
+
   {% if customer_is_logged and stored_payment_methods and allow_card_saving %}
   <div id="globalpayments-choose" class="form-horizontal">
     <ul class="nav nav-tabs">
@@ -9,44 +18,61 @@
     </ul>
   </div>
   {% endif %}
-  
+
   {% if gateway.integrationType == 'hosted_payment' %}
-    <div class="hpp" style="width: 600px; margin: auto">
-			{% if hpp_link %}
-			<a type="button" href="{{ hpp_link }}" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" class="btn btn-primary" >Order Now</a>
-			{% else %}
-			<a type="button" href="javascript:void(0);" value="Order Now" id="button-order" style="width: 600px" data-loading-text="{{ text_loading }}" data-hpp-error="{{ hpp_error|e('html_attr') }}" class="btn btn-primary hpp-order-disabled" >Order Now</a>
-			{% endif %}
+    {# Hosted Payment Page (HPP) Mode #}
+    <div class="hpp-payment-container" style="margin: 20px auto; text-align: center;">
+      {% if hpp_link %}
+        <div class="alert alert-info" style="margin-bottom: 20px;">
+          <i class="fa fa-info-circle"></i> You will be redirected to a secure payment page to complete your order.
+        </div>
+        <a href="{{ hpp_link }}"
+           id="hpp-payment-button"
+           class="btn btn-primary btn-lg"
+           style="min-width: 300px; padding: 15px 30px; font-size: 18px;">
+          <i class="fa fa-lock"></i> Proceed to Secure Payment
+        </a>
+      {% else %}
+        <div class="alert alert-danger">
+          <i class="fa fa-exclamation-triangle"></i> Unable to initialize payment. Please try again or contact support.
+        </div>
+      {% endif %}
     </div>
+		<style>
+	/* HPP Payment Container Styles */
+	.hpp-payment-container {
+		padding: 30px;
+		background: #f9f9f9;
+		border-radius: 8px;
+		border: 1px solid #e0e0e0;
+	}
 
-		{% if not hpp_link and hpp_error %}
-		<script type="text/javascript">
-			$('body').off('click.hppDisabledOrderNow', '#button-order.hpp-order-disabled');
-			$('body').on('click.hppDisabledOrderNow', '#button-order.hpp-order-disabled', function(e) {
-				e.preventDefault();
-				var hppErrorMessage = $(this).data('hpp-error');
-				if (hppErrorMessage) {
-					var $alert = $('#globalpayments-alert');
-					var $breadcrumb = $('.breadcrumb').first();
+	#hpp-payment-button {
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
 
-					if ($breadcrumb.length) {
-						$breadcrumb.after($alert);
-					} else {
-						$('#globalpayments-payment-form').prepend($alert);
-					}
+	#hpp-payment-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+	}
 
-					$alert.text(hppErrorMessage).show();
-					$('html, body').animate({
-						scrollTop: ($alert.offset().top - 100)
-					}, 300);
-				}
-			});
-		</script>
-		{% endif %}
+	#hpp-payment-button i {
+		margin-right: 8px;
+	}
+  </style>
+	<script>
+  $('#globalpayments-loading').hide();
+
+  $('#hpp-payment-button').on('click', function() {
+    $(this).html('<i class="fa fa-spinner fa-spin"></i> Redirecting To Payment Page');
+    $(this).addClass('disabled');
+  });
+  </script>
   {% endif %}
   
   {% if gateway.integrationType == 'dropin_ui' %}
-	  
+
 	  <input type="hidden" name="{{ gateway.gatewayId }}[paymentType]" value="{{ payment_tab_option }}" id="tab-option" />
 	  <div class="globalpayments" style="width: 600px; margin: auto">
 	    <fieldset id="{{ gateway.gatewayId }}-payment-token"{% if payment_tab_option != 'saved' %} style="display: none"{% endif %}>
@@ -86,9 +112,10 @@
 	    </div>
 	</form>
 
-{% endif %}
+
   
 <style>
+
   .saved-card-installment-description{
 	font-family: FontAwesome;
 	color: #1E91CF;
@@ -104,9 +131,9 @@
     z-index: 1001 !important;
   }
 
-  .globalpayments-validation-error, .globalpayments-sandbox-warning {
-    list-style:none outside;
-  }
+
+
+
 
   /* Styles for disabled div during AJAX calls */
   .disabled-during-ajax {
@@ -338,6 +365,7 @@
 						}
 					}
 
+
 					// Add installments configuration only for Mexico with MXN, dropin_ui, and Installments enabled
 					if (
 						base_country === 'MX' &&
@@ -354,6 +382,7 @@
 							]
 						};
 					}
+
 					// ensure the submit button's parent is on the page as this is added
 					// only after the initial page load
 					if ($(this.getSubmitButtonTargetSelector(this.id)).length === 0) {
@@ -369,17 +398,17 @@
 
 						// Only add amount and apms when BLIK is enabled
 						if (apmsEnabled) {
-						formConfig.amount = this.order.amount ? this.order.amount : '0';
-						formConfig.apms = [];
-					}
-					if (
-						base_country === 'MX' &&
-						base_currency === 'MXN' &&
-						gatewayConfig.integrationType === 'dropin_ui' &&
-						gatewayConfig.enableInstallments
-					) {
-						formConfig.amount = this.order.amount ? this.order.amount : '0';
-					}						this.cardForm = GlobalPayments.creditCard.form(
+              formConfig.amount = this.order.amount ? this.order.amount : '0';
+  						formConfig.apms = [];
+  					}
+  					if (
+  						base_country === 'MX' &&
+  						base_currency === 'MXN' &&
+  						gatewayConfig.integrationType === 'dropin_ui' &&
+  						gatewayConfig.enableInstallments
+  					) {
+  						formConfig.amount = this.order.amount ? this.order.amount : '0';
+  					}	this.cardForm = GlobalPayments.creditCard.form(
 							'#' + this.id + '-' + this.fieldOptions['payment-form'].class,
 							formConfig
 						)
@@ -568,10 +597,10 @@
 												dataType: 'json',
 												data: ajaxData,
 												success: function(response_data) {
-													
+
 													var response = JSON.parse(JSON.stringify(response_data));
 													console.log(response);
-										
+
 													if (response.success && response.redirect_url) {
 															// Create detail object with actual redirect URL from response
 															const detail = {
@@ -1094,3 +1123,5 @@
 		}
 	);
 </script>
+
+{% endif %}

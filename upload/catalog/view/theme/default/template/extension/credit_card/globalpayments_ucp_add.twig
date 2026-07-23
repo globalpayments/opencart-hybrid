@@ -135,7 +135,8 @@
 				 * @returns
 				 */
 				renderPaymentFields: function () {
-					if ($('#' + this.id + '-' + this.fieldOptions['card-number-field'].class).children().length > 0) {
+					if ($('#' + this.id + '-' + this.fieldOptions['card-number-field']) && 
+					$('#' + this.id + '-' + this.fieldOptions['card-number-field']?.class)?.children().length > 0) {
 						console.log('Warning! Payment fields cannot be loaded.');
 						return;
 					}

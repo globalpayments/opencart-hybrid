@@ -320,7 +320,7 @@ SW;
 		} catch (\Exception $e) {
 			// Log the actual error for debugging purposes
 			error_log('GlobalPayments Frontend Configuration Error: ' . $e->getMessage());
-			
+
 			// Return generic error message to prevent information leakage
 			return array(
 				'error'    => true,
@@ -355,7 +355,7 @@ SW;
 	 *
 	 * @return array|false|string
 	 */
-	public function securePaymentFieldsThreeDSecureParams(OrderData $order = null, $jsonEncode = true) {
+	public function securePaymentFieldsThreeDSecureParams(?OrderData $order = null, $jsonEncode = true) {
 
 		if (!$this->supportsThreeDSecure) {
 			return array();

@@ -1,74 +1,80 @@
 <?php
+
 /**
  * GlobalPayments HPP Webhook Controller
- * Handles webhook notifications from GlobalPayments for Hosted Payment Page (HPP)
+ *
  */
 class ControllerExtensionPaymentHppWebhook extends Controller
 {
     /**
      * Main webhook handler - receives all GlobalPayments HPP notifications
+     *
+     * @return void
      */
-    public function index(): void
+    public function index() : void
     {
-        $action = $this->request->get['action'] ?? $this->request->post['action'] ?? '';
+        // Validate request method - webhooks should be POST
+        if ($this->request->server['REQUEST_METHOD'] !== 'POST') {
+            $this->log('HPP Webhook: Invalid request method');
+            $this->sendJsonResponse([
+                'status' => 'error',
+                'message' => 'Invalid request method'
+            ], 405);
+            return;
+        }
+
+        // Get webhook data and process it
         $requestData = $this->getWebhookRequestData();
 
-        error_log('GlobalPayments HPP Webhook received: ' . json_encode($requestData));
-
-        switch ($action) {
-            case 'hpp_status_handler':
-                $this->handleHppStatusNotification($requestData);
-                break;
-            default:
-                $this->response->setOutput(json_encode([
-                    'status' => 'error',
-                    'message' => 'Unknown action: ' . $action
-                ]));
-                $this->response->addHeader('HTTP/1.1 400 Bad Request');
-                return;
-        }
+        // Process the HPP status notification
+        $this->handleHppStatusNotification($requestData);
     }
 
     /**
      * Handle HPP payment status notifications
+     *
+     * @param array $requestData Webhook request data
+     * @return void
      */
-    private function handleHppStatusNotification(array $requestData): void
+    private function handleHppStatusNotification( array $requestData )
     {
         try {
-            $result = $this->processHppWebhookFallback($requestData);
+            $result = $this->processHppWebhook($requestData);
 
-            if ($result['status'] === 'success') {
-                $this->response->setOutput(json_encode($result));
-                $this->response->addHeader('HTTP/1.1 200 OK');
+            if ( $result['status'] === 'success' ) {
+                $this->sendJsonResponse( $result, 200 );
             } else {
-                $this->response->setOutput(json_encode($result));
-                $this->response->addHeader('HTTP/1.1 400 Bad Request');
+                $this->sendJsonResponse( $result, 400 );
             }
         } catch (Exception $e) {
-            $this->response->setOutput(json_encode([
+            $this->log('HPP Webhook: Exception - ' . $e->getMessage());
+            $this->sendJsonResponse([
                 'status' => 'error',
                 'message' => 'HPP webhook processing failed: ' . $e->getMessage()
-            ]));
-            $this->response->addHeader('HTTP/1.1 500 Internal Server Error');
+            ], 500);
         }
     }
 
     /**
-     * Fallback HPP webhook processing when HPPPayment class is not available
+     * Process HPP webhook notification
+     *
+     * @param array $requestData Webhook request data
+     * @return array Processing result
      */
-    private function processHppWebhookFallback(array $requestData): array
+    private function processHppWebhook( array $requestData ) :array
     {
         try {
-            if (!$this->validateHppResponseHash()) {
+
+               if ( !$this->validateHppResponseHash() ) {
                 return [
                     'status' => 'error',
                     'message' => 'Invalid HPP response hash - possible tampering'
                 ];
             }
 
-            $orderId = $this->extractOrderIdFromWebhook($requestData);
+            $orderId = $this->extractOrderIdFromWebhook( $requestData );
 
-            if (!$orderId) {
+            if ( !$orderId ) {
                 return [
                     'status' => 'error',
                     'message' => 'Could not extract order ID from webhook data'
@@ -76,19 +82,21 @@ class ControllerExtensionPaymentHppWebhook extends Controller
             }
 
             $this->load->model('checkout/order');
-            $order = $this->model_checkout_order->getOrder($orderId);
+            $order = $this->model_checkout_order->getOrder( $orderId );
 
-            if (!$order) {
+            if ( !$order ) {
                 return [
                     'status' => 'error',
                     'message' => 'Order not found: ' . $orderId
                 ];
             }
 
-            $paymentStatus = $this->extractPaymentStatus($requestData);
-            $transactionId = $this->extractTransactionId($requestData);
+         
 
-            $this->updateOrderFromWebhook($order, $paymentStatus, $transactionId);
+            $paymentStatus = $this->extractPaymentStatus( $requestData );
+            $transactionId = $this->extractTransactionId( $requestData );
+
+            $this->updateOrderFromWebhook( $order, $paymentStatus, $transactionId );
 
             return [
                 'status' => 'success',
@@ -96,93 +104,154 @@ class ControllerExtensionPaymentHppWebhook extends Controller
                 'order_id' => $orderId
             ];
         } catch (Exception $e) {
+            $this->log( "HPP webhook processing failed: " . $e->getMessage() );
             return [
                 'status' => 'error',
-                'message' => 'HPP webhook fallback processing failed: ' . $e->getMessage()
+                'message' => 'HPP webhook processing failed'
             ];
         }
     }
 
     /**
      * Validate HPP response using GlobalPayments signature validation
+     *
+     * @return bool True if signature is valid
      */
-    private function validateHppResponseHash(): bool
+    private function validateHppResponseHash() : bool
     {
-        $signature = $_SERVER["HTTP_X_GP_SIGNATURE"] ?? '';
-        $rawInput = file_get_contents('php://input');
+        $signature = $this->getGpSignatureFromHeaders();
 
-        if (empty($rawInput) || empty($signature)) {
-            error_log('HPP: Empty signature or input data');
+        if ( empty( $signature ) ) {
+            $this->log('HPP Webhook: No X-GP-Signature found in request headers');
             return false;
         }
 
-        $cleanInput = $this->sanitizeHppJsonInput($rawInput);
+        $rawInput = file_get_contents( 'php://input' );
 
-        $this->load->model('setting/setting');
-
-        $isProduction = $this->config->get('payment_globalpayments_ucp_is_production');
-
-        if ($isProduction == 1) {
-            $appKey = $this->config->get('payment_globalpayments_ucp_app_key');
-        } else {
-            $appKey = $this->config->get('payment_globalpayments_ucp_sandbox_app_key');
-        }
-
-        if (empty($appKey)) {
-            error_log('HPP: App key not found in gateway settings');
+        if ( empty( $rawInput ) ) {
+            $this->log('HPP Webhook: No POST body data received');
             return false;
         }
 
-        $expectedSignature = hash('sha512', $cleanInput . $appKey);
+        $appKey = $this->getAppKey();
 
-        return hash_equals($expectedSignature, $signature);
+        if ( empty( $appKey ) ) {
+            $this->log('HPP Webhook: App key not configured');
+            return false;
+        }
+
+        $parsedInput = json_decode( $rawInput, true );
+
+        if ( !$parsedInput ) {
+            $this->log('HPP Webhook: Failed to parse JSON input for signature validation');
+            return false;
+        }
+
+        $minifiedInput = json_encode( $parsedInput, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+        $expectedSignature = hash( 'sha512', $minifiedInput . $appKey );
+        $isValid = hash_equals( strtolower( $expectedSignature ), strtolower( $signature ) );
+
+        if ( !$isValid ) {
+            $this->log('HPP Webhook: Signature validation failed');
+        }
+
+        return $isValid;
     }
 
     /**
-     * Sanitize JSON input by cleaning escaped characters
+     * Get GP signature from request headers
+     *
+     * @return string Signature or empty string
      */
-    private function sanitizeHppJsonInput(string $rawInput): string
+    private function getGpSignatureFromHeaders() : string
     {
-        if (strpos($rawInput, '\"') !== false || strpos($rawInput, '\\') !== false) {
-            $replacements = [
-                '\"' => '"',
-                '\\/' => '/',
-                '\\\\' => '\\'
-            ];
-
-            return str_replace(array_keys($replacements), array_values($replacements), $rawInput);
+        $signature = "";
+        // Try X-GP-Signature first
+        if ( isset( $this->request->server['HTTP_X_GP_SIGNATURE'] ) ) 
+        {
+            $signature = $this->request->server['HTTP_X_GP_SIGNATURE'];
+        }
+        
+        elseif ( function_exists( "getallheaders" ) || function_exists( 'apache_request_headers' ) )
+        {
+            $headers = function_exists( "getallheaders" ) ? getallheaders() : apache_request_headers();
+            $headers = array_change_key_case( $headers );
+            if ( isset( $headers['x-gp-signature'] ) ) {
+                $signature =  $headers['x-gp-signature'];
+            } 
         }
 
-        return $rawInput;
+        if ( empty( $signature ) ) {
+            return null;
+        }
+
+        // trim signature
+        $signature = trim( $signature );
+
+        // Validate format (should be hex string)
+        if ( !preg_match('/^[a-fA-F0-9]+$/', $signature ) ) {
+            $this->log('HPP Redirect: Invalid signature format');
+            return null;
+        }
+
+        // Validate length (SHA512 = 128 chars)
+        if ( strlen( $signature ) !== 128 ) {
+            $this->log( 'HPP Redirect: Signature length incorrect (expected 128, got ' . strlen( $signature ) . ')');
+            return null;
+        }
+
+        return $signature;
     }
 
     /**
-     * Extract order ID from webhook data (generic method for status webhooks)
+     * Get app key based on environment mode
+     *
+     * @return string App key or empty string
      */
-    private function extractOrderIdFromWebhook(array $data): ?int
+    private function getAppKey() : string
     {
-        if (isset($data['ORDER_ID']) && is_numeric($data['ORDER_ID'])) {
-            return (int)$data['ORDER_ID'];
+         // Load UCP config to get app key
+        $this->load->model( 'extension/payment/globalpayments_ucp' );
+        $isProduction = $this->config->get( 'payment_globalpayments_ucp_is_production' );
+
+        return ( $isProduction == 1 ) ? 
+        $this->config->get( 'payment_globalpayments_ucp_app_key' ) :
+        $this->config->get( 'payment_globalpayments_ucp_sandbox_app_key' );
+    }
+
+    /**
+     * Extract order ID from webhook data
+     *
+     * @param array $data Webhook data
+     * @return int|null Order ID or null
+     */
+    private function extractOrderIdFromWebhook(array $data) : ?int
+    {
+        if (!empty($data['link_data']['reference'])) {
+            $orderId = $this->extractOrderIdFromReference($data['link_data']['reference']);
+            if ($orderId) {
+                return $orderId;
+            }
         }
 
-        if (isset($data['reference'])) {
-            $reference = $data['reference'];
+        return null;
+    }
 
-            if (is_numeric($reference)) {
-                return (int)$reference;
+    /**
+     * Extract order ID from reference string
+     *
+     * @param string $reference Reference string
+     *
+     * @return int|null Order ID or null
+     */
+    private function extractOrderIdFromReference( string $reference ) : ?int
+    {
+        // Extract from order_id_ prefix
+        if (strpos($reference, 'order_id_') === 0) {
+            $orderId = str_replace('order_id_', '', $reference);
+            if (is_numeric($orderId)) {
+                return (int) $orderId;
             }
-
-            if (preg_match('/_Order_(\d+)/', $reference, $matches)) {
-                return (int)$matches[1];
-            }
-
-            if (preg_match('/(\d+)/', $reference, $matches)) {
-                return (int)$matches[1];
-            }
-        }
-
-        if (isset($data['order_id']) && is_numeric($data['order_id'])) {
-            return (int)$data['order_id'];
         }
 
         return null;
@@ -190,92 +259,151 @@ class ControllerExtensionPaymentHppWebhook extends Controller
 
     /**
      * Extract payment status from webhook data
+     *
+     * @param array $data Webhook data
+     * @return string Payment status
      */
-    private function extractPaymentStatus(array $data): string
+    private function extractPaymentStatus(array $data) : string
     {
-        $possibleFields = ['status'];
-
-        foreach ($possibleFields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
-                return trim($data[$field]);
-            }
-        }
-
-        return 'UNKNOWN';
+        return isset( $data[ 'status' ] ) && !empty( $data[ 'status' ] )
+            ? trim( $data['status'] )
+            : 'UNKNOWN';
     }
 
     /**
      * Extract transaction ID from webhook data
+     *
+     * @param array $data Webhook data
+     *
+     * @return string|null Transaction ID or null
      */
-    private function extractTransactionId(array $data): ?string
+    private function extractTransactionId( array $data ) : ?string
     {
-        $idFields = ['id', 'transaction_id', 'reference'];
+      if (isset( $data['id'] ) && !empty( $data['id'] ) ) {
+        return $data['id'];
+      }
 
-        foreach ($idFields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
-                return $data[$field];
-            }
-        }
-
-        return null;
+      return null;
     }
 
     /**
      * Update order based on webhook notification
+     *
+     * @param array       $order          Order data
+     * @param string      $paymentStatus  Payment status
+     * @param string|null $transactionId Transaction ID
+     *
+     * @return void
      */
-    private function updateOrderFromWebhook(
+    private function updateOrderFromWebhook( 
         array $order,
         string $paymentStatus,
         ?string $transactionId
-    ): void {
+    ) : void
+    {
         $orderId = $order['order_id'];
-        $statusUpper = strtoupper($paymentStatus);
+        $statusUpper = strtoupper( $paymentStatus );
 
-        $comment = "Webhook: Payment status: $paymentStatus";
-        if ($transactionId) {
+        $comment = "HPP Webhook: Payment status: $paymentStatus";
+        if ( $transactionId ) {
             $comment .= ", Transaction ID: $transactionId";
         }
 
-        switch ($statusUpper) {
-            case 'CAPTURED':
-            case 'COMPLETED':
-            case 'SUCCESS':
-                $orderStatusId = 2;
-                $notify = true;
-                break;
-            case 'DECLINED':
-            case 'FAILED':
-            case 'CANCELLED':
-                $orderStatusId = 10;
-                $notify = true;
-                break;
-            case 'PENDING':
-                $orderStatusId = 1;
-                $notify = false;
-                break;
-            default:
-                return;
+        $statusConfig = $this->getOrderStatusConfig( $statusUpper );
+
+        if ( !$statusConfig ) {
+            $this->log( "HPP Webhook: Unknown status '$statusUpper' for order $orderId" );
+            return;
         }
 
-        $this->model_checkout_order->addOrderHistory($orderId, $orderStatusId, $comment, $notify);
+        $this->model_checkout_order->addOrderHistory(
+            $orderId,
+            $statusConfig['status_id'],
+            $comment,
+            $statusConfig['notify']
+        );
+    }
+
+    /**
+     * Get order status configuration based on payment status
+     *
+     * @param string $statusUpper Uppercase payment status
+     *
+     * @return array|null Status configuration or null
+     */
+    private function getOrderStatusConfig( string $statusUpper ) : ?array
+    {
+        $statusMap = [
+            'CAPTURED' => ['status_id' => 2, 'notify' => true],
+            'COMPLETED' => ['status_id' => 2, 'notify' => true],
+            'SUCCESS' => ['status_id' => 2, 'notify' => true],
+            'DECLINED' => ['status_id' => 10, 'notify' => true],
+            'FAILED' => ['status_id' => 10, 'notify' => true],
+            'CANCELLED' => ['status_id' => 10, 'notify' => true],
+            'PENDING' => ['status_id' => 1, 'notify' => false],
+        ];
+
+        return $statusMap[ $statusUpper ] ?? null;
     }
 
     /**
      * Get comprehensive webhook request data
-     * Combines GET, POST, and JSON body data
+     *
+     * @return array Request data
      */
-    private function getWebhookRequestData(): array
+    private function getWebhookRequestData() : array
     {
-        $requestData = array_merge($_GET, $_POST);
+        $rawInput = file_get_contents( 'php://input' );
+        $requestData = array();
 
-        $rawInput = file_get_contents('php://input');
-        if (!empty($rawInput)) {
-            $jsonData = json_decode($rawInput, true);
-            if (json_last_error() === JSON_ERROR_NONE && $jsonData) {
-                $requestData = array_merge($requestData, $jsonData);
+        if ( !empty( $rawInput ) ) {
+            $jsonData = json_decode( $rawInput, true );
+            if ( json_last_error() === JSON_ERROR_NONE && $jsonData ) {
+                $requestData = $jsonData;
             }
         }
 
+        // Merge with OpenCart request object
+        if ( !empty( $this->request->get ) ) {
+            $requestData = array_merge( $this->request->get, $requestData );
+        }
+
+        // Also include POST form data as fallback
+        if ( !empty( $this->request->post ) ) {
+            $requestData = array_merge( $this->request->post, $requestData );
+        }
+
         return $requestData;
+    }
+
+    /**
+     * Send JSON response with proper headers
+     *
+     * @param array $data       Response data
+     * @param int   $statusCode HTTP status code
+     *
+     * @return void
+     */
+    private function sendJsonResponse(array $data, $statusCode = 200) : void
+    {
+        $this->response->addHeader( 'Content-Type: application/json' );
+        $this->response->addHeader( 'HTTP/1.1 ' . $statusCode );
+        $this->response->setOutput( json_encode( $data ) );
+    }
+
+    /**
+     * Write to log if debug is enabled
+     * @param String msg Error message 
+     * @return void
+     */
+
+    private function log( string $msg ) : void
+    {
+        $this->load->model('extension/payment/globalpayments_ucp');
+        $debugEnabled = !empty($this->config->get('payment_globalpayments_ucp_debug'));
+        if( $debugEnabled && !empty( $msg ) )
+        {
+            $this->log->write($msg);
+        }
     }
 }

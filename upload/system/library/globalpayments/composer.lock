@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17be4eaaacd7e85034803c389b1091fc",
+    "content-hash": "06406a862aa1d644dcdeb4b714baff07",
     "packages": [
         {
             "name": "globalpayments/php-sdk",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/globalpayments/php-sdk.git",
-                "reference": "bf3cea18a1670a378c0ffd1e37487637934c475f"
+                "reference": "dcb8de123672d2c63f491e584731b30afc254232"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/bf3cea18a1670a378c0ffd1e37487637934c475f",
-                "reference": "bf3cea18a1670a378c0ffd1e37487637934c475f",
+                "url": "https://api.github.com/repos/globalpayments/php-sdk/zipball/dcb8de123672d2c63f491e584731b30afc254232",
+                "reference": "dcb8de123672d2c63f491e584731b30afc254232",
                 "shasum": ""
             },
             "require": {

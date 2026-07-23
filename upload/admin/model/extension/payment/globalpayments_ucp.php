@@ -1,7 +1,9 @@
 <?php
 
-class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
-	public function install() {
+class ModelExtensionPaymentGlobalPaymentsUcp extends Model
+{
+	public function install(): void
+	{
 		$this->db->query("
 			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "globalpayments_card` (
 			  `token_id` INT(11) NOT NULL AUTO_INCREMENT,
@@ -33,22 +35,31 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 			) ENGINE=MyISAM DEFAULT COLLATE=utf8_general_ci;");
 	}
 
-	public function uninstall() {
+	public function uninstall(): void
+	{
 		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "globalpayments_card`;");
 		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "globalpayments_transaction`;");
 	}
 
-	public function getTransactions($order_id) {
+	public function getTransactions(int $order_id): array
+	{
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "globalpayments_transaction WHERE order_id = '" . (int)$order_id . "'");
 
 		return $query->rows;
 	}
 
-	public function addTransaction($order_id, $gateway_id, $payment_action, $amount, $currency, $gatewayResponse) {
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction` 
-		SET `order_id` = '" . (int)$order_id . "', 
-		    `gateway_id` = '" . $this->db->escape( $gateway_id ) . "', 
-		    `payment_action` = '" . $this->db->escape( $payment_action ) . "', 
+	public function addTransaction(
+		int $order_id,
+		string $gateway_id,
+		string $payment_action,
+		float $amount,
+		string $currency,
+		object $gatewayResponse
+	): void {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction`
+		SET `order_id` = '" . (int)$order_id . "',
+		    `gateway_id` = '" . $this->db->escape( $gateway_id ) . "',
+		    `payment_action` = '" . $this->db->escape( $payment_action ) . "',
 		    `gateway_transaction_id` = '" . $this->db->escape( $gatewayResponse->transactionReference->transactionId ) . "',
 		    `response_code` = '" . $this->db->escape( $gatewayResponse->responseCode ) . "',
 		    `response_message` = '" . $this->db->escape( $gatewayResponse->responseMessage ) . "',
@@ -58,7 +69,15 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 		    `time_created` = '" . $gatewayResponse->timestamp . "'");
 	}
 
-	public function fixColumns() {
+	public function fixColumns(): void
+	{
+		//Check if the table exists 
+		$tableExists = $this->db->query("SHOW TABLES LIKE'" . DB_PREFIX . "globalpayments_transaction'")->num_rows > 0;
+
+		if(!$tableExists){
+			return;
+		}
+
 	    // SQL query to check if the value exists
 	    $insertEnumValues = "ENUM('authorize', 'charge', 'capture', 'refund', 'reverse', 'initiate', 'cancel')";
 	    $checkEnumValues = "enum('authorize','charge','capture','refund','reverse','initiate','cancel')";
@@ -67,4 +86,21 @@ class ModelExtensionPaymentGlobalPaymentsUcp extends Model {
 	        $this->db->query("ALTER TABLE " . DB_PREFIX . "globalpayments_transaction MODIFY COLUMN payment_action " . $insertEnumValues . " NOT NULL");
         }
     }
+
+	public function addOrderHistory(int $orderId, int $orderStatusId, string $comment, int $notify = 1): void
+	{
+		$this->db->query(
+			"INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', " .
+			"order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', " .
+			"comment = '" . $this->db->escape($comment) . "', date_added = NOW()"
+		);
+	}
+
+	public function updateOrderStatus(int $orderId, int $orderStatusId): void
+	{
+		$this->db->query(
+			"UPDATE `" . DB_PREFIX . "order` SET order_status_id = '" . (int)$orderStatusId . "', " .
+			"date_modified = NOW() WHERE order_id = '" . (int)$orderId . "'"
+		);
+	}
 }

@@ -7,7 +7,7 @@ use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 
 class GetAccessTokenRequest extends AbstractRequest {
-	public function __construct(array $config = array(), RequestData $requestData = null) {
+	public function __construct(array $config = array(), ?RequestData $requestData = null) {
 		parent::__construct($config, $requestData);
 
 		if(!empty($_POST) && $_POST['app_id'] !== null && $_POST['app_key'] !== null ) {
@@ -16,7 +16,7 @@ class GetAccessTokenRequest extends AbstractRequest {
 			$this->config['permissions'] = [
 				'PMT_POST_Create_Single',
 			];
-			
+
 			// Add installment permissions only if Installments is enabled
 			if (!empty($this->config['enable_installments'])) {
 				array_push($this->config['permissions'], 'INS_POST_Query', 'BIN_GET_Details', 'PMT_POST_Create');

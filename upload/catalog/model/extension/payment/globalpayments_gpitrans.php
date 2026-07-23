@@ -27,7 +27,8 @@ class ModelExtensionPaymentGlobalPaymentsGpiTrans extends Model {
 	}
 
 	public function getCards($customer_id, $gateway_id) {
-		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "globalpayments_card WHERE `customer_id` = '" . (int)$customer_id . "' AND `gateway_id` = '" . $this->db->escape($gateway_id) . "' ORDER BY `token_id` DESC");
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "globalpayments_card WHERE `customer_id` = '" . 
+			(int)$customer_id . "' AND `gateway_id` = '" . $this->db->escape($gateway_id) . "' ORDER BY `token_id` DESC");
 
 		return $query->rows;
 	}
@@ -39,10 +40,10 @@ class ModelExtensionPaymentGlobalPaymentsGpiTrans extends Model {
 	}
 
 	public function addCard($gateway_id, $customer_id, $token, $card_type, $card_last4, $expiry_year, $expiry_month, $is_default = 0) {
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_card` 
-		SET `gateway_id` = '" . $this->db->escape($gateway_id) . "', 
-		    `customer_id` = '" . (int)$customer_id . "', 
-		    `token` = '" . $this->db->escape($token) . "', 
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_card`
+		SET `gateway_id` = '" . $this->db->escape($gateway_id) . "',
+		    `customer_id` = '" . (int)$customer_id . "',
+		    `token` = '" . $this->db->escape($token) . "',
 		    `card_type` = '" . $this->db->escape($card_type) . "',
 		    `card_last4` = '" . $this->db->escape($card_last4) . "',
 		    `expiry_year` = '" . $this->db->escape($expiry_year) . "',
@@ -82,10 +83,10 @@ class ModelExtensionPaymentGlobalPaymentsGpiTrans extends Model {
 			$transactionDate = $gatewayResponse->timestamp;
 		}
 
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction` 
-		SET `order_id` = '" . (int)$order_id . "', 
-		    `gateway_id` = '" . $this->db->escape($gateway_id) . "', 
-		    `payment_action` = '" . $this->db->escape($payment_action) . "', 
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction`
+		SET `order_id` = '" . (int)$order_id . "',
+		    `gateway_id` = '" . $this->db->escape($gateway_id) . "',
+		    `payment_action` = '" . $this->db->escape($payment_action) . "',
 		    `gateway_transaction_id` = '" . $this->db->escape($transactionId) . "',
 		    `response_code` = '" . $this->db->escape($responseCode) . "',
 		    `response_message` = '" . $this->db->escape($responseMessage) . "',

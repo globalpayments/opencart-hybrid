@@ -165,6 +165,14 @@ class GpApiGateway extends AbstractGateway {
 
 
 	/**
+	 * Shared 3DS security salt from platform config.
+	 *
+	 * @var string
+	 */
+	public $threeDSSecuritySalt = '';
+
+
+	/**
 	 * 3DS Challenge notification endpoint.
 	 *
 	 * @var string
@@ -191,7 +199,7 @@ class GpApiGateway extends AbstractGateway {
 	 * @var bool
 	 */
 	public $enableThreeDSecure = true;
-	
+
 	/**
 	 * @var string
 	 */
@@ -235,6 +243,25 @@ class GpApiGateway extends AbstractGateway {
 	);
 
 	/**
+	 * Type of HPP installments plan.
+	 * @var InstallmentsFundingMode
+	 */
+	public $hppInstallmentsType;
+
+	/**
+	 * HPP installments plan duration
+	 * @var int
+	 */
+	public $hppInstallmentsDuration;
+
+	/**
+	 * HPP Installments amount theshold
+	 * @var int
+	 */
+
+	public $hppInstallmentsTheshold;
+
+	/**
 	 * {@inheritDoc}
 	 *
 	 * @return array|Array
@@ -244,7 +271,7 @@ class GpApiGateway extends AbstractGateway {
 		// Check if BLIK and Open Banking should be enabled based on country and currency
 		$enableBlik = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledBlik : 0;
 		$enableOpenbanking = $this->shouldEnablePolishPaymentMethods() ? (int) $this->enabledOpenbanking : 0;
-		
+
 		// Determine data residency based on region
 		// Check for EU/Europe region (case-insensitive)
 		$dataResidency = 'NONE';
@@ -254,7 +281,7 @@ class GpApiGateway extends AbstractGateway {
 				$dataResidency = 'EU';
 			}
 		}
-		
+
 		$options = array(
 			'accessToken'           => $this->getAccessToken(),
 			'apiVersion'            => GpApiConnector::GP_API_VERSION,
@@ -271,13 +298,13 @@ class GpApiGateway extends AbstractGateway {
 			'enableInstallments' => $this->enableInstallments ?? false,
 			'dataResidency' => $dataResidency,
 		);
-		
+
 		// MUST set serviceUrl for frontend JavaScript library to use correct regional endpoint
 		// The JS library requires explicit serviceUrl even when dataResidency is set
 		if (!empty($this->serviceUrl)) {
 			$options['serviceUrl'] = $this->serviceUrl;
 		}
-		
+
 		return $options;
 	}
 
@@ -296,7 +323,7 @@ class GpApiGateway extends AbstractGateway {
 				$dataResidency = 'EU';
 			}
 		}
-		
+
 		$backendOptions = array(
 			'gatewayProvider'          => $this->gatewayProvider,
 			'gatewayId'                => $this->gatewayId,

@@ -48,4 +48,3 @@ $_['placeholder_title'] = 'Credit or Debit Card';
 $_['installment_id'] = 'Installment Id';
 $_['installment_reference'] = 'Installment Reference';
 $_['saved_card_installment_description'] = 'For card-based installment payment options, please enter your card information.';
-

@@ -15,11 +15,13 @@ use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
 use GlobalPayments\PaymentGatewayProvider\Requests\AccessToken\GetAccessTokenRequest;
 
-class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
-	private $error = array();
-	private $alert = array();
+class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
+{
+	private array $error = [];
+	private array $alert = [];
 
-	public function index() {
+	public function index(): void
+	{
 		$data = [];
 		$this->load->language('extension/payment/globalpayments_ucp');
 
@@ -41,12 +43,28 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$globalpayments_openbanking_installed    = in_array('globalpayments_openbanking', $extensions);
 		$globalpayments_paypal_installed         = in_array('globalpayments_paypal', $extensions);
 
-		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+		if ($this->request->server['REQUEST_METHOD'] === 'POST') {
 			$this->load->model('setting/setting');
 
 			// Unified Payments
 			$this->request->post['payment_globalpayments_ucp_status'] = $this->request->post['payment_globalpayments_ucp_enabled'] ?? null;
 			$this->request->post['payment_globalpayments_ucp_card']   = $this->request->post['payment_globalpayments_ucp_allow_card_saving'] ?? null;
+			$this->request->post['payment_globalpayments_ucp_is_production'] = $this->request->post['payment_globalpayments_ucp_is_production'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_debug'] = $this->request->post['payment_globalpayments_ucp_debug'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_installments'] = $this->request->post['payment_globalpayments_ucp_enable_installments'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_blik'] = $this->request->post['payment_globalpayments_ucp_enable_blik'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_openbanking'] = $this->request->post['payment_globalpayments_ucp_enable_openbanking'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_integration_type'] = $this->request->post['payment_globalpayments_ucp_integration_type'] ?? "dropin_ui";
+
+
+			// Handle HPP wallets array - convert to JSON for storage
+			if (isset($this->request->post['payment_globalpayments_ucp_hpp_wallets']) && is_array($this->request->post['payment_globalpayments_ucp_hpp_wallets'])) {
+				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode($this->request->post['payment_globalpayments_ucp_hpp_wallets']);
+			} else {
+				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode([]);
+			}
+
 			if ($this->validate()) {
 				$this->model_setting_setting->editSetting('payment_globalpayments_ucp', $this->request->post);
 			}
@@ -109,7 +127,13 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 
 			if (empty($this->error)) {
 				$this->session->data['success'] = $this->language->get('text_success');
-				$this->response->redirect( $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true));
+				$this->response->redirect(
+					$this->url->link(
+						'marketplace/extension',
+						'user_token=' . $this->session->data['user_token'] . '&type=payment',
+						true
+					)
+				);
 			}
 		}
 
@@ -184,17 +208,21 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 		if (isset($this->request->post['payment_globalpayments_ucp_is_production'])) {
 			$data['payment_globalpayments_ucp_is_production'] = $this->request->post['payment_globalpayments_ucp_is_production'];
-		} elseif (!empty($this->request->post)) {
-			$data['payment_globalpayments_ucp_is_production'] = 0;
-		} else {
-			$data['payment_globalpayments_ucp_is_production'] = $this->config->get('payment_globalpayments_ucp_is_production');
 		}
+		elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_is_production'] = 0;
+		}
+		else {
+			$data['payment_globalpayments_ucp_is_production'] = $this->config->get('payment_globalpayments_ucp_is_production') ?: 0;
+		}
+
 		if (isset($this->request->post['payment_globalpayments_ucp_region'])) {
 			$data['payment_globalpayments_ucp_region'] = $this->request->post['payment_globalpayments_ucp_region'];
 		} else {
 			$data['payment_globalpayments_ucp_region'] =
 				$this->config->get('payment_globalpayments_ucp_region') ?: 'global';
 		}
+
 		if (isset($this->request->post['payment_globalpayments_ucp_app_id'])) {
 			$data['payment_globalpayments_ucp_app_id'] = $this->request->post['payment_globalpayments_ucp_app_id'];
 		} else {
@@ -239,16 +267,20 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
 			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
-		} elseif (!empty($this->request->post)) {
+		}
+		elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_ucp_enable_three_d_secure'] = 0;
-		} else {
+		}
+		else {
 			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
 		}
 		if (isset($this->request->post['payment_globalpayments_ucp_integration_type'])) {
 			$data['payment_globalpayments_ucp_integration_type'] = $this->request->post['payment_globalpayments_ucp_integration_type'];
-		} else {
-			$data['payment_globalpayments_ucp_integration_type'] = $this->config->get('payment_globalpayments_ucp_integration_type');
 		}
+		else {
+			$data['payment_globalpayments_ucp_integration_type'] = $this->config->get('payment_globalpayments_ucp_integration_type') ?? "dropin_ui";
+		}
+
 		if (isset($this->request->post['payment_globalpayments_ucp_enable_installments'])) {
 			$data['payment_globalpayments_ucp_enable_installments'] = $this->request->post['payment_globalpayments_ucp_enable_installments'];
 		} elseif (!empty($this->request->post)) {
@@ -256,6 +288,17 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_enable_installments'] = $this->config->get('payment_globalpayments_ucp_enable_installments');
 		}
+
+		// HPP Wallets - decode from JSON storage
+		if (isset($this->request->post['payment_globalpayments_ucp_hpp_wallets'])) {
+			$data['payment_globalpayments_ucp_hpp_wallets'] = is_string($this->request->post['payment_globalpayments_ucp_hpp_wallets'])
+				? json_decode($this->request->post['payment_globalpayments_ucp_hpp_wallets'], true)
+				: $this->request->post['payment_globalpayments_ucp_hpp_wallets'];
+		} else {
+			$stored = $this->config->get('payment_globalpayments_ucp_hpp_wallets');
+			$data['payment_globalpayments_ucp_hpp_wallets'] = is_string($stored) ? json_decode($stored, true) : (is_array($stored) ? $stored : []);
+		}
+
 		if (isset($this->request->post['payment_globalpayments_ucp_enable_dcc'])) {
 			$data['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'];
 		} elseif (!empty($this->request->post)) {
@@ -287,129 +330,146 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		} else {
 			$data['payment_globalpayments_ucp_txn_descriptor'] = $this->config->get('payment_globalpayments_ucp_txn_descriptor');
 		}
-		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
-			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
+
+
+		if (isset($this->request->post['payment_globalpayments_ucp_hpp_installments_plan_type'])) {
+			$data['payment_globalpayments_ucp_hpp_installments_plan_type'] = $this->request->post['payment_globalpayments_ucp_hpp_installments_plan_type'];
 		} else {
-			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+			$data['payment_globalpayments_ucp_hpp_installments_plan_type'] = $this->config->get('payment_globalpayments_ucp_hpp_installments_plan_type');
 		}
-		if (isset($this->request->post['payment_globalpayments_ucp_enable_three_d_secure'])) {
-			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'];
-		} elseif (!empty($this->request->post)) {
-			$data['payment_globalpayments_ucp_enable_three_d_secure'] = 1;
+		if (isset($this->request->post['payment_globalpayments_ucp_hpp_installments_plan_duration'])) {
+			$data['payment_globalpayments_ucp_hpp_installments_plan_duration'] = $this->request->post['payment_globalpayments_ucp_hpp_installments_plan_duration'];
 		} else {
-			$data['payment_globalpayments_ucp_enable_three_d_secure'] = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure');
+			$data['payment_globalpayments_ucp_hpp_installments_plan_duration'] = $this->config->get('payment_globalpayments_ucp_hpp_installments_plan_duration');
 		}
+		if (isset($this->request->post['payment_globalpayments_ucp_hpp_installments_threshold'])) {
+			$data['payment_globalpayments_ucp_hpp_installments_threshold'] = $this->request->post['payment_globalpayments_ucp_hpp_installments_threshold'];
+		} else {
+			$data['payment_globalpayments_ucp_hpp_installments_threshold'] = $this->config->get('payment_globalpayments_ucp_hpp_installments_threshold');
+		}
+
+		// 3DS Mandate
+		$this->load->library('globalpayments');
+		$this->globalpayments->setGateway(GatewayId::GP_API);
+
+		if ($this->globalpayments->threeDSecureRequired()){
+			$data['three_d_secure_required'] = 1;
+		} else {
+			$data['three_d_secure_required'] = 0;
+		}
+		$data['three_d_secure_display_text'] = $this->globalpayments->getThreeDSecureDisplayText();
+
 		$this->load->library('globalpayments');
 		$data['help_is_production']       = sprintf($this->language->get('help_is_production'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
 		$data['help_allow_card_saving']   = sprintf($this->language->get('help_allow_card_saving'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
 		$data['help_txn_descriptor_note'] = sprintf($this->language->get('help_txn_descriptor_note'), GpApiGateway::FIRST_LINE_SUPPORT_EMAIL);
-		$data['help_region']              = $this->language->get('help_region');
 
+		$data['help_region']              = $this->language->get('help_region');
 		$data['alerts'] = $this->alert;
 
-		$data['tabs']   = array();
-		$data['tabs'][] = array(
+		$data['tabs']   = [];
+		$data['tabs'][] = [
 			'id'   => 'ucp',
 			'name' => $this->language->get('tab_ucp'),
-		);
-		$data['tabs'][] = array(
+		];
+		$data['tabs'][] = [
 			'id'   => 'payment',
 			'name' => $this->language->get('tab_payment'),
-		);
+		];
 		$data['active_tab'] = str_replace('extension/payment/globalpayments_', '', $this->request->get['route']);
 
 		if ($globalpayments_googlepay_installed) {
 			$data['display_googlepay_tab'] = $this->load->controller('extension/payment/globalpayments_googlepay/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'googlepay',
 				'name' => $this->language->get('tab_googlepay'),
-			);
+			];
 		} else {
 			$data['display_googlepay_tab'] = '';
 		}
 		if ($globalpayments_applepay_installed) {
 			$data['display_applepay_tab'] = $this->load->controller('extension/payment/globalpayments_applepay/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'applepay',
 				'name' => $this->language->get('tab_applepay'),
-			);
+			];
 		} else {
 			$data['display_applepay_tab'] = '';
 		}
 
 		if ($globalpayments_clicktopay_installed) {
 			$data['display_clicktopay_tab'] = $this->load->controller('extension/payment/globalpayments_clicktopay/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'clicktopay',
 				'name' => $this->language->get('tab_clicktopay'),
-			);
+			];
 		} else {
 			$data['display_clicktopay_tab'] = '';
 		}
 
 		if ($globalpayments_affirm_installed) {
 			$data['display_affirm_tab'] = $this->load->controller('extension/payment/globalpayments_affirm/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'affirm',
 				'name' => $this->language->get('tab_affirm'),
-			);
+			];
 		} else {
 			$data['display_affirm_tab'] = '';
 		}
 
 		if ($globalpayments_klarna_installed) {
 			$data['display_klarna_tab'] = $this->load->controller('extension/payment/globalpayments_klarna/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'klarna',
 				'name' => $this->language->get('tab_klarna'),
-			);
+			];
 		} else {
 			$data['display_klarna_tab'] = '';
 		}
 
 		if ($globalpayments_clearpay_installed) {
 			$data['display_clearpay_tab'] = $this->load->controller('extension/payment/globalpayments_clearpay/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'clearpay',
 				'name' => $this->language->get('tab_clearpay'),
-			);
+			];
 		} else {
 			$data['display_clearpay_tab'] = '';
 		}
 
 		if ($globalpayments_openbanking_installed) {
 			$data['display_openbanking_tab'] = $this->load->controller('extension/payment/globalpayments_openbanking/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'openbanking',
 				'name' => $this->language->get('tab_openbanking'),
-			);
+			];
 		} else {
 			$data['display_openbanking_tab'] = '';
 		}
 
 		if ($globalpayments_paypal_installed) {
 			$data['display_paypal_tab'] = $this->load->controller('extension/payment/globalpayments_paypal/display', $this->error);
-			$data['tabs'][] = array(
+			$data['tabs'][] = [
 				'id'   => 'paypal',
 				'name' => $this->language->get('tab_paypal'),
-			);
+			];
 		} else {
 			$data['display_paypal_tab'] = '';
 		}
 
-		$data['breadcrumbs'] = array();
-		$data['breadcrumbs'][] = array(
+		$data['breadcrumbs'] = [];
+		$data['breadcrumbs'][] = [
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)
-		);
-		$data['breadcrumbs'][] = array(
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true),
+		];
+		$data['breadcrumbs'][] = [
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true)
-		);
-		$data['breadcrumbs'][] = array(
+			'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true),
+		];
+		$data['breadcrumbs'][] = [
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/payment/globalpayments_ucp', 'user_token=' . $this->session->data['user_token'], true)
-		);
+			'href' => $this->url->link('extension/payment/globalpayments_ucp', 'user_token=' . $this->session->data['user_token'], true),
+		];
 
 		$data['action'] = $this->url->link($this->request->get['route'], 'user_token=' . $this->session->data['user_token'], true);
 
@@ -435,7 +495,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 	 * @param int $country_id
 	 * @return string
 	 */
-	private function getCountryIsoCode($country_id) {
+	private function getCountryIsoCode(int $country_id): string
+	{
 		if (empty($country_id)) {
 			return '';
 		}
@@ -443,10 +504,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->model('localisation/country');
 		$country = $this->model_localisation_country->getCountry($country_id);
 
-		return isset($country['iso_code_2']) ? $country['iso_code_2'] : '';
+		return $country['iso_code_2'] ?? '';
 	}
 
-	public function validate() {
+	public function validate(): bool
+	{
 		if ( ! $this->user->hasPermission('modify', 'extension/payment/globalpayments_ucp')) {
 			$this->alert[] = array(
 				'type'    => 'danger',
@@ -493,21 +555,22 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		}
 
 		if ($this->error) {
-			$this->alert[] = array(
+			$this->alert[] = [
 				'type'    => 'danger',
 				'message' => $this->language->get('error_settings_ucp'),
-			);
+			];
 		} else {
-			$this->alert[] = array(
+			$this->alert[] = [
 				'type'    => 'success',
 				'message' => $this->language->get('success_settings_ucp'),
-			);
+			];
 		}
 
 		return ! $this->error;
 	}
 
-	public function order() {
+	public function order(): string
+	{
 		$this->load->language('extension/payment/globalpayments_ucp_order');
 
 		$data['user_token']   = $this->session->data['user_token'];
@@ -517,7 +580,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		return $this->load->view('extension/payment/globalpayments_ucp_order', $data);
 	}
 
-	public function getTransaction() {
+	public function getTransaction(): void
+	{
 		if ( ! isset($this->request->get['order_id'])) {
 			return;
 		}
@@ -611,7 +675,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->response->setOutput($this->load->view('extension/payment/globalpayments_ucp_order_ajax', $data));
 	}
 
-	public function checkApiCredentials() {
+	public function checkApiCredentials(): void
+	{
 		$response = [];
 
 		if (!isset($this->request->post['app_id']) || !isset($this->request->post['app_key'])) {
@@ -662,7 +727,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->response->setOutput(json_encode($response));
 	}
 
-	public function transactionCommand() {
+	public function transactionCommand(): void
+	{
 		$response = [];
 
 		$this->load->language('extension/payment/globalpayments_ucp_order');
@@ -704,6 +770,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$requestData->order->currency = $this->request->post['currency'];
 		$requestData->gatewayId       = $this->request->post['gateway_id'];
 
+        $this->load->model('extension/payment/globalpayments_ucp');
+
+
 		try {
 			switch ($this->request->post['transaction_type']) {
 				case AbstractGateway::CAPTURE:
@@ -718,7 +787,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 					$orderInfo = $this->model_sale_order->getOrder($this->request->post['order_id']);
                     $orderTotal = $this->currency->format($orderInfo['total'], $orderInfo['currency_code'], $orderInfo['currency_value'], false);
 					$isCompleteRefund = false;
-                    $this->load->model('extension/payment/globalpayments_ucp');
                     $transactions = $this->model_extension_payment_globalpayments_ucp->getTransactions($this->request->post['order_id']);
                     $totalamountrefunded = 0;
                     foreach ($transactions as $transaction) {
@@ -730,7 +798,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
                     if ($orderInfo) {
 						$isCompleteRefund = (float) $totalamountrefunded >= (float) $orderTotal;
 					}
-
 					if ($isCompleteRefund) {
 						// Update order status to 11 (Refunded) for complete refunds
 						$this->completeStatusUpdate((int) $this->request->post['order_id']);
@@ -755,7 +822,14 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 			}
 
 			$this->load->model('extension/payment/globalpayments_ucp');
-			$this->model_extension_payment_globalpayments_ucp->addTransaction($this->request->post['order_id'], $this->request->post['gateway_id'], $this->request->post['transaction_type'], $requestData->order->amount, $requestData->order->currency, $gatewayResponse);
+			$this->model_extension_payment_globalpayments_ucp->addTransaction(
+				$this->request->post['order_id'],
+				$this->request->post['gateway_id'],
+				$this->request->post['transaction_type'],
+				$requestData->order->amount,
+				$requestData->order->currency,
+				$gatewayResponse
+			);
 			unset($response['error']);
 		} catch (\Exception $e) {
 			unset($response['success']);
@@ -766,30 +840,35 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->response->setOutput(json_encode($response));
 	}
 
-	private function orderHistoryUpdate($orderId): void
+	private function orderHistoryUpdate(int $orderId): void
 	{
 		$orderStatusId = 2; // processing
 		$comment = "Partially refund done";
 		$notify = 1; // true
 
 		// Add order history entry
-		$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', comment = '" . $this->db->escape($comment) . "', date_added = NOW()");
+		$this->model_extension_payment_globalpayments_ucp->addOrderHistory($orderId, $orderStatusId, $comment, $notify);
 	}
 
-	private function completeStatusUpdate($orderId): void
+	private function completeStatusUpdate(int $orderId): void
 	{
 		$orderStatusId = 11; // Refunded status
 		$comment = $this->language->get('text_refunded_comment');
 		$notify = 1; // true
 
 		// Update order status
-		$this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = '" . (int)$orderStatusId . "', date_modified = NOW() WHERE order_id = '" . (int)$orderId . "'");
+		$this->model_extension_payment_globalpayments_ucp->updateOrderStatus($orderId, $orderStatusId);
 
 		// Add order history entry
-		$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', comment = '" . $this->db->escape($comment) . "', date_added = NOW()");
+		$this->model_extension_payment_globalpayments_ucp->addOrderHistory($orderId, $orderStatusId, $comment, $notify);
 	}
 
-	private function handleInitializedTransactions($orderId, $transaction, $transactions_count, $should_refund) {
+	private function handleInitializedTransactions(
+		int $orderId,
+		array $transaction,
+		int $transactions_count,
+		bool $should_refund
+	): array {
 		$transaction_actions = [];
 		if ($transactions_count === 1 && $transaction['payment_action'] === AbstractGateway::INITIATE) {
 			if ($this->user->isLogged() && $this->user->getGroupId() == 1) {
@@ -875,7 +954,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		AbstractRequest::sendJsonResponse($response);
 	}
 
-	private function validateRefundAmount($amount, $authAmount) {
+	private function validateRefundAmount(float|string $amount, float|string $authAmount): ?float
+	{
 		$amount = str_replace(',', '.', $amount);
 		$amount = number_format((float)round($amount, 2, PHP_ROUND_HALF_UP), 2, '.', '');
 		if ( ! is_numeric($amount)) {
@@ -892,7 +972,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		return $amount;
 	}
 
-	public function install() {
+	public function install(): void
+	{
 		$this->load->model('setting/extension');
 		$this->model_setting_extension->install('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->install('payment', 'globalpayments_applepay');
@@ -949,9 +1030,34 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->load->model('extension/payment/globalpayments_paypal');
 		$this->model_extension_payment_globalpayments_paypal->install();
 
+		// HPP installments display - register events
+		$this->load->model('setting/event');
+
+  		$this->model_setting_event->deleteEventByCode('gp_hpp_installments_after');
+		$this->model_setting_event->deleteEventByCode('gp_hpp_installments_before');
+
+		// Register event to capture installments data while order_id still in session
+		$this->model_setting_event->addEvent(
+			'gp_hpp_installments_before',
+			"catalog/controller/checkout/success/before",
+			"extension/payment/globalpayments_ucp/captureInstallmentsData",
+			true,
+			0
+		);
+
+			// Register event to inject HTML into rendered output
+		$this->model_setting_event->addEvent(
+			'gp_hpp_installments_after',
+			"catalog/view/common/success/after",
+			"extension/payment/globalpayments_ucp/injectInstallmentsHTML",
+			true,
+			0
+		);
+
 	}
 
-	public function uninstall() {
+	public function uninstall(): void
+	{
 		$this->load->model('setting/extension');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_googlepay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_applepay');
@@ -961,6 +1067,10 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller {
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_clearpay');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_openbanking');
 		$this->model_setting_extension->uninstall('payment', 'globalpayments_paypal');
+
+		$this->model_setting_event->deleteEventByCode('gp_hpp_installments_before');
+		$this->model_setting_event->deleteEventByCode('gp_hpp_installments_after');
+
 
 		$this->load->model('extension/payment/globalpayments_ucp');
 		$this->model_extension_payment_globalpayments_ucp->uninstall();

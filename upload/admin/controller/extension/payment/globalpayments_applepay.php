@@ -89,7 +89,7 @@ class ControllerExtensionPaymentGlobalPaymentsApplePay extends Controller {
 			$data['payment_globalpayments_applepay_accepted_cards'] = '';
 		} else {
 			$config_value = $this->config->get('payment_globalpayments_applepay_accepted_cards');
-			$data['payment_globalpayments_applepay_accepted_cards'] = is_array($config_value) 
+			$data['payment_globalpayments_applepay_accepted_cards'] = is_array($config_value)
 				? $config_value : explode(',', $config_value);
 		}
 		if (isset($this->request->post['payment_globalpayments_applepay_button_color'])) {

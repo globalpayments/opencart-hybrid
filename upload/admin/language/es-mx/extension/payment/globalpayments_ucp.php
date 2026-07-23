@@ -40,6 +40,8 @@ $_['label_payment_action']        = 'Acción de Pago';
 $_['label_allow_card_saving']     = 'Permitir guardar tarjeta';
 $_['label_txn_descriptor']        = 'Descriptor de transacción de pedido';
 $_['label_enable_three_d_secure'] = 'Habilitar 3DSecure';
+
+$_['label_enable_installments']   = 'Habilitar cuotas';
 $_['label_sort_order']            = 'Orden de clasificación';
 
 // Help
@@ -57,12 +59,13 @@ $_['help_allow_card_saving']     = 'Nota: para utilizar la función de ahorro de
 $_['help_txn_descriptor']        = 'Durante una acción de Captura o Autorizar pago, este valor se transmitirá como el descriptor específico de la transacción que figura en la cuenta bancaria del cliente (maxLength: 25).';
 $_['help_txn_descriptor_note']   = 'Comuníquese con el <a href="mailto:%s?Subject=OpenCart%%20Transaction%%20Descriptor%%20Option">soporte</a> si tiene alguna pregunta sobre esta opción.';
 $_['help_account_name']          = 'Especifique qué cuenta usar al procesar una transacción. Se utilizará la cuenta predeterminada si no se especifica.';
+$_['help_enable_installments']   = 'Enable Installments payment option for eligible transactions.';
 
 // Entry
 $_['entry_enabled']                  = 'Habilitar puerta de enlace';
 $_['entry_is_production']            = 'Modo en vivo';
-$_['entry_region_global']             = 'Global (predeterminado)';
-$_['entry_region_europe']             = 'Europa';
+$_['entry_region_global']            = 'Global (predeterminado)';
+$_['entry_region_europe']            = 'Europa';
 $_['entry_credentials_check']        = 'Verificación de credenciales';
 $_['entry_debug']                    = 'Habilitar registro';
 $_['entry_payment_action_authorize'] = 'Autorizar sólo';
@@ -90,3 +93,7 @@ $_['success_credentials_check'] = '¡Sus credenciales fueron confirmadas exitosa
 
 // Alert
 $_['alert_credentials_check'] = '¡Asegurse de que ha llenado los campos de ID de la App y de la clave de la App!';
+
+// 3D secure
+$_['three_d_secure_required_display_text']      = '3D Secure es obligatorio en su pais y es habilitado automaticamente';
+$_['three_d_secure_not_required_display_text']  = '3D Secure es opcional en su pais';

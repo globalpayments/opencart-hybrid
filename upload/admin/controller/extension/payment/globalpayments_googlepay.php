@@ -55,13 +55,13 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		}
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_googlepay_accepted_cards'])) {
 			$accepted_cards = $this->request->post['payment_globalpayments_googlepay_accepted_cards'];
-			$data['payment_globalpayments_googlepay_accepted_cards'] = is_array($accepted_cards) 
+			$data['payment_globalpayments_googlepay_accepted_cards'] = is_array($accepted_cards)
 				? $accepted_cards : explode(',', $accepted_cards);
 		} elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_googlepay_accepted_cards'] = '';
 		} else {
 			$config_value = $this->config->get('payment_globalpayments_googlepay_accepted_cards');
-			$data['payment_globalpayments_googlepay_accepted_cards'] = is_array($config_value) 
+			$data['payment_globalpayments_googlepay_accepted_cards'] = is_array($config_value)
 				? $config_value : explode(',', $config_value);
 		}
 		if (isset($this->request->post['payment_globalpayments_googlepay_button_color'])) {
@@ -71,13 +71,13 @@ class ControllerExtensionPaymentGlobalPaymentsGooglePay extends Controller {
 		}
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'])) {
 			$auth_methods = $this->request->post['payment_globalpayments_googlepay_allowed_card_auth_methods'];
-			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = is_array($auth_methods) 
+			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = is_array($auth_methods)
 				? $auth_methods : explode(',', $auth_methods);
 		} elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = '';
 		} else {
 			$config_value = $this->config->get('payment_globalpayments_googlepay_allowed_card_auth_methods');
-			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = is_array($config_value) 
+			$data['payment_globalpayments_googlepay_allowed_card_auth_methods'] = is_array($config_value)
 				? $config_value : explode(',', $config_value);
 		}
 		if (isset($this->request->post['payment_globalpayments_googlepay_payment_action'])) {

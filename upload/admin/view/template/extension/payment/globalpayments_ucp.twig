@@ -8,7 +8,7 @@
 		}
 	}
 
-	// Service URL mapping based on region and environment
+    // Service URL mapping based on region and environment
 	var serviceUrls = {
 		'global': {
 			'production': 'https://apis.globalpay.com/ucp',
@@ -50,6 +50,7 @@
 			updateServiceUrl();
 		});
 	});
+
 </script>
 {{ column_left }}
 <div id="content">
@@ -57,7 +58,7 @@
     <div class="container-fluid">
       <div class="pull-right">
         <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}"
-          class="btn btn-primary"><i class="fa fa-save"></i></button>
+          class="btn btn-primary" id="input-save"><i class="fa fa-save"></i></button>
         <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
       </div>
       <h1>{{ heading_title }}</h1>
@@ -110,13 +111,13 @@
                 <div class="col-sm-10 checkbox">
                   <label>
                     <input id="input-is_production" type="checkbox" name="payment_globalpayments_ucp_is_production"
-                           value="{{ payment_globalpayments_ucp_is_production }}"{% if (payment_globalpayments_ucp_is_production==1) %} checked{% endif %}/> {{ entry_is_production }}
+                           value="{{ payment_globalpayments_ucp_is_production ? "1" : "0"}}"{% if (payment_globalpayments_ucp_is_production==1) %} checked{% endif %}/> {{ entry_is_production }}
                   </label>
                   <br/><br/>
                   <p>{{ help_is_production }}</p>
                 </div>
-              </div>
-              <div class="form-group">
+            </div>
+            <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-region"><span data-toggle="tooltip" title="{{ help_region }}">{{ label_region }}</span></label>
                 <div class="col-sm-10">
                   <select name="payment_globalpayments_ucp_region" id="input-region" class="form-control">
@@ -151,8 +152,11 @@
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 0) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-account_name">{{ label_account_name }}</label>
                 <div class="col-sm-10">
-                  <select name="payment_globalpayments_ucp_account_name" id="input-account_name" title="{{ help_account_name|striptags|e }}" class="form-control"></select>
-                  {% if error_live_credentials_account_name %}
+                  <select name="payment_globalpayments_ucp_account_name" id="input-account_name" title="{{ help_account_name|striptags|e }}" class="form-control"
+                  {% if payment_globalpayments_ucp_account_name %} prevSelected ="{{ payment_globalpayments_ucp_account_name }}"
+                  {% endif %}>
+									</select>
+									{% if error_live_credentials_account_name %}
                     <div class="text-danger">{{ error_live_credentials_account_name }}</div>
                   {% endif %}
                   <br/>
@@ -179,14 +183,16 @@
                   {% endif %}
                 </div>
               </div>
-
               <div class="form-group required{% if (payment_globalpayments_ucp_is_production == 1) %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-sandbox_account_name">{{ label_sandbox_account_name }}</label>
                 <div class="col-sm-10">
-                <select name="payment_globalpayments_ucp_sandbox_account_name" id="input-sandbox_account_name" title="{{ help_credentials_check|striptags|e }}" class="form-control"></select>
-                  {% if error_sandbox_credentials_account_name %}
-                    <div class="text-danger">{{ error_sandbox_credentials_account_name }}</div>
-                  {% endif %}
+	                <select name="payment_globalpayments_ucp_sandbox_account_name" id="input-sandbox_account_name" title="{{ help_credentials_check|striptags|e }}" class="form-control"
+	                  {% if payment_globalpayments_ucp_sandbox_account_name %} prevSelected ="{{payment_globalpayments_ucp_sandbox_account_name}}"
+	                  {% endif %}>
+									</select>
+									{% if error_sandbox_credentials_account_name %}
+	                    <div class="text-danger">{{ error_sandbox_credentials_account_name }}</div>
+	                {% endif %}
                   <br/>
                   <p>{{ help_account_name }}</p>
                 </div>
@@ -199,14 +205,14 @@
                   <p>{{ help_for_credentials_check }}</p>
                 </div>
               </div>
-
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-debug"><span data-toggle="tooltip" title="{{ help_debug }}">{{ label_debug }}</span></label>
                 <div class="col-sm-10 checkbox">
                   <label>
                     <input id="input-debug" type="checkbox" name="payment_globalpayments_ucp_debug"
-                           value="{{ payment_globalpayments_ucp_debug }}"{% if (payment_globalpayments_ucp_debug==1) %} checked{% endif %} /> {{ entry_debug }}
-                  </label>
+                           value="{{ payment_globalpayments_ucp_debug }}"{% if (payment_globalpayments_ucp_debug==1) %} checked{% endif %} />
+                           {{ entry_debug }}
+                    </label>
                 </div>
               </div>
               <div class="form-group required">
@@ -222,9 +228,22 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-enable-threeDSecure"> {{ label_enable_three_d_secure }}</label>
                 <div class="col-sm-10 checkbox">
+                      {% set threeDSecureValue =
+                      payment_globalpayments_ucp_enable_three_d_secure is same as(null)
+                      ? three_d_secure_required
+                      : payment_globalpayments_ucp_enable_three_d_secure %}
                   <label>
-                    <input id="input-enable-threeDSecure" type="checkbox" name="payment_globalpayments_ucp_enable_three_d_secure"
-                           value="{{ payment_globalpayments_ucp_enable_three_d_secure }}"{% if (payment_globalpayments_ucp_enable_three_d_secure==1) %} checked{% endif %} /> {{ label_enable_three_d_secure }}
+                    <input id="input-enable-threeDSecure"
+                          type="checkbox"
+                          name="payment_globalpayments_ucp_enable_three_d_secure"
+                          value="{{ threeDSecureValue }}"
+                          {% if threeDSecureValue %}
+                            checked
+                          {% endif %}
+                    />
+                    {{ label_enable_three_d_secure }}
+                    <br/><br/>
+                    {{ three_d_secure_display_text }}
                   </label>
                 </div>
               </div>
@@ -238,6 +257,91 @@
 		    <option value="hosted_payment" {{ payment_globalpayments_ucp_integration_type == 'hosted_payment' ? 'selected' : '' }}>{{ entry_integration_type_hosted_payment }}</option>
 	          </select>
 	        <br/>
+	        </div>
+	      </div>
+
+        {% if base_country == "GB" or base_country == "CA" %}
+        <div class="alert alert-info hpp_installments_notice {% if payment_globalpayments_ucp_integration_type != 'hosted_payment'%} hidden {%endif%}" style="text-align:center">
+             <h4><i class="fa fa-info-circle"></i>{{text_hpp_installments_title}}</h4>
+             <p>{{text_hpp_installments_subtitle}}</p>
+        </div>
+        <h4 class="hpp_installments_filtering_title {% if payment_globalpayments_ucp_integration_type != 'hosted_payment'%} hidden {%endif%}">{{text_hpp_installments_filtering_title}}</h4>
+        <div class="form-group hpp_installments_plan_types {% if payment_globalpayments_ucp_integration_type != 'hosted_payment'%} hidden {%endif%}">
+		    <label class="col-sm-2 control-label" for="hpp_installments_plan_types_tooltip">
+		      <span data-toggle="tooltip" title="{{ help_hpp_installments_plan_types_tooltip }}">{{ label_hpp_installments_plan_types }}</span>
+		    </label>
+	        <div class="col-sm-10">
+	          <select name="payment_globalpayments_ucp_hpp_installments_plan_type" id="hpp_installments_plan_type" class="form-control">
+		          <option value="any" {{ payment_globalpayments_ucp_hpp_installments_plan_type == 'any' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_type_any }}</option>
+		          <option value="consumer_funded" {{ payment_globalpayments_ucp_hpp_installments_plan_type == 'consumer_funded' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_type_customer_funded }}</option>
+		          <option value="merchant_funded" {{ payment_globalpayments_ucp_hpp_installments_plan_type == 'merchant_funded' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_type_merchant_funded }}</option>
+		          <option value="hybrid_funded" {{ payment_globalpayments_ucp_hpp_installments_plan_type == 'hybrid_funded' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_type_hybrid_funded }}</option>
+		          <option value="bilateral" {{ payment_globalpayments_ucp_hpp_installments_plan_type == 'bilateral' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_type_bilateral }}</option>
+          </select>
+	        <br/>
+	        </div>
+
+        </div>
+        <div class="form-group hpp_installments_plan_duration {% if payment_globalpayments_ucp_integration_type != 'hosted_payment'%} hidden {%endif%}">
+		    <label class="col-sm-2 control-label" for="payment_globalpayments_ucp_hpp_installments_plan_duration">
+		      <span data-toggle="tooltip" title="{{ help_hpp_installments_plan_duration_tooltip }}">{{ label_hpp_installments_plan_duration }}</span>
+		    </label>
+	        <div class="col-sm-10">
+	          <select name="payment_globalpayments_ucp_hpp_installments_plan_duration" id="hpp_installments_plan_duration" class="form-control">
+		          <option value="any" {{ payment_globalpayments_ucp_hpp_installments_plan_duration == 'any' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_duration_any }}</option>
+		          <option value="6_month" {{ payment_globalpayments_ucp_hpp_installments_plan_duration == '6_month' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_duration_6_month }}</option>
+		          <option value="12_month" {{ payment_globalpayments_ucp_hpp_installments_plan_duration == '12_month' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_duration_12_month }}</option>
+		          <option value="24_month" {{ payment_globalpayments_ucp_hpp_installments_plan_duration == '24_month' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_duration_24_month }}</option>
+		          <option value="32_month" {{ payment_globalpayments_ucp_hpp_installments_plan_duration == '32_month' ? 'selected' : '' }}>{{ entry_hpp_installments_plan_duration_32_month }}</option>
+          </select>
+	        <br/>
+	        </div>
+	      </div>
+
+        <div class="form-group hpp_installments_plan_threshold">
+          <label class="col-sm-2 control-label" for="hpp_installments_threshold">
+            {{ label_hpp_installments_plan_threshold }}
+   		      <span data-toggle="tooltip" title="{{ help_hpp_installments_plan_threshold_tooltip }}">{{ label_hpp_installments_plan_threshold }}</span>
+          </label>
+          <div class="col-sm-10">
+            <input id="hpp_installments_threshold"
+                  type="number"
+                  name="payment_globalpayments_ucp_hpp_installments_threshold"
+                  value="{{ payment_globalpayments_ucp_hpp_installments_threshold }}"
+                  class="form-control"
+                  maxlength="15" />
+          </div>
+        </div>
+
+        {% endif %}
+	      <div class="form-group hpp-wallets-settings" id="hpp-wallets-group" style="display: none;">
+		<label class="col-sm-2 control-label">
+		  <span data-toggle="tooltip" title="{{ help_hpp_wallets }}">{{ label_hpp_wallets }}</span>
+		</label>
+	        <div class="col-sm-10">
+		  <div class="well well-sm" style="height: 150px; overflow: auto;">
+		    <div class="checkbox">
+		      <label>
+		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="applepay" {% if 'applepay' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> Apple Pay
+		      </label>
+		    </div>
+		    <div class="checkbox">
+		      <label>
+		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="googlepay" {% if 'googlepay' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> Google Pay
+		      </label>
+		    </div>
+		    <div class="checkbox">
+		      <label>
+		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="payu" {% if 'payu' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> PayU
+		      </label>
+		    </div>
+		    <div class="checkbox">
+		      <label>
+		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="blik" {% if 'blik' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> Blik
+		      </label>
+		    </div>
+		  </div>
+		  <div class="help-block">{{ help_hpp_wallets_description }}</div>
 	        </div>
 	      </div>
               {% if base_country == 'MX' and base_currency == 'MXN' %}
@@ -267,7 +371,7 @@
                   <input type="text" name="payment_globalpayments_ucp_sort_order" value="{{ payment_globalpayments_ucp_sort_order }}" placeholder="{{ label_sort_order }}" id="input-sort-order" class="form-control" />
                 </div>
               </div>
-              {% if base_country == 'PL' and base_currency == 'PLN' %}
+              {% if base_country == 'PL' and base_currency == 'PLN' and payment_globalpayments_ucp_integration_type == "dropin_ui" %}
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-enabled-blik">{{ label_blik }}</label>
                 <div class="col-sm-10 checkbox">
@@ -340,26 +444,10 @@
     </div>
   </div>
 </div>
-<script type="text/javascript">
-	function toggleCredentialsSettings (event) {
-		var isProduction = $(event.target).is(':checked');
-		if (isProduction) {
-			$('#input-sandbox_app_id').parents('.form-group').addClass('hidden');
-			$('#input-sandbox_app_key').parents('.form-group').addClass('hidden');
-			$('#input-sandbox_account_name').parents('.form-group').addClass('hidden');
-			$('#input-app_id').parents('.form-group').removeClass('hidden');
-			$('#input-app_key').parents('.form-group').removeClass('hidden');
-			$('#input-account_name').parents('.form-group').removeClass('hidden');
-		} else {
-			$('#input-app_id').parents('.form-group').addClass('hidden');
-			$('#input-app_key').parents('.form-group').addClass('hidden');
-			$('#input-account_name').parents('.form-group').addClass('hidden');
-			$('#input-sandbox_app_id').parents('.form-group').removeClass('hidden');
-			$('#input-sandbox_app_key').parents('.form-group').removeClass('hidden');
-			$('#input-sandbox_account_name').parents('.form-group').removeClass('hidden');
-		}
-	}
+<script>
 
+(function ($, window) {
+  'use strict';
 	function toggleInstallments (event) {
 		var integrationType = $('#input-integration_type').val();
 		var baseCountry = '{{ base_country }}';
@@ -400,102 +488,273 @@
     $('#input-sandbox_account_name').trigger('change');
 	});
 
-	// Reset all account dropdowns when any app id or app key changes
-  $('#input-app_id, #input-app_key').on('input keyup change', function() {
-    resetAccountNameDropdown('#input-account_name');
-    $('#input-account_name').trigger('change');
-	});
+  function GlobalPaymentsUcpAdmin(params) {
+    this.baseCountry = params.baseCountry || '';
+    this.userToken   = params.userToken || '';
 
-	function isLiveMode() {
-		return $('#input-is_production').is(':checked');
-	}
+    this.serviceUrls = {
+      global: {
+        production: 'https://apis.globalpay.com/ucp',
+        sandbox: 'https://apis.sandbox.globalpay.com/ucp'
+      },
+      europe: {
+        production: 'https://apis.eu.globalpay.com/ucp',
+        sandbox: 'https://apis.sandbox.eu.globalpay.com/ucp'
+      }
+    };
 
-	function getGatewaySetting(setting) {
-		if (isLiveMode()) {
-			return $('#input-' + setting).val().trim();
-		} else {
-			return $('#input-sandbox_' + setting).val().trim();
-		}
-	}
+    this.init();
+  }
 
-	$('#button-credentials-check').button({ loadingText: "{{ text_loading }}" });
+  GlobalPaymentsUcpAdmin.prototype = {
 
-	$('#button-credentials-check').on('click', function () {
-		var gateway_app_id = getGatewaySetting('app_id');
-		var gateway_app_key = getGatewaySetting('app_key');
-		var environment = 0;
-		var region = $('#input-region').val() || 'global';
+    init: function () {
+      this.updateServiceUrl();
+      this.toggleInstallments();
+      this.toggleHppWallets();
+      this.attachEventHandlers();
 
-		if(!gateway_app_id || !gateway_app_key) {
-			alert( "{{ alert_credentials_check }}" );
-			return;
-		}
-		if (isLiveMode())  {
-			environment = 1;
-		}
-		
-		// Get the correct service URL based on region and environment
-		var serviceUrl = serviceUrls[region] ? serviceUrls[region][environment == 1 ? 'production' : 'sandbox'] : '';
-		
-		var clicked_button = $(this);
+      $('#button-credentials-check').trigger('click');
+    },
 
-		$.ajax({
-			url: 'index.php?route=extension/payment/globalpayments_ucp/checkApiCredentials&user_token={{ user_token }}',
-			type: 'post',
-			data: {
-				app_id: gateway_app_id,
-				app_key: gateway_app_key,
-				environment: environment,
-				region: region,
-				service_url: serviceUrl,
-			},
-			dataType: 'json',
-			beforeSend: function () {
-				clicked_button.button('loading');
-				$('.alert').hide().removeClass('alert-success alert-danger');
-			},
-			complete: function () {
-				clicked_button.button('reset');
-			},
-			success: function (json) {
-        if(environment == 1){
-            var accountSelected = '{{ payment_globalpayments_ucp_account_name}}';
-        }else{
-            var accountSelected = '{{ payment_globalpayments_ucp_sandbox_account_name}}';
-        }
-        if(environment == 1){
-          resetAccountNameDropdown('#input-account_name');
-          $.each(json.accountNames,function(a,values){
-            $('#input-account_name').append($('<option >', { value: values, text: values }));
-          });
 
-          if(accountSelected != ''){
-              $('#input-account_name').val(accountSelected);
+    attachEventHandlers: function () {
+      $(document)
+        .on('change', '#input-region', this.onRegionChange.bind(this))
+        .on('change', '#input-is_production', this.onEnvironmentChange.bind(this))
+        .on('change', '#input-integration_type', this.onIntegrationTypeChange.bind(this))
+        .on('click', '#button-credentials-check', this.checkCredentials.bind(this))
+        .on(
+          'change',
+          '#input-enabled,' +
+          '#input-enable-threeDSecure,' +
+          '#input-enable-installments,' +
+          '#input-debug,' +
+          '#input-allow_card_saving,' +
+          '#input-is_production,' +
+          '#input-enabled-blik,' +
+          '#input-enabled-openbanking',
+          this.toggleCheckboxValue
+        );
+
+      $('#input-app_id, #input-app_key').on(
+        'input keyup change',
+        this.clearLiveAccountName.bind(this)
+      );
+    },
+
+
+    onRegionChange: function () {
+      this.updateServiceUrl();
+      this.resetAccountDropdown('#input-account_name');
+      this.resetAccountDropdown('#input-sandbox_account_name');
+    },
+
+    onEnvironmentChange: function (event) {
+      this.toggleCheckboxValue(event);
+      this.toggleCredentialsSettings(event);
+      this.updateServiceUrl();
+    },
+
+    onIntegrationTypeChange: function () {
+      this.toggleInstallments();
+      this.toggleHppWallets();
+    },
+
+    toggleCheckboxValue: function (event) {
+      var $el = $(event.target);
+      $el.val($el.is(':checked') ? 1 : 0);
+    },
+
+    toggleCredentialsSettings: function (event) {
+      var isLive = $(event.target).is(':checked');
+
+      this.toggleGroup(
+        ['#input-app_id', '#input-app_key', '#input-account_name'],
+        isLive
+      );
+
+      this.toggleGroup(
+        ['#input-sandbox_app_id', '#input-sandbox_app_key', '#input-sandbox_account_name'],
+        !isLive
+      );
+    },
+
+    toggleGroup: function (selectors, show) {
+      selectors.forEach(function (selector) {
+        $(selector).parents('.form-group').toggleClass('hidden', !show);
+      });
+    },
+
+    toggleInstallments: function () {
+      var integrationType = $('#input-integration_type').val();
+      var show = integrationType === 'dropin_ui' && this.baseCountry === 'MX';
+
+      $('#input-enable-installments')
+        .parents('.form-group')
+        .toggleClass('hidden', !show);
+
+    // Toggle Hpp Installments elements
+    let hppInstallmentsEls = [$("[class*=hpp_installments]")] ?? null;
+    if( hppInstallmentsEls ) {
+      hppInstallmentsEls.forEach((el)=>{
+        if(el){
+          el.toggleClass('hidden', integrationType === 'dropin_ui');
           }
-        }else{
-          resetAccountNameDropdown('#input-sandbox_account_name');
-          $.each(json.accountNames,function(a,values){
-            $('#input-sandbox_account_name').append($('<option >', { value: values, text: values }));
-          });
+      })
+    }
 
-          if(accountSelected != ''){
-              $('#input-sandbox_account_name').val(accountSelected);
-          }
+    },
+
+    toggleHppWallets: function () {
+      var integrationType = $('#input-integration_type').val();
+      $('#hpp-wallets-group').toggle(integrationType === 'hosted_payment');
+    },
+
+    updateServiceUrl: function () {
+      var url = this.getServiceUrl().replace(/\/ucp$/, '');
+      $('#input-service-url').text(url);
+    },
+
+    isLiveMode: function () {
+      return $('#input-is_production').is(':checked');
+    },
+
+    getRegion: function () {
+      return $('#input-region').val() || 'global';
+    },
+
+    getEnvironmentName: function () {
+      return this.isLiveMode() ? 'production' : 'sandbox';
+    },
+
+    getServiceUrl: function () {
+      var region = this.getRegion();
+      var env = this.getEnvironmentName();
+      return this.serviceUrls[region]?.[env] || '';
+    },
+
+    getGatewaySetting: function (key) {
+      var prefix = this.isLiveMode() ? '' : 'sandbox_';
+      return $('#input-' + prefix + key).val().trim();
+    },
+
+
+    resetAccountDropdown: function (selector) {
+      $(selector).empty().val('').trigger('change');
+    },
+
+    clearLiveAccountName: function () {
+      this.resetAccountDropdown('#input-account_name');
+    },
+
+    checkCredentials: function () {
+      var appId = this.getGatewaySetting('app_id');
+      var appKey = this.getGatewaySetting('app_key');
+
+      if (!appId || !appKey) {
+        alert("{{ alert_credentials_check }}");
+        return;
+      }
+
+      var environment = this.isLiveMode() ? 1 : 0;
+      var region = this.getRegion();
+      var serviceUrl = this.getServiceUrl();
+      var self = this;
+
+      $.ajax({
+        url:
+          'index.php?route=extension/payment/globalpayments_ucp/checkApiCredentials' +
+          '&user_token=' + this.userToken,
+        type: 'post',
+        dataType: 'json',
+        data: {
+          app_id: appId,
+          app_key: appKey,
+          environment: environment,
+          region: region,
+          service_url: serviceUrl
+        },
+        beforeSend: function () {
+          $('#button-credentials-check').button('loading');
+          $('.alert:not(".hpp_installments_notice")').remove();
+        },
+        complete: function () {
+          $('#button-credentials-check').button('reset');
+        },
+        success: function (json) {
+          return self.handleCredentialResponse(json, environment);
+
         }
-				if (json['error']) {
-					$('#table-alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '</div>');
-				}
+      });
+    },
 
-				if (json['success']) {
-					$('#table-alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> ' + json['success'] + '</div>');
-				}
-			}
-		})
-	})
+    handleCredentialResponse: function (json, environment) {
 
-  $(document).ready(function() {
-    $('#button-credentials-check').trigger('click');
+      var selector =
+        environment === 1
+
+          ? '#input-account_name'
+          : '#input-sandbox_account_name';
+
+      this.resetAccountDropdown(selector);
+      //Prevent the account selection from reseting on page load
+      let previousSelection = "";
+      if($(selector).is("[prevSelected]")){
+        previousSelection = $(selector).attr("prevSelected");
+      }
+
+      if (json.accountNames) {
+        json.accountNames.forEach(function (name) {
+          let newOption =  { value: name, text: name };
+          if(newOption.value === previousSelection){
+            newOption.selected = true;
+          }
+          $(selector).append($('<option>',newOption));
+        });
+      }
+
+      if (json.error) {
+        this.showAlert('danger', json.error);
+        return false;
+      }
+
+      if (json.success) {
+        this.showAlert('success', json.success);
+        return true;
+      }
+    },
+
+
+    showAlert: function (type, message) {
+      var alertId = 'gp_alert';
+
+      // Remove existing alert
+      $('#' + alertId).remove();
+
+      // Insert alert
+      $('#table-alert').prepend(
+        '<div id="' + alertId + '" class="alert alert-' + type + '">' +
+          '<i class="fa fa-info-circle"></i> ' +
+          message +
+        '</div>'
+      );
+
+      // Scroll into view
+      var alertEl = document.getElementById(alertId);
+      if (alertEl && alertEl.scrollIntoView) {
+        alertEl.scrollIntoView(true);
+      }
+    }
+  };
+
+  $(function () {
+    new GlobalPaymentsUcpAdmin({
+      baseCountry: '{{ base_country }}',
+      userToken: '{{ user_token }}'
+    });
   });
 
+})(jQuery, window);
 </script>
 {{ footer }}

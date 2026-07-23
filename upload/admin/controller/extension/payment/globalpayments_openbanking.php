@@ -68,7 +68,7 @@ class ControllerExtensionPaymentGlobalPaymentsOpenBanking extends Controller {
 
 		if (isset($this->request->post) && isset($this->request->post['payment_globalpayments_openbanking_currencies'])) {
 			$currencies = $this->request->post['payment_globalpayments_openbanking_currencies'];
-			$data['payment_globalpayments_openbanking_currencies'] = is_array($currencies) 
+			$data['payment_globalpayments_openbanking_currencies'] = is_array($currencies)
 				? $currencies : explode(',', $currencies);
 		} elseif (!empty($this->request->post)) {
 			$data['payment_globalpayments_openbanking_currencies'] = '';

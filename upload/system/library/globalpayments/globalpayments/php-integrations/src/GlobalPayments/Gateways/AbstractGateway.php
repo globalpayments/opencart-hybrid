@@ -315,7 +315,7 @@ abstract class AbstractGateway implements GatewayInterface {
 	 * @return Transaction|mixed
 	 * @throws ApiException
 	 */
-	public function processRequest($requestType, RequestData $requestData = null, $configData = null) {
+	public function processRequest($requestType, ?RequestData $requestData = null, $configData = null) {
 		$request = $this->prepareRequest($requestType, $requestData);
 
 		if (!empty($configData)) {
@@ -345,7 +345,7 @@ abstract class AbstractGateway implements GatewayInterface {
 	 * @return mixed
 	 * @throws ApiException
 	 */
-	protected function prepareRequest($requestType, RequestData $requestData = null) {
+	protected function prepareRequest($requestType, ?RequestData $requestData = null) {
 		if (!class_exists($requestType)) {
 			throw new ApiException('Request undefined. Unable to perform request.');
 		}
