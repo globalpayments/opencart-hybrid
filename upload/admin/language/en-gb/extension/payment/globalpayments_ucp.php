@@ -80,7 +80,6 @@ $_['help_hpp_installments_plan_duration_tooltip'] = 'Used to retrieve installmen
 $_['help_hpp_installments_plan_threshold'] = 'Used to determine whether to return the longest or shortest tenure/duration plans depending on the amount sent. Setting 0 or nothing will disable this feature and plans will be shown in default sort order
 The amount should be sent in the smallest unit of the required currency. Example: 2000 = £20.00.';
 $_['help_hpp_installments_plan_threshold_tooltip'] = 'The amount should be sent in the smallest unit of the required currency. Example: 2000 = €20.00 Ex value sent 50000 will mean that: For transactions with an amount less or equal than €500.00, the plans with the shortest tenure will be displayed first. For transactions with an amount greater than €500.00, the plans with the longest tenure will be displayed first. Note: If not present, request will be sent with default value: plans with the longest tenure.';
-
 $_['help_enable_dcc']            = 'Enable or disable Dynamic Currency Conversion (DCC) for transactions processed through Global Payments. Only available with Hosted Payment Page integration.';
 
 // Entry

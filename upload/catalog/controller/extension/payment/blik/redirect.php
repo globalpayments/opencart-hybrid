@@ -3,20 +3,29 @@
  * GlobalPayments BLIK Redirect Controller for OpenCart
  * Handles redirects from payment gateways back to the store
  */
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
+
 
 class ControllerExtensionPaymentBlikRedirect extends Controller 
 {
+    public function __construct( $registry ) {
+        // Loads the globalpayments SDK
+        parent::__construct( $registry );
+        $this->load->library('globalpayments');
+	}
+    
     /**
      * Main index method - handles redirect requests
      */
     public function index(): void
     {
+        $appKey = $this->getAppKey();
+        Utils::validateSignature($appKey);
+        
         // Get action and order_id parameters
         $action = $this->request->get['action'] ?? '';
         $order_id = $this->request->get['order_id'] ?? '';
         
-        // Log the incoming request for debugging
-        $this->log->write('BLIK Redirect: action=' . $action . ', order_id=' . $order_id);
         try {
             switch ($action) {
                 case 'blik_redirect_handler':
@@ -125,12 +134,6 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
     {
         $order_id = $order['order_id'];
         
-        $this->log->write("Processing BLIK redirect for order: $order_id, status: $status, txn: $transaction_id");
-        // Debug: Log all GET parameters (remove in production)
-        if (defined('DEBUG_PAYMENTS') && DEBUG_PAYMENTS) {
-            $this->log->write(json_encode($_GET));
-        }
-        
         switch (strtoupper($status)) {
             case 'SUCCESS':
             case 'COMPLETED':
@@ -151,7 +154,6 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
             case 'CANCELLED':
                 // Payment failed - redirect to failure page
                 $this->updateOrderStatus($order_id, $status, $transaction_id, 'failed');
-                //$this->redirectToFailure($order_id, 'BLIK payment was ' . strtolower($status));
                 $this->redirectToCart();
                 break;
                 
@@ -174,9 +176,7 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
     private function processObRedirect(array $order, string $status, string $transaction_id, string $reference): void
     {
         $order_id = $order['order_id'];
-        
-        $this->log->write("Processing Open Banking redirect for order: $order_id, status: $status, txn: $transaction_id");
-        
+                
         switch (strtoupper($status)) {
             case 'SUCCESS':
             case 'COMPLETED':
@@ -249,9 +249,7 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
         }
        
         // Update the order status using OpenCart's standard method
-        $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, $notify);
-        
-        $this->log->write("Updated order $order_id status to $order_status_id ($result_type): $comment");
+        $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, $notify);        
     }
     
     /**
@@ -268,7 +266,6 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
             $this->session->data['success'] = $message;
         }
         $this->cart->clear();
-        $this->log->write("Redirecting to success page: $url");
         $this->response->redirect($url);
     }
     
@@ -284,9 +281,7 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
         $this->session->data['error'] = $message;
         
         // Redirect to checkout failure page
-        $url = $this->url->link('checkout/cart', '', true);
-        
-        $this->log->write("Redirecting to failure page: $url - Message: $message");
+        $url = $this->url->link('checkout/cart', '', true);        
         $this->response->redirect($url);
     }
     
@@ -295,27 +290,43 @@ class ControllerExtensionPaymentBlikRedirect extends Controller
      */
     private function redirectToCart(): void
     {
-        $url = $this->url->link('checkout/cart', '', true);
-        
-        $this->log->write("Redirecting to cart page: $url");
+        $url = $this->url->link('checkout/cart', '', true);        
         $this->response->redirect($url);
     }
     
     /**
+     * Get app key based on environment mode
+     *
+     * @return string App key or empty string
+     */
+    private function getAppKey() : string
+    {
+         // Load UCP config to get app key
+        $this->load->model( 'extension/payment/globalpayments_ucp' );
+        $isProduction = $this->config->get( 'payment_globalpayments_ucp_is_production' );
+
+        return ( $isProduction == 1 ) ?
+        $this->config->get( 'payment_globalpayments_ucp_app_key' ) :
+        $this->config->get( 'payment_globalpayments_ucp_sandbox_app_key' );
+    }
+
+
+    //TODO: look into why these two are even here, not called anywhere
+    /**
      * Direct redirect handler for backward compatibility
      */
-    public function blikHandler(): void
-    {
-        $order_id = $this->request->get['order_id'] ?? '';
-        $this->handleBlikRedirect($order_id);
-    }
-    
-    /**
-     * Direct Open Banking redirect handler for backward compatibility
-     */
-    public function obHandler(): void
-    {
-        $order_id = $this->request->get['order_id'] ?? '';
-        $this->handleObRedirect($order_id);
-    }
+    // public function blikHandler(): void
+    // {
+    //     $order_id = $this->request->get['order_id'] ?? '';
+    //     $this->handleBlikRedirect($order_id);
+    // }
+
+    // /**
+    //  * Direct Open Banking redirect handler for backward compatibility
+    //  */
+    // public function obHandler(): void
+    // {
+    //     $order_id = $this->request->get['order_id'] ?? '';
+    //     $this->handleObRedirect($order_id);
+    // }
 }

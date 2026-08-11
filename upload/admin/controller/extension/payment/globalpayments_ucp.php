@@ -289,6 +289,14 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$data['payment_globalpayments_ucp_enable_installments'] = $this->config->get('payment_globalpayments_ucp_enable_installments');
 		}
 
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_dcc'])) {
+			$data['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enable_dcc'] = 0;
+		} else {
+			$data['payment_globalpayments_ucp_enable_dcc'] = $this->config->get('payment_globalpayments_ucp_enable_dcc');
+		}
+
 		// HPP Wallets - decode from JSON storage
 		if (isset($this->request->post['payment_globalpayments_ucp_hpp_wallets'])) {
 			$data['payment_globalpayments_ucp_hpp_wallets'] = is_string($this->request->post['payment_globalpayments_ucp_hpp_wallets'])
@@ -299,13 +307,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$data['payment_globalpayments_ucp_hpp_wallets'] = is_string($stored) ? json_decode($stored, true) : (is_array($stored) ? $stored : []);
 		}
 
-		if (isset($this->request->post['payment_globalpayments_ucp_enable_dcc'])) {
-			$data['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'];
-		} elseif (!empty($this->request->post)) {
-			$data['payment_globalpayments_ucp_enable_dcc'] = 0;
-		} else {
-			$data['payment_globalpayments_ucp_enable_dcc'] = $this->config->get('payment_globalpayments_ucp_enable_dcc');
-		}
 		if (isset($this->request->post['payment_globalpayments_ucp_sort_order'])) {
 			$data['payment_globalpayments_ucp_sort_order'] = $this->request->post['payment_globalpayments_ucp_sort_order'];
 		} else {

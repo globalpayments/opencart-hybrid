@@ -21,7 +21,7 @@ class GetAccessTokenRequest extends AbstractRequest {
 			if (!empty($this->config['enable_installments'])) {
 				array_push($this->config['permissions'], 'INS_POST_Query', 'BIN_GET_Details', 'PMT_POST_Create');
 			}
-
+			
 			// Add DCC permissions if DCC is enabled and integration type is hosted payment page
 			if (
 				!empty($this->config['allowDCC'])

@@ -29,7 +29,7 @@ class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	 const VERSION = '2.0.0';
+	 const VERSION = '2.0.1';
 
 	/**
 	 * GP API regions.
@@ -151,6 +151,7 @@ class GlobalPayments {
 		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type') ?: "dropin_ui";
 		$this->gateway->language           = $this->language->get('code');
 		$this->gateway->enableInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments') == 1;
+		$this->gateway->allowDCC           = $this->config->get('payment_globalpayments_ucp_enable_dcc') == 1;
 		$region = self::normalizeGpApiRegion($this->config->get('payment_globalpayments_ucp_region'));
 		$this->gateway->region             = $region;
 		$this->gateway->serviceUrl         = self::resolveGpApiServiceUrl($region, (bool)$this->gateway->isProduction);
@@ -161,7 +162,6 @@ class GlobalPayments {
 		$this->gateway->enableThreeDSecure = $this->config->get('payment_globalpayments_ucp_enable_three_d_secure') ?? $this->threeDSecureRequired();
 
 
-		$this->gateway->allowDCC           = $this->config->get('payment_globalpayments_ucp_enable_dcc') == 1;
 
 		$this->load->model('localisation/country');
 		$store_country_id = $this->config->get('config_country_id');

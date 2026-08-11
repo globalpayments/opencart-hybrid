@@ -307,7 +307,6 @@
 				 * @returns
 				 */
 				renderPaymentFields: function () {
-					// HPP does not render secure card field targets; skip Drop-in/UI initialization.
 					if (this.gatewayOptions.integrationType === 'hosted_payment') {
 						return;
 					}
@@ -476,8 +475,8 @@
 									var ajaxData = {
 										payment_method: 'blik',
 										gateway_id: this.id,
-										action: 'initiate_sale',
-										token: '{{ apm_csrf_token }}'
+										token: '{{ apm_csrf_token }}',
+										action: 'initiate_sale'
 									};
 
 									// Add order data if available
@@ -579,8 +578,8 @@
 											var ajaxData = {
 												payment_method: 'open_banking',
 												gateway_id: this.id,
-												action: 'initiate_sale',
-												token: '{{ apm_csrf_token }}'
+												token: '{{ apm_csrf_token }}',
+												action: 'initiate_sale'
 											};
 
 											// Add order data if available

@@ -1,18 +1,8 @@
 <?php
 
-// Try to load BlikPayment class if available
-$blik_payment_file = DIR_SYSTEM . 'library/globalpayments/globalpayments/' .
-    'php-integrations/src/GlobalPayments/Gateways/DiUiApms/BlikPayment.php';
-if (file_exists($blik_payment_file)) {
-    require_once $blik_payment_file;
-}
-
-// Try to load OpenBankingPayment class if available
-$ob_payment_file = DIR_SYSTEM . 'library/globalpayments/globalpayments/' .
-    'php-integrations/src/GlobalPayments/Gateways/DiUiApms/OpenBankingPayment.php';
-if (file_exists($ob_payment_file)) {
-    require_once $ob_payment_file;
-}
+use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment;
+use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment;
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 /**
  * GlobalPayments BLIK Webhook Controller
@@ -20,11 +10,21 @@ if (file_exists($ob_payment_file)) {
  */
 class ControllerExtensionPaymentBlikWebhook extends Controller
 {
+
+    public function __construct( $registry ) {
+        // Loads the globalpayments SDK
+        parent::__construct( $registry );
+        $this->load->library('globalpayments');
+	}
+    
     /**
      * Main webhook handler - receives all GlobalPayments notifications
      */
     public function index(): void
     {
+        $appKey = $this->getAppKey();
+        Utils::validateSignature($appKey);
+        
         // Set response headers for webhook
         $this->response->addHeader('Content-Type: application/json');
         
@@ -33,9 +33,6 @@ class ControllerExtensionPaymentBlikWebhook extends Controller
         
         // Get comprehensive request data (PrestaShop pattern)
         $request_data = $this->getWebhookRequestData();
-        
-        // Log incoming webhook for debugging
-        error_log('GlobalPayments Webhook received: ' . json_encode($request_data));
         
         switch ($action) {
             case 'blik_status_handler':
@@ -63,37 +60,18 @@ class ControllerExtensionPaymentBlikWebhook extends Controller
             // Get comprehensive request data
             $request_data = $this->getWebhookRequestData();
             
-            // Check if BlikPayment class exists and has the handler method
-            if (
-                class_exists('GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment') &&
-                method_exists(
-                    'GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment',
-                    'handle_blik_status_notification'
-                )
-            ) {
-                $result = \GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment::handle_blik_status_notification(
-                    $request_data,
-                    $this->registry
-                );
-                
-                if ($result['status'] === 'success') {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 200 OK');
-                } else {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 400 Bad Request');
-                }
+            // TODO: these params look wrong (not sure we need registry in there JIMI)
+            $result = BlikPayment::handle_blik_status_notification(
+                $request_data,
+                $this->registry
+            );
+            
+            if ($result['status'] === 'success') {
+                $this->response->setOutput(json_encode($result));
+                $this->response->addHeader('HTTP/1.1 200 OK');
             } else {
-                // Fallback: process notification using legacy webhook logic
-                $result = $this->processWebhookFallback($request_data);
-                
-                if ($result['status'] === 'success') {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 200 OK');
-                } else {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 400 Bad Request');
-                }
+                $this->response->setOutput(json_encode($result));
+                $this->response->addHeader('HTTP/1.1 400 Bad Request');
             }
             
         } catch (Exception $e) {
@@ -111,31 +89,16 @@ class ControllerExtensionPaymentBlikWebhook extends Controller
     private function handleObStatusNotification(): void
     {
         try {
-            // Check if OpenBankingPayment class exists and has the handler method
-            if (
-                class_exists('GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment') &&
-                method_exists(
-                    'GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment',
-                    'handle_ob_status_notification'
-                )
-            ) {
-                $result = \GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment::handle_ob_status_notification(
-                    $this->registry
-                );
+            $result = OpenBankingPayment::handle_ob_status_notification(
+                $this->registry
+            );
                 
-                if ($result['status'] === 'success') {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 200 OK');
-                } else {
-                    $this->response->setOutput(json_encode($result));
-                    $this->response->addHeader('HTTP/1.1 400 Bad Request');
-                }
+            if ($result['status'] === 'success') {
+                $this->response->setOutput(json_encode($result));
+                $this->response->addHeader('HTTP/1.1 200 OK');
             } else {
-                $this->response->setOutput(json_encode([
-                    'status' => 'error',
-                    'message' => 'Open Banking webhook handler not implemented'
-                ]));
-                $this->response->addHeader('HTTP/1.1 501 Not Implemented');
+                $this->response->setOutput(json_encode($result));
+                $this->response->addHeader('HTTP/1.1 400 Bad Request');
             }
             
         } catch (Exception $e) {
@@ -145,172 +108,6 @@ class ControllerExtensionPaymentBlikWebhook extends Controller
             ]));
             $this->response->addHeader('HTTP/1.1 500 Internal Server Error');
         }
-    }
-
-    /**
-     * Fallback webhook processing when BlikPayment class is not available
-     */
-    private function processWebhookFallback(array $request_data): array
-    {
-        try {
-            // Extract order ID from various sources
-            $order_id = $this->extractOrderIdFromWebhook($request_data);
-            
-            if (!$order_id) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Could not extract order ID from webhook data'
-                ];
-            }
-            
-            // Load order
-            $this->load->model('checkout/order');
-            $order = $this->model_checkout_order->getOrder($order_id);
-            
-            if (!$order) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Order not found: ' . $order_id
-                ];
-            }
-            
-            // Extract payment status
-            $payment_status = $this->extractPaymentStatus($request_data);
-            $transaction_id = $this->extractTransactionId($request_data);
-            
-            // Update order status
-            $this->updateOrderFromWebhook($order, $payment_status, $transaction_id);
-            
-            return [
-                'status' => 'success',
-                'message' => 'Webhook processed successfully',
-                'order_id' => $order_id
-            ];
-            
-        } catch (Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Webhook fallback processing failed: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Extract order ID from webhook data
-     */
-    private function extractOrderIdFromWebhook(array $data): ?int
-    {
-        // Try reference field first
-        if (isset($data['reference'])) {
-            $reference = $data['reference'];
-            
-            // Direct numeric reference
-            if (is_numeric($reference)) {
-                return (int)$reference;
-            }
-            
-            // Extract from patterns like "Order_41", "TRN_xxx_Order_350"
-            if (preg_match('/_Order_(\d+)/', $reference, $matches)) {
-                return (int)$matches[1];
-            }
-            
-            // Extract any number from reference
-            if (preg_match('/(\d+)/', $reference, $matches)) {
-                return (int)$matches[1];
-            }
-        }
-        
-        // Try platforms array
-        if (isset($data['platforms']) && is_array($data['platforms'])) {
-            foreach ($data['platforms'] as $platform) {
-                if (isset($platform['order_id'])) {
-                    if (preg_match('/_Order_(\d+)/', $platform['order_id'], $matches)) {
-                        return (int)$matches[1];
-                    }
-                }
-            }
-        }
-        
-        return null;
-    }
-
-    /**
-     * Extract payment status from webhook data
-     */
-    private function extractPaymentStatus(array $data): string
-    {
-        $status_fields = ['status', 'payment_status', 'transaction_status'];
-        
-        foreach ($status_fields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
-                return $data[$field];
-            }
-        }
-        
-        return 'UNKNOWN';
-    }
-
-    /**
-     * Extract transaction ID from webhook data
-     */
-    private function extractTransactionId(array $data): ?string
-    {
-        $id_fields = ['id', 'transaction_id', 'reference'];
-        
-        foreach ($id_fields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
-                return $data[$field];
-            }
-        }
-        
-        return null;
-    }
-
-    /**
-     * Update order based on webhook notification
-     */
-    private function updateOrderFromWebhook(
-        array $order,
-        string $payment_status,
-        ?string $transaction_id
-    ): void {
-        $order_id = $order['order_id'];
-        $status_upper = strtoupper($payment_status);
-        
-        // Create comment with webhook details
-        $comment = "Payment status: $payment_status";
-        if ($transaction_id) {
-            $comment .= ", Transaction ID: $transaction_id";
-        }
-        
-        switch ($status_upper) {
-            case 'CAPTURED':
-            case 'COMPLETED':
-            case 'SUCCESS':
-                $order_status_id = 2; // Processing
-                $notify = true;
-                break;
-            case 'DECLINED':
-            case 'FAILED':
-            case 'CANCELLED':
-                $order_status_id = 7; // Failed
-                $notify = true;
-                break;
-            case 'PENDING':
-                $order_status_id = 1; // Pending
-                $notify = false;
-                break;
-            default:
-                return; // Unknown status, don't update
-        }
-        
-        // Add order history
-        $this->model_checkout_order->addOrderHistory(
-            $order_id,
-            $order_status_id,
-            $comment,
-            $notify
-        );
     }
 
     /**
@@ -334,16 +131,20 @@ class ControllerExtensionPaymentBlikWebhook extends Controller
         return $request_data;
     }
 
+    //TODO duplicate of that from redirect, move to utils
     /**
-     * Direct statusUpdate method for backward compatibility
-     * Routes to BLIK handler by default
+     * Get app key based on environment mode
+     *
+     * @return string App key or empty string
      */
-    public function statusUpdate(): void
+    private function getAppKey() : string
     {
-        // Set response headers for webhook
-        $this->response->addHeader('Content-Type: application/json');
-        
-        // Route to BLIK handler for backward compatibility
-        $this->handleBlikStatusNotification();
+         // Load UCP config to get app key
+        $this->load->model( 'extension/payment/globalpayments_ucp' );
+        $isProduction = $this->config->get( 'payment_globalpayments_ucp_is_production' );
+
+        return ( $isProduction == 1 ) ?
+        $this->config->get( 'payment_globalpayments_ucp_app_key' ) :
+        $this->config->get( 'payment_globalpayments_ucp_sandbox_app_key' );
     }
 }

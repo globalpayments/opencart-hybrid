@@ -5,7 +5,6 @@ use GlobalPayments\PaymentGatewayProvider\Gateways\{AbstractGateway , GatewayId}
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
 use GlobalPayments\Api\Builders\HPPBuilder;
 use GlobalPayments\Api\Entities\{Address, PayerDetails, PhoneNumber, Transaction};
-use GlobalPayments\Api\Entities\GpApi\AccessTokenInfo;
 use GlobalPayments\Api\Entities\Enums\{
 	AddressType,
 	CaptureMode,
@@ -39,24 +38,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 	public function index(): string
 	{
 		$this->load->language('extension/payment/globalpayments_ucp');
-
-		// 1. Migrate any legacy SDK error into the namespaced HPP error bucket.
-		if (
-    		$this->globalpayments->gateway->integrationType === 'hosted_payment'
-    		&& isset($this->session->data['error'])
-    		&& strpos($this->session->data['error'], 'action_type - LINK_CREATE') !== false
-		) {
-    		$this->session->data['globalpayments_hpp_error'] = $this->session->data['error'];
-    		unset($this->session->data['error']);
-		}
-
-		// Prevent stale HPP prebuild errors from leaking into Drop-in UI checkout.
-		if (
-    		$this->globalpayments->gateway->integrationType !== 'hosted_payment'
-    		&& isset($this->session->data['globalpayments_hpp_error'])
-		) {
-    		unset($this->session->data['globalpayments_hpp_error']);
-		}
 
 		$this->setOrder();
 		$this->globalpayments->setSecurePaymentFieldsTranslations();
@@ -108,8 +89,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		} else {
 			$data['globalpayments_secure_payment_fields_params'] = $this->globalpayments->gateway->securePaymentFieldsParams();
 			$data['globalpayments_secure_payment_threedsecure_params'] = $this->globalpayments->gateway->securePaymentFieldsThreeDSecureParams($this->order);
-
-
 		if (empty($this->session->data['apm_csrf_token'])) {
 			$this->session->data['apm_csrf_token'] = bin2hex(random_bytes(32));
 		}
@@ -402,16 +381,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$config->country = $this->globalpayments->gateway->country;
 			$config->channel = Channel::CardNotPresent;
 
-			// Set the correct account name so GP API uses the HPP-enabled account.
-			$hppAccountName = $isProduction
-				? $this->globalpayments->gateway->accountName
-				: $this->globalpayments->gateway->sandboxAccountName;
-			if (!empty($hppAccountName)) {
-				$accessTokenInfo = new AccessTokenInfo();
-				$accessTokenInfo->transactionProcessingAccountName = $hppAccountName;
-				$config->accessTokenInfo = $accessTokenInfo;
-			}
-
 			ServicesContainer::configureService($config);
 
 			$this->load->model('checkout/order');
@@ -477,6 +446,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$country_info = $this->model_localisation_country->getCountry($store_country_id);
 			$store_country_iso = isset($country_info['iso_code_2']) ? $country_info['iso_code_2'] : '';
 
+			// Get DCC setting
+			$enableDCC = (bool) $this->globalpayments->gateway->allowDCC;
+			
 			// Determine payment methods based on amount and configuration
 			$paymentMethods = ["CARD"];
 			// $paymentMethods = [HPPAllowedPaymentMethods::BLIK];
@@ -504,9 +476,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 						// $paymentMethods[] = HPPAllowedPaymentMethods::PAYU;
 					}
 				}
-        
-			// Get DCC setting
-			$enableDCC = (bool) $this->globalpayments->gateway->allowDCC;
+			}
+
 
 			$hppBuilder = HPPBuilder::create()
 				->withName($this->session->data['order_id'])
@@ -533,11 +504,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 					$cancelUrl
 				)
 				->withCurrency($order_info['currency_code'])
-        ->withCurrencyConversionMode($enableDCC)
 				->withAddressMatchIndicator($hasShippingAddress ?
 				$this->addressMatch($billingAddress, $shippingAddress) :
-				true);
-
+				true)
+				->withCurrencyConversionMode($enableDCC);
+						
 			// Add digital wallets if available
 			if (!empty($digitalWallets)) {
 				$hppBuilder->withDigitalWallets($digitalWallets);

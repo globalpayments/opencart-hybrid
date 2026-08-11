@@ -1,5 +1,4 @@
 <?php
-
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\BlikPayment;
 use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment;
@@ -7,10 +6,10 @@ use GlobalPayments\PaymentGatewayProvider\Gateways\DiUiApms\OpenBankingPayment;
 class ControllerExtensionPaymentApmMiddleware extends Controller
 {
 
-
 	public function __construct( $registry ) {
-		parent::__construct( $registry );
-		$this->load->library('globalpayments');
+			// Loads the globalpayments SDK
+			parent::__construct( $registry );
+			$this->load->library('globalpayments');
 	}
     public function confirm(): void
     {

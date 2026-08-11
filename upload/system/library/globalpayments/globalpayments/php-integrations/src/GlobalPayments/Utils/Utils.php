@@ -3,6 +3,9 @@
 namespace GlobalPayments\PaymentGatewayProvider\Utils;
 
 use GlobalPayments\Api\Entities\Enums\TransactionStatus;
+use LogicException;
+use GlobalPayments\PaymentGatewayProvider\Gateways\GpApiGateway;
+use GlobalPayments\Api\Entities\Enums\ShaHashType;
 
 class Utils {
 	/**
@@ -80,4 +83,27 @@ class Utils {
 	public static function getJsLibVersion() {
 		return '4.1.19';
 	}
+
+	public static function validateSignature($appKey): void
+	{
+        $gateway = new GpApiGateway();
+
+        $querryString = substr($_SERVER["QUERY_STRING"], strpos($_SERVER["QUERY_STRING"], 'X-GP-Signature'));
+
+        $signature = substr(substr($querryString, 0, strpos($querryString, 'id=') - 1), 15);
+
+        $querryStringSubString = substr($_SERVER["QUERY_STRING"], strpos($_SERVER["QUERY_STRING"], '&id=') + 1);
+
+        $calculatedSignature = hash(
+            ShaHashType::SHA512,
+						$querryStringSubString . $appKey
+        );
+
+        if ($signature !== $calculatedSignature) {
+			error_log("Invaild signature");
+			error_log($querryStringSubString);
+		throw new LogicException('Invalid request signature.');
+
+        };
+    }
 }

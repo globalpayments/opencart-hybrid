@@ -156,13 +156,6 @@ class GpApiGateway extends AbstractGateway {
 	 */
 	public $initiateAuthenticationUrl;
 
-	/**
-	 * Shared 3DS security salt from platform config.
-	 *
-	 * @var string
-	 */
-	public $threeDSSecuritySalt = '';
-
 
 	/**
 	 * Shared 3DS security salt from platform config.
@@ -341,7 +334,7 @@ class GpApiGateway extends AbstractGateway {
 			'dynamicHeaders'           => $this->dynamicHeaders,
 			'enable_installments'      => $this->enableInstallments ?? false,
 			'allowDCC'                 => $this->allowDCC ?? false,
-			'integrationType'          => $this->integrationType ?? null,
+			'integrationType'          => $this->integrationType,
 			'dataResidency'            => $dataResidency,
 		);
 
