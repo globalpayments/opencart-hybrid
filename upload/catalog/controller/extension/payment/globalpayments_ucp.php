@@ -99,6 +99,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		$data['is_production'] = $this->config->get('payment_globalpayments_ucp_is_production');
 		$data['allow_card_saving'] = $this->config->get('payment_globalpayments_ucp_allow_card_saving');
 		$data['enable_installments'] = $this->config->get('payment_globalpayments_ucp_enable_installments');
+		$enableVisaInstallments = $this->config->get('payment_globalpayments_ucp_enable_visa_installments');
+		if ($enableVisaInstallments === null || $enableVisaInstallments === '') {
+			$enableVisaInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments');
+		}
+		$data['enable_visa_installments'] = $enableVisaInstallments;
 
 		$data['environment_indicator'] = $this->globalpayments->gateway->getEnvironmentIndicator('alert alert-danger');
 		$data['secure_payment_fields'] = $this->globalpayments->gateway->getCreditCardFormatFields();
@@ -194,6 +199,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 					$requestData->installments = (object) [
 						'id' => $tokenData->installment->id ?? null,
 						'reference' => $tokenData->installment->reference ?? null,
+						'language' => $tokenData->installment->language ?? null,
+						'version' => $tokenData->installment->version ?? null,
 					];
 
 				}

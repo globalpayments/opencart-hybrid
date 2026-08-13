@@ -24,12 +24,13 @@ use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Klarna;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\BuyNowPayLater\Clearpay;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\Apm\Paypal;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 class GlobalPayments {
 	/**
 	 * Extension version.
 	 */
-	 const VERSION = '2.0.1';
+	 const VERSION = '2.1.0';
 
 	/**
 	 * GP API regions.
@@ -151,6 +152,23 @@ class GlobalPayments {
 		$this->gateway->integrationType    = $this->config->get('payment_globalpayments_ucp_integration_type') ?: "dropin_ui";
 		$this->gateway->language           = $this->language->get('code');
 		$this->gateway->enableInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments') == 1;
+		$enableVisaInstallments = $this->config->get('payment_globalpayments_ucp_enable_visa_installments');
+		if ($enableVisaInstallments === null || $enableVisaInstallments === '') {
+			$enableVisaInstallments = $this->config->get('payment_globalpayments_ucp_enable_installments');
+		}
+		$this->gateway->enableVisaInstallments = (int) $enableVisaInstallments === 1;
+		$visaFundingModeRaw = (string) $this->config->get('payment_globalpayments_ucp_visa_installments_funding_mode');
+		$visaFundingModeMap = [
+			'any' => 'ANY',
+			'consumer_funded' => 'CONSUMER_FUNDED',
+			'merchant_funded' => 'MERCHANT_FUNDED',
+			'hybrid_funded' => 'HYBRID_FUNDED',
+			'bilateral' => 'BILATERAL',
+		];
+		$visaFundingModeKey = strtolower(trim($visaFundingModeRaw));
+		$this->gateway->visaInstallmentsFundingMode = $visaFundingModeMap[$visaFundingModeKey] ?? 'ANY';
+		$this->gateway->visaInstallmentsMaxTimeUnitNumber = $this->config->get('payment_globalpayments_ucp_visa_installments_max_time_unit_number');
+		$this->gateway->visaInstallmentsMaxAmount = $this->config->get('payment_globalpayments_ucp_visa_installments_max_amount');
 		$this->gateway->allowDCC           = $this->config->get('payment_globalpayments_ucp_enable_dcc') == 1;
 		$region = self::normalizeGpApiRegion($this->config->get('payment_globalpayments_ucp_region'));
 		$this->gateway->region             = $region;
@@ -167,6 +185,14 @@ class GlobalPayments {
 		$store_country_id = $this->config->get('config_country_id');
 		$store_country    = $this->model_localisation_country->getCountry($store_country_id);
 		$this->gateway->country = $store_country['iso_code_2'];
+		$this->gateway->baseCountry = $store_country['iso_code_2'];
+		$this->gateway->baseCurrency = $this->config->get('config_currency');
+		$visaInstallmentsSupported = Utils::isVisaInstallmentsSupported(
+			$this->gateway->baseCountry,
+			$this->gateway->baseCurrency
+		) && $this->gateway->integrationType === 'dropin_ui';
+		$this->gateway->enableVisaInstallments = $this->gateway->enableVisaInstallments
+			&& $visaInstallmentsSupported;
 
 		/**
 		 * All these settings should be platform specific.

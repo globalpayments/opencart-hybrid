@@ -81,7 +81,27 @@ class Utils {
 	}
 
 	public static function getJsLibVersion() {
-		return '4.1.19';
+		return '5.0.1';
+	}
+
+	/**
+	 * Check if Visa installments are supported for a country/currency pair.
+	 */
+	public static function isVisaInstallmentsSupported(?string $country, ?string $currency): bool {
+		$supportedCombinations = [
+			'GB' => 'GBP',
+			'CA' => 'CAD',
+		];
+
+		if (!is_string($country) || !is_string($currency)) {
+			return false;
+		}
+
+		$countryUpper = strtoupper($country);
+		$currencyUpper = strtoupper($currency);
+
+		return isset($supportedCombinations[$countryUpper])
+			&& $supportedCombinations[$countryUpper] === $currencyUpper;
 	}
 
 	public static function validateSignature($appKey): void

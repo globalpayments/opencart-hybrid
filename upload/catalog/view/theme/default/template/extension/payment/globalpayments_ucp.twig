@@ -79,12 +79,12 @@
 	    {% for stored_payment_method in stored_payment_methods %}
 	      <div class="radio">
 		<label>
-		  <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}"
+		  <input type="radio" id="{{ gateway.gatewayId }}-payment-token-{{ stored_payment_method.token_id }}" name="{{ gateway.gatewayId }}[paymentTokenId]" value="{{ stored_payment_method.token_id }}" data-card-type="{{ stored_payment_method.card_type|lower }}"
 		  {% if stored_payment_method.is_default %}
 		    checked="checked"
 		  {% endif %}>
 		  {{ stored_payment_method.card_type }} {{ text_ending_in }} {{ stored_payment_method.card_last4 }} ({{ text_expires }} {{ stored_payment_method.expiry_month }}/{{ stored_payment_method.expiry_year }})
-			{% if enable_installments %}
+			{% if enable_installments or enable_visa_installments %}
 				<i class="fa fa-question-circle saved-card-installment-description" title="{{saved_card_installment_description}}"></i>
 			{% endif %}
 		</label>
@@ -271,6 +271,19 @@
 
 			GlobalPaymentsGatewayProvider.prototype = {
 				/**
+				 * Normalize 3DS config flag to a strict boolean.
+				 *
+				 * @returns {boolean}
+				 */
+				isThreeDSecureEnabled: function () {
+					var value = this.gatewayOptions.enableThreeDSecure;
+					if (typeof value === 'string') {
+						value = value.toLowerCase();
+					}
+					return value === true || value === 1 || value === '1' || value === 'true' || value === 'yes';
+				},
+
+				/**
 				 * Add important event handlers for controlling the payment experience during checkout
 				 *
 				 * @returns
@@ -291,10 +304,11 @@
 						$(self.getPlaceOrderButtonSelector()).on('click', function ($e) {
 							$e.preventDefault();
 							$e.stopImmediatePropagation();
-							if (!self.gatewayOptions.enableThreeDSecure) {
+							if (!self.isThreeDSecureEnabled()) {
 								self.submitForm();
+							} else {
+								self.threeDSecure();
 							}
-							self.threeDSecure();
 							return;
 						});
 					});
@@ -331,9 +345,38 @@
 					let acceptBlik = (gatewayConfig.enableBlik === 1) ? true : false;
 					let acceptOpenBanking = (gatewayConfig.enableOpenbanking === 1) ? true : false;
 					let apmsEnabled = (acceptBlik || acceptOpenBanking) ? true : false;
-					console.log('{{base_currency}}','{{base_country}}');
+					let apmArray = false;
+					if (apmsEnabled) {
+						apmArray = [];
+						if (acceptBlik) {
+							apmArray.push(GlobalPayments.enums.Apm.Blik);
+						}
+						if (acceptOpenBanking) {
+							apmArray.push(GlobalPayments.enums.Apm.OpenBankingPayment);
+						}
+
+						if (apmArray.length === 0) {
+							apmArray = false;
+						}
+					}
+
 					var base_currency = '{{base_currency}}';
 					var base_country  = '{{base_country}}';
+					var supportsMxInstallments = (base_country === 'MX' && base_currency === 'MXN');
+					var normalizeBoolean = function (value) {
+						if (typeof value === 'string') {
+							value = value.toLowerCase();
+						}
+						return value === true || value === 1 || value === '1' || value === 'true' || value === 'yes';
+					};
+					var supportsVisaInstallments = normalizeBoolean(gatewayConfig.enableVisaInstallments);
+					var toMinorUnitsAmount = function(amount) {
+						var numericAmount = parseFloat(amount);
+						if (isNaN(numericAmount)) {
+							return '0';
+						}
+						return Math.round(numericAmount * 100).toString();
+					};
 					if (apmsEnabled) {
 						gatewayConfig.apms = {
 							currencyCode: base_currency,
@@ -365,21 +408,58 @@
 					}
 
 
-					// Add installments configuration only for Mexico with MXN, dropin_ui, and Installments enabled
+					// MX installments (LATAM)
 					if (
-						base_country === 'MX' &&
-						base_currency === 'MXN' &&
+						supportsMxInstallments &&
 						gatewayConfig.integrationType === 'dropin_ui' &&
 						gatewayConfig.enableInstallments
 					) {
 						gatewayConfig.installments = {
-							accountName: "{{ is_production ? account_name : sandbox_account_name }}",
-							country: "MX",
-							currency: "MXN",
+							program: 'LATAM',
+							country: base_country,
+							currency: base_currency,
 							allowedCardNetworks: [
 								GlobalPayments.enums.CardNetwork.Visa
 							]
 						};
+
+						if (gatewayConfig.installmentsAccountName) {
+							gatewayConfig.installments.accountName = gatewayConfig.installmentsAccountName;
+						}
+					}
+
+					// Visa installments (UK/CA)
+					if (
+						supportsVisaInstallments &&
+						gatewayConfig.integrationType === 'dropin_ui' &&
+						gatewayConfig.enableVisaInstallments
+					) {
+						var visaCountry = base_country === 'GB' ? 'UK' : base_country;
+						var visaConfig = {
+							funding_mode: gatewayConfig.visaInstallmentsFundingMode || 'ANY'
+						};
+
+						if (gatewayConfig.visaInstallmentsMaxTimeUnitNumber) {
+							visaConfig.max_time_unit_number = parseInt(gatewayConfig.visaInstallmentsMaxTimeUnitNumber, 10);
+						}
+
+						if (gatewayConfig.visaInstallmentsMaxAmount) {
+							visaConfig.max_amount = parseFloat(gatewayConfig.visaInstallmentsMaxAmount);
+						}
+
+						gatewayConfig.installments = {
+							program: 'VIS',
+							country: visaCountry,
+							currency: base_currency,
+							config: visaConfig,
+							allowedCardNetworks: [
+								GlobalPayments.enums.CardNetwork.Visa
+							]
+						};
+
+						if (gatewayConfig.installmentsAccountName) {
+							gatewayConfig.installments.accountName = gatewayConfig.installmentsAccountName;
+						}
 					}
 
 					// ensure the submit button's parent is on the page as this is added
@@ -395,19 +475,26 @@
 							style: "gp-default"
 						};
 
-						// Only add amount and apms when BLIK is enabled
+						var isInstallmentFlow = (
+							(supportsMxInstallments && gatewayConfig.enableInstallments)
+							|| (supportsVisaInstallments && gatewayConfig.enableVisaInstallments)
+						);
+
+						if (
+							isInstallmentFlow &&
+							gatewayConfig.integrationType === 'dropin_ui'
+						) {
+							var installmentsAmount = this.order.amount ? this.order.amount : '0';
+							formConfig.amount = toMinorUnitsAmount(installmentsAmount);
+						}
+
 						if (apmsEnabled) {
-              formConfig.amount = this.order.amount ? this.order.amount : '0';
-  						formConfig.apms = [];
-  					}
-  					if (
-  						base_country === 'MX' &&
-  						base_currency === 'MXN' &&
-  						gatewayConfig.integrationType === 'dropin_ui' &&
-  						gatewayConfig.enableInstallments
-  					) {
-  						formConfig.amount = this.order.amount ? this.order.amount : '0';
-  					}	this.cardForm = GlobalPayments.creditCard.form(
+							if (!isInstallmentFlow) {
+								formConfig.amount = this.order.amount ? this.order.amount : '0';
+							}
+							formConfig.apms = apmArray;
+						}
+						this.cardForm = GlobalPayments.creditCard.form(
 							'#' + this.id + '-' + this.fieldOptions['payment-form'].class,
 							formConfig
 						)
@@ -823,16 +910,20 @@
 					}
 
 					if (response.installment) {
+						var installmentLanguage = response.installment.language ? response.installment.language : null;
+						var installmentVersion = response.installment.version ? response.installment.version : null;
 							responseDetails.installment = {
 							id : response.installment.installmentId,
 							reference : response.installment.installmentReference,
+							language : installmentLanguage,
+							version : installmentVersion,
 						}
 					}
 
 					this.paymentTokenResponse = JSON.stringify(responseDetails);
 
 					this.createInputElement('paymentTokenResponse', this.paymentTokenResponse);
-					if (!this.gatewayOptions.enableThreeDSecure) {
+					if (!this.isThreeDSecureEnabled()) {
 						this.submitForm();
 					} else {
 						this.threeDSecure();
@@ -849,13 +940,18 @@
 				 * 3DS Process
 				 */
 				threeDSecure: function () {
+					if (!this.isThreeDSecureEnabled()) {
+						this.submitForm();
+						return true;
+					}
+
 					this.blockOnSubmit();
 					var self = this;
 					var _form = this.getForm();
 					var $form = $(_form);
+					var paymentOption = $('#tab-option').val();
 
 					var paymentTokenId = 'new';
-					var paymentOption = $('#tab-option').val();
 					if (paymentOption === 'saved') {
 						paymentTokenId = $('input[name="' + this.id + '[paymentTokenId]"]:checked').val();
 					}
@@ -1050,6 +1146,12 @@
 				 */
 				blockOnSubmit: function () {
 					var $form = $( this.getForm() );
+
+					if (typeof $.fn.block !== 'function') {
+						disablePaymentForm();
+						return;
+					}
+
 					var form_data = $form.data();
 					if ( 1 !== form_data['blockUI.isBlocked'] ) {
 						$form.block({
@@ -1083,6 +1185,12 @@
 				 */
 				unblockOnError: function () {
 					var $form = $(this.getForm());
+
+					if (typeof $.fn.unblock !== 'function') {
+						enablePaymentForm();
+						return;
+					}
+
 					var form_data = $form.data();
 					if (1 == form_data['blockUI.isBlocked']) {
 						$form.unblock();

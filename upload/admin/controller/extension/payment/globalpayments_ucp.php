@@ -53,9 +53,25 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$this->request->post['payment_globalpayments_ucp_debug'] = $this->request->post['payment_globalpayments_ucp_debug'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_three_d_secure'] = $this->request->post['payment_globalpayments_ucp_enable_three_d_secure'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_installments'] = $this->request->post['payment_globalpayments_ucp_enable_installments'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_visa_installments'] = $this->request->post['payment_globalpayments_ucp_enable_visa_installments'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_blik'] = $this->request->post['payment_globalpayments_ucp_enable_blik'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_openbanking'] = $this->request->post['payment_globalpayments_ucp_enable_openbanking'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_integration_type'] = $this->request->post['payment_globalpayments_ucp_integration_type'] ?? "dropin_ui";
+
+			$integrationType = $this->request->post['payment_globalpayments_ucp_integration_type'];
+			$settings = $this->model_setting_setting->getSetting('config');
+			$storeCountry = isset($settings['config_country_id']) ? strtoupper($this->getCountryIsoCode((int)$settings['config_country_id'])) : '';
+			$storeCurrency = strtoupper((string)$this->config->get('config_currency'));
+			$isVisaEligible = $this->isVisaInstallmentsSupported($storeCountry, $storeCurrency)
+				&& $integrationType === 'dropin_ui';
+
+			if (! $isVisaEligible) {
+				// Server-side guard: hidden admin fields can still be forced via direct POST.
+				$this->request->post['payment_globalpayments_ucp_enable_visa_installments'] = 0;
+				unset($this->request->post['payment_globalpayments_ucp_visa_installments_funding_mode']);
+				unset($this->request->post['payment_globalpayments_ucp_visa_installments_max_time_unit_number']);
+				unset($this->request->post['payment_globalpayments_ucp_visa_installments_max_amount']);
+			}
 
 
 			// Handle HPP wallets array - convert to JSON for storage
@@ -289,6 +305,36 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$data['payment_globalpayments_ucp_enable_installments'] = $this->config->get('payment_globalpayments_ucp_enable_installments');
 		}
 
+		if (isset($this->request->post['payment_globalpayments_ucp_enable_visa_installments'])) {
+			$data['payment_globalpayments_ucp_enable_visa_installments'] = $this->request->post['payment_globalpayments_ucp_enable_visa_installments'];
+		} elseif (!empty($this->request->post)) {
+			$data['payment_globalpayments_ucp_enable_visa_installments'] = 0;
+		} else {
+			$visaInstallmentsSetting = $this->config->get('payment_globalpayments_ucp_enable_visa_installments');
+			if ($visaInstallmentsSetting === null || $visaInstallmentsSetting === '') {
+				$visaInstallmentsSetting = $this->config->get('payment_globalpayments_ucp_enable_installments');
+			}
+			$data['payment_globalpayments_ucp_enable_visa_installments'] = $visaInstallmentsSetting;
+		}
+
+		if (isset($this->request->post['payment_globalpayments_ucp_visa_installments_funding_mode'])) {
+			$data['payment_globalpayments_ucp_visa_installments_funding_mode'] = $this->request->post['payment_globalpayments_ucp_visa_installments_funding_mode'];
+		} else {
+			$data['payment_globalpayments_ucp_visa_installments_funding_mode'] = $this->config->get('payment_globalpayments_ucp_visa_installments_funding_mode') ?: 'any';
+		}
+
+		if (isset($this->request->post['payment_globalpayments_ucp_visa_installments_max_time_unit_number'])) {
+			$data['payment_globalpayments_ucp_visa_installments_max_time_unit_number'] = $this->request->post['payment_globalpayments_ucp_visa_installments_max_time_unit_number'];
+		} else {
+			$data['payment_globalpayments_ucp_visa_installments_max_time_unit_number'] = $this->config->get('payment_globalpayments_ucp_visa_installments_max_time_unit_number') ?: '';
+		}
+
+		if (isset($this->request->post['payment_globalpayments_ucp_visa_installments_max_amount'])) {
+			$data['payment_globalpayments_ucp_visa_installments_max_amount'] = $this->request->post['payment_globalpayments_ucp_visa_installments_max_amount'];
+		} else {
+			$data['payment_globalpayments_ucp_visa_installments_max_amount'] = $this->config->get('payment_globalpayments_ucp_visa_installments_max_amount') ?: '';
+		}
+
 		if (isset($this->request->post['payment_globalpayments_ucp_enable_dcc'])) {
 			$data['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'];
 		} elseif (!empty($this->request->post)) {
@@ -506,6 +552,18 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		$country = $this->model_localisation_country->getCountry($country_id);
 
 		return $country['iso_code_2'] ?? '';
+	}
+
+	/**
+	 * Check whether Visa installments are allowed for a country/currency pair.
+	 */
+	private function isVisaInstallmentsSupported(?string $country, ?string $currency): bool
+	{
+		$country = strtoupper((string)$country);
+		$currency = strtoupper((string)$currency);
+
+		return ($country === 'GB' && $currency === 'GBP')
+			|| ($country === 'CA' && $currency === 'CAD');
 	}
 
 	public function validate(): bool

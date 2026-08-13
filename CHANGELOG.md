@@ -4,12 +4,18 @@
 
 # Changelog
 
-## Latest Version - v2.0.1 (08/06/26)
+## Latest Version - v2.1.0 (08/13/26)
+### Enhancements:
+- Added Support for Visa Installments Payment Plans
+### Bug Fixes:
+- Added fix for Apm(blik and payu) issue after upgraded JS version
+- Fixed 3ds issue for unified payments
+
+## v2.0.1 (08/06/26)
 
 # Added additional security for APMs
 
-
-## Latest Version - v2.0.0 (07/23/26)
+## v2.0.0 (07/23/26)
 
 #Fixed 
  - Account Name admin dropdown box not populating with correct name in live mode

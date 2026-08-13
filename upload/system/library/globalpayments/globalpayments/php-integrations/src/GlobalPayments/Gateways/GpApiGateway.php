@@ -66,6 +66,13 @@ class GpApiGateway extends AbstractGateway {
 	public $enableInstallments = false;
 
 	/**
+	 * Enable Visa installments feature.
+	 *
+	 * @var bool
+	 */
+	public $enableVisaInstallments = false;
+
+	/**
 	 * Sandbox App ID.
 	 *
 	 * @var string
@@ -227,6 +234,27 @@ class GpApiGateway extends AbstractGateway {
 	public $baseCurrency;
 
 	/**
+	 * Visa installments funding mode.
+	 *
+	 * @var string
+	 */
+	public $visaInstallmentsFundingMode = 'ANY';
+
+	/**
+	 * Visa installments max time unit number.
+	 *
+	 * @var string|int|null
+	 */
+	public $visaInstallmentsMaxTimeUnitNumber;
+
+	/**
+	 * Visa installments max amount.
+	 *
+	 * @var string|float|null
+	 */
+	public $visaInstallmentsMaxAmount;
+
+	/**
 	 * Authentication statuses
 	 */
 	public $threeDSecureAuthenticationStatus = array(
@@ -289,6 +317,13 @@ class GpApiGateway extends AbstractGateway {
 			'language' => $this->language,
 			'integrationType' => $this->integrationType,
 			'enableInstallments' => $this->enableInstallments ?? false,
+			'enableVisaInstallments' => $this->enableVisaInstallments ?? false,
+			'visaInstallmentsFundingMode' => $this->visaInstallmentsFundingMode ?: 'ANY',
+			'visaInstallmentsMaxTimeUnitNumber' => $this->visaInstallmentsMaxTimeUnitNumber,
+			'visaInstallmentsMaxAmount' => $this->visaInstallmentsMaxAmount,
+			'installmentsAccountName' => $this->getCredentialSetting('accountName'),
+			'country' => $this->baseCountry ?? $this->country,
+			'currency' => $this->baseCurrency,
 			'dataResidency' => $dataResidency,
 		);
 
@@ -325,6 +360,7 @@ class GpApiGateway extends AbstractGateway {
 			'accountName'              => $this->getCredentialSetting('accountName'),
 			'channel'                  => Channel::CardNotPresent,
 			'country'                  => $this->country,
+			'currency'                 => $this->baseCurrency,
 			'environment'              => $this->isProduction ? Environment::PRODUCTION : Environment::TEST,
 			'methodNotificationUrl'    => $this->methodNotificationUrl,
 			'challengeNotificationUrl' => $this->challengeNotificationUrl,
@@ -333,6 +369,7 @@ class GpApiGateway extends AbstractGateway {
 			'logDirectory'             => $this->logDirectory,
 			'dynamicHeaders'           => $this->dynamicHeaders,
 			'enable_installments'      => $this->enableInstallments ?? false,
+			'enable_visa_installments' => $this->enableVisaInstallments ?? false,
 			'allowDCC'                 => $this->allowDCC ?? false,
 			'integrationType'          => $this->integrationType,
 			'dataResidency'            => $dataResidency,

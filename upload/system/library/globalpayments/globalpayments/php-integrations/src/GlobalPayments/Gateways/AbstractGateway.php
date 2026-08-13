@@ -139,6 +139,13 @@ abstract class AbstractGateway implements GatewayInterface {
 	public $debug;
 
 	/**
+	 * Internal logger instance.
+	 *
+	 * @var Logger
+	 */
+	public $logger;
+
+	/**
 	 * Site base url used to build callback urls
 	 *
 	 * @var string

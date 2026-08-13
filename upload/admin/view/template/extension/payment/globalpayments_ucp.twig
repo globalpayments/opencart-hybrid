@@ -356,6 +356,48 @@
               </div>
               {% endif %}
 
+                {% if (base_country == 'GB' and base_currency == 'GBP') or (base_country == 'CA' and base_currency == 'CAD') %}
+                <div class="form-group{% if payment_globalpayments_ucp_integration_type != 'dropin_ui' %} hidden{% endif %}">
+                    <label class="col-sm-2 control-label" for="input-enable-visa-installments"><span data-toggle="tooltip" title="{{ help_enable_visa_installments }}">{{ label_enable_visa_installments }}</span></label>
+                  <div class="col-sm-10 checkbox">
+                    <label>
+                      <input id="input-enable-visa-installments" type="checkbox" name="payment_globalpayments_ucp_enable_visa_installments"
+                               value="{{ payment_globalpayments_ucp_enable_visa_installments }}"{% if (payment_globalpayments_ucp_enable_visa_installments==1) %} checked{% endif %} /> {{ label_enable_visa_installments }}
+                    </label>
+                  </div>
+                </div>
+
+          <div class="form-group visa-installments-field{% if payment_globalpayments_ucp_integration_type != 'dropin_ui' or payment_globalpayments_ucp_enable_visa_installments != 1 %} hidden{% endif %}">
+          <label class="col-sm-2 control-label" for="input-visa-installments-funding-mode">{{ label_visa_installments_funding_mode }}</label>
+          <div class="col-sm-10">
+            <select name="payment_globalpayments_ucp_visa_installments_funding_mode" id="input-visa-installments-funding-mode" class="form-control">
+              <option value="any" {{ payment_globalpayments_ucp_visa_installments_funding_mode == 'any' ? 'selected' : '' }}>{{ entry_visa_installments_funding_mode_any }}</option>
+              <option value="consumer_funded" {{ payment_globalpayments_ucp_visa_installments_funding_mode == 'consumer_funded' ? 'selected' : '' }}>{{ entry_visa_installments_funding_mode_consumer_funded }}</option>
+              <option value="merchant_funded" {{ payment_globalpayments_ucp_visa_installments_funding_mode == 'merchant_funded' ? 'selected' : '' }}>{{ entry_visa_installments_funding_mode_merchant_funded }}</option>
+              <option value="hybrid_funded" {{ payment_globalpayments_ucp_visa_installments_funding_mode == 'hybrid_funded' ? 'selected' : '' }}>{{ entry_visa_installments_funding_mode_hybrid_funded }}</option>
+              <option value="bilateral" {{ payment_globalpayments_ucp_visa_installments_funding_mode == 'bilateral' ? 'selected' : '' }}>{{ entry_visa_installments_funding_mode_bilateral }}</option>
+            </select>
+            <div class="help-block">{{ help_visa_installments_funding_mode }}</div>
+          </div>
+        </div>
+
+          <div class="form-group visa-installments-field{% if payment_globalpayments_ucp_integration_type != 'dropin_ui' or payment_globalpayments_ucp_enable_visa_installments != 1 %} hidden{% endif %}">
+          <label class="col-sm-2 control-label" for="input-visa-installments-max-time-unit-number">{{ label_visa_installments_max_time_unit_number }}</label>
+          <div class="col-sm-10">
+            <input type="number" min="1" name="payment_globalpayments_ucp_visa_installments_max_time_unit_number" id="input-visa-installments-max-time-unit-number" class="form-control" value="{{ payment_globalpayments_ucp_visa_installments_max_time_unit_number }}" />
+            <div class="help-block">{{ help_visa_installments_max_time_unit_number }}</div>
+          </div>
+        </div>
+
+          <div class="form-group visa-installments-field{% if payment_globalpayments_ucp_integration_type != 'dropin_ui' or payment_globalpayments_ucp_enable_visa_installments != 1 %} hidden{% endif %}">
+          <label class="col-sm-2 control-label" for="input-visa-installments-max-amount">{{ label_visa_installments_max_amount }}</label>
+          <div class="col-sm-10">
+            <input type="number" min="0" step="0.01" name="payment_globalpayments_ucp_visa_installments_max_amount" id="input-visa-installments-max-amount" class="form-control" value="{{ payment_globalpayments_ucp_visa_installments_max_amount }}" />
+            <div class="help-block">{{ help_visa_installments_max_amount }}</div>
+          </div>
+        </div>
+              {% endif %}
+
 							<div class="form-group{% if payment_globalpayments_ucp_integration_type != 'hosted_payment' %} hidden{% endif %}" id="dcc-form-group">
                 <label class="col-sm-2 control-label" for="input-enable-dcc"><span data-toggle="tooltip" title="{{ help_enable_dcc }}">{{ label_enable_dcc }}</span></label>
                 <div class="col-sm-10 checkbox">
@@ -452,6 +494,7 @@
 
   function GlobalPaymentsUcpAdmin(params) {
     this.baseCountry = params.baseCountry || '';
+    this.baseCurrency = params.baseCurrency || '';
     this.userToken   = params.userToken || '';
 
     this.serviceUrls = {
@@ -492,6 +535,7 @@
           '#input-enabled,' +
           '#input-enable-threeDSecure,' +
           '#input-enable-installments,' +
+            '#input-enable-visa-installments,' +
           '#input-debug,' +
           '#input-allow_card_saving,' +
           '#input-is_production,' +
@@ -499,6 +543,8 @@
           '#input-enabled-openbanking',
           this.toggleCheckboxValue
         );
+
+        $(document).on('change', '#input-enable-installments, #input-enable-visa-installments', this.toggleInstallments.bind(this));
 
       $('#input-app_id, #input-app_key').on(
         'input keyup change',
@@ -561,11 +607,22 @@
 
     toggleInstallments: function () {
       var integrationType = $('#input-integration_type').val();
-      var show = integrationType === 'dropin_ui' && this.baseCountry === 'MX';
+      var isMxInstallments = this.baseCountry === 'MX' && this.baseCurrency === 'MXN';
+      var isVisaInstallments = (this.baseCountry === 'GB' && this.baseCurrency === 'GBP') || (this.baseCountry === 'CA' && this.baseCurrency === 'CAD');
+      var showMxInstallments = integrationType === 'dropin_ui' && isMxInstallments;
+      var showVisaInstallments = integrationType === 'dropin_ui' && isVisaInstallments;
+      var visaInstallmentsEnabled = $('#input-enable-visa-installments').is(':checked');
+      var showVisaInstallmentFields = integrationType === 'dropin_ui' && isVisaInstallments && visaInstallmentsEnabled;
 
       $('#input-enable-installments')
         .parents('.form-group')
-        .toggleClass('hidden', !show);
+        .toggleClass('hidden', !showMxInstallments);
+
+        $('#input-enable-visa-installments')
+          .parents('.form-group')
+          .toggleClass('hidden', !showVisaInstallments);
+
+      $('.visa-installments-field').toggleClass('hidden', !showVisaInstallmentFields);
 
     // Toggle Hpp Installments elements
     let hppInstallmentsEls = [$("[class*=hpp_installments]")] ?? null;
@@ -724,6 +781,7 @@
   $(function () {
     new GlobalPaymentsUcpAdmin({
       baseCountry: '{{ base_country }}',
+      baseCurrency: '{{ base_currency }}',
       userToken: '{{ user_token }}'
     });
   });

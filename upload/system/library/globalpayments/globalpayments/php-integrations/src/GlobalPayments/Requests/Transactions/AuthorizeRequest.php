@@ -2,10 +2,15 @@
 
 namespace GlobalPayments\PaymentGatewayProvider\Requests\Transactions;
 
+use GlobalPayments\Api\Entities\{
+	InstallmentData,
+	InstallmentTerms
+};
 use GlobalPayments\Api\Entities\Enums\TransactionModifier;
 use GlobalPayments\Api\PaymentMethods\CreditCardData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 class AuthorizeRequest extends AbstractRequest {
 	public function execute() {
@@ -34,11 +39,26 @@ class AuthorizeRequest extends AbstractRequest {
 		                         ->withRequestMultiUseToken($this->requestData->saveCard);
 		                         
 
-		// Add installment data if present (pass as plain object with id/reference)
+		// Add installment data if present
 		if (!empty($this->requestData->installments)) {
-			// Directly assign installment object to builder property
-			// The SDK will serialize this object as-is to the API request
-			$builder->installment = $this->requestData->installments;
+			$installmentData = new InstallmentData();
+			$installmentData->id = $this->requestData->installments->id ?? null;
+			$installmentData->reference = $this->requestData->installments->reference ?? null;
+
+			if ($this->shouldUseVisaInstallments()) {
+				$installmentData->program = 'VIS';
+
+				$language = $this->requestData->installments->language ?? null;
+				$version = $this->requestData->installments->version ?? null;
+				if (!empty($language) && !empty($version)) {
+					$installmentTerms = new InstallmentTerms();
+					$installmentTerms->language = $this->normalizeInstallmentLanguage($language);
+					$installmentTerms->version = $version;
+					$installmentData->terms = $installmentTerms;
+				}
+			}
+
+			$builder->installment = $installmentData;
 		}
 
 		if (!empty($this->requestData->mobileType)) {
@@ -46,5 +66,27 @@ class AuthorizeRequest extends AbstractRequest {
 		}
 
 		return $builder->execute();
+	}
+
+	private function shouldUseVisaInstallments(): bool {
+		if (empty($this->config['enable_visa_installments'])) {
+			return false;
+		}
+
+		return Utils::isVisaInstallmentsSupported(
+			$this->config['country'] ?? null,
+			$this->config['currency'] ?? null
+		);
+	}
+
+	private function normalizeInstallmentLanguage(string $language): string {
+		$languageMapping = [
+			'en' => 'eng',
+			'fr' => 'fre',
+		];
+
+		$normalized = strtolower($language);
+
+		return $languageMapping[$normalized] ?? $normalized;
 	}
 }

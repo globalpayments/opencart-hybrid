@@ -5,10 +5,16 @@ namespace GlobalPayments\PaymentGatewayProvider\Requests\AccessToken;
 use GlobalPayments\Api\ServicesContainer;
 use GlobalPayments\PaymentGatewayProvider\Data\RequestData;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
+use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 class GetAccessTokenRequest extends AbstractRequest {
 	public function __construct(array $config = array(), ?RequestData $requestData = null) {
 		parent::__construct($config, $requestData);
+
+		$visaInstallmentsSupported = Utils::isVisaInstallmentsSupported(
+			$this->config['country'] ?? null,
+			$this->config['currency'] ?? null
+		);
 
 		if(!empty($_POST) && $_POST['app_id'] !== null && $_POST['app_key'] !== null ) {
 			$this->config['permissions'] = [];
@@ -21,6 +27,11 @@ class GetAccessTokenRequest extends AbstractRequest {
 			if (!empty($this->config['enable_installments'])) {
 				array_push($this->config['permissions'], 'INS_POST_Query', 'BIN_GET_Details', 'PMT_POST_Create');
 			}
+
+			// Add Visa installments-related permissions for supported country/currency.
+			if (!empty($this->config['enable_visa_installments']) && $visaInstallmentsSupported) {
+				array_push($this->config['permissions'], 'INS_POST_Query', 'PMT_POST_Create', 'PMT_POST_Create_Single');
+			}
 			
 			// Add DCC permissions if DCC is enabled and integration type is hosted payment page
 			if (
@@ -29,8 +40,9 @@ class GetAccessTokenRequest extends AbstractRequest {
 				&& ($this->config['integrationType'] ?? null) === 'hosted_payment'
 			) {
 				array_push($this->config['permissions'], 'CCS_POST_DCC', 'PMT_POST_Create');
-				$this->config['permissions'] = array_values(array_unique($this->config['permissions']));
 			}
+
+			$this->config['permissions'] = array_values(array_unique($this->config['permissions']));
 		}
 		// @TODO: Currently we request an access token every time we load hosted fields.
 		// @TODO: Should we set access token expiration?
