@@ -4,7 +4,15 @@
 
 # Changelog
 
-## Latest Version - v2.1.0 (08/13/26)
+## Latest Version - v2.2.0 (08/20/26)
+### Enhancements:
+- Added support for eRaty via Hosted Payment Page (HPP)
+- Added support for Transit and Genius gateway 
+### Bug Fixes:
+- Fixed HPP checkout failure due to incorrect gateway property reference.
+- Fixed HPP checkout ignoring "Authorize" setting
+
+## v2.1.0 (08/13/26)
 ### Enhancements:
 - Added Support for Visa Installments Payment Plans
 ### Bug Fixes:

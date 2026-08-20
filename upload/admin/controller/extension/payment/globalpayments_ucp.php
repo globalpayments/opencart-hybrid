@@ -664,6 +664,16 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			}
 		}
 
+		// Check if this is an eRaty payment - disable refunds if so
+		$isEratyPayment = $this->isEratyPayment($data['order_id']);
+		if ($isEratyPayment) {
+			$should_refund = false;
+			$data['is_eraty_payment'] = true;
+			$data['eraty_refund_message'] = $this->language->get('error_eraty_refund_not_supported');
+		} else {
+			$data['is_eraty_payment'] = false;
+		}
+
 		$transactions_count = count($transactions);
 
 		foreach ($transactions as $key => $transaction) {
@@ -839,6 +849,11 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 					$response['success'] = $this->language->get('text_success_capture');
 					break;
 				case AbstractGateway::REFUND:
+					// Check if payment method is eRaty - refunds not supported
+					if ($this->isEratyPayment((int) $this->request->post['order_id'])) {
+						throw new \Exception($this->language->get('error_eraty_refund_not_supported'));
+					}
+					
 					$gatewayResponse     = $this->globalpayments->gateway->processRefund($requestData);
 					// Check if this is a complete refund to update order status
 					// Get the original order total to compare with refund amount
@@ -1029,6 +1044,29 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		}
 
 		return $amount;
+	}
+
+	/**
+	 * Check if the order was paid using eRaty payment method
+	 *
+	 * @param int $orderId
+	 * @return bool True if the order was paid using eRaty
+	 */
+	private function isEratyPayment(int $orderId): bool
+	{
+		$this->load->model('sale/order');
+		$orderInfo = $this->model_sale_order->getOrder($orderId);
+
+		if (!$orderInfo || empty($orderInfo['payment_custom_field'])) {
+			return false;
+		}
+
+		$customField = $orderInfo['payment_custom_field'];
+		if (is_string($customField)) {
+			$customField = json_decode($customField, true);
+		}
+
+		return !empty($customField['isEraty']);
 	}
 
 	public function install(): void

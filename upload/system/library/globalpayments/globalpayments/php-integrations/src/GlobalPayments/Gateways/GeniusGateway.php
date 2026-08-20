@@ -128,6 +128,13 @@ class GeniusGateway extends AbstractGateway {
 	public $debug = false;
 
 	/**
+	 * File path to the logging directory.
+	 *
+	 * @var string
+	 */
+	public $logDirectory = '';
+
+	/**
 	 * Payment gateway enabled status
 	 *
 	 * @var bool
@@ -235,6 +242,7 @@ class GeniusGateway extends AbstractGateway {
 		// Environment and debug settings
 		$this->isProduction = isset($config['is_production']) ? (bool)$config['is_production'] : false;
 		$this->debug = isset($config['debug']) ? (bool)$config['debug'] : false;
+		$this->logDirectory = $config['log_directory'] ?? '';
 	}
 
 	/**
@@ -264,7 +272,8 @@ class GeniusGateway extends AbstractGateway {
 			'merchantKey' => $this->getCredentialSetting('merchant_key'),
 			'webApiKey' => $this->getCredentialSetting('web_api_key'),
 			'environment' => $this->isProduction ? Environment::PRODUCTION : Environment::TEST,
-			'debug' => $this->debug
+			'debug' => $this->debug,
+			'logDirectory' => $this->logDirectory
 		];
 	}
 
@@ -317,7 +326,7 @@ class GeniusGateway extends AbstractGateway {
 		$config->environment = $this->isProduction ? Environment::PRODUCTION : Environment::TEST;
 		
 		if ($this->debug) {
-			$config->requestLogger = new SampleRequestLogger(new Logger(""));
+			$config->requestLogger = new SampleRequestLogger(new Logger($this->logDirectory));
 		}
 
 		ServicesContainer::configureService($config);

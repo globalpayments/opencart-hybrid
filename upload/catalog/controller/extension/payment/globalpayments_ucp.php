@@ -21,6 +21,7 @@ use GlobalPayments\Api\Entities\Enums\{
 use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
 use GlobalPayments\Api\ServicesContainer;
 use GlobalPayments\Api\Utils\CountryUtils;
+use GlobalPayments\Api\Utils\StringUtils;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 use GlobalPayments\Api\Entities\GpApi\AccessTokenInfo;
 
@@ -367,18 +368,19 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 	public function buildHPP(): ?string
 	{
 		try {
+			$captureMode = $this->resolveHppCaptureMode();
 			$config = new GpApiConfig();
 			$accountName ="";
 			if ($this->globalpayments->gateway->isProduction == 1) {
 				$config->appId = $this->globalpayments->gateway->appId;
 				$config->appKey = $this->globalpayments->gateway->appKey;
 				$config->environment = Environment::PRODUCTION;
-				$accountName = $this->gateway->accountName ?? null;
+				$accountName = $this->globalpayments->gateway->accountName ?? null;
 			} else {
 				$config->appId = $this->globalpayments->gateway->sandboxAppId;
 				$config->appKey = $this->globalpayments->gateway->sandboxAppKey;
 				$config->environment = Environment::TEST;
-				$accountName = $this->gateway->sandboxAccountName ?? null;
+				$accountName = $this->globalpayments->gateway->sandboxAccountName ?? null;
 			}
 			if (!empty($accountName)) {
 				$accessTokenInfo = new AccessTokenInfo();
@@ -485,6 +487,14 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 				}
 			}
 
+			// eRaty is automatically enabled when eligibility conditions are met:
+			// - Billing country must be Poland (PL)
+			// - Transaction currency must be PLN
+			// Availability is controlled at the gateway/account level, not via plugin configuration
+			$billingCountryCode = $order_info['payment_iso_code_2'] ?? null;
+			if ($this->isEratyEligible($billingCountryCode, $order_info['currency_code'])) {
+				$paymentMethods[] = HPPAllowedPaymentMethods::ERATY;
+			}
 
 			$hppBuilder = HPPBuilder::create()
 				->withName($this->session->data['order_id'])
@@ -495,12 +505,12 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 				->withBillingAddress($billingAddress)
 				->withShippingAddress($shippingAddress)
 				->withShippingPhone($phoneNumber)
-				->withAmount($this->order->amount)
+				->withAmount(StringUtils::toNumeric($this->order->amount, $order_info['currency_code']))
 				->withOrderReference($this->session->data['order_id'])
 				->withTransactionConfig(
 					Channel::CardNotPresent,
 					$store_country_iso,
-					CaptureMode::AUTO,
+					$captureMode,
 					$paymentMethods,
 					PaymentMethodUsageMode::SINGLE
 				)
@@ -540,6 +550,18 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		}
 	}
 
+	/**
+	 * Resolve HPP capture mode from the configured UCP payment action.
+	 *
+	 * @return string Returns CaptureMode::LATER for authorize-only flows,
+	 *                otherwise returns CaptureMode::AUTO.
+	 */
+	private function resolveHppCaptureMode(): string
+	{
+		return $this->globalpayments->gateway->paymentAction === AbstractGateway::AUTHORIZE
+			? CaptureMode::LATER
+			: CaptureMode::AUTO;
+	}
 
 	/**
 	 * Write to log if debug is enabled
@@ -726,6 +748,29 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			return false;
 		}
 		return $iso_code === "GB" || $iso_code === "CA";
+	}
+
+	/**
+	 * Check if eRaty payment method is eligible based on billing country and currency
+	 *
+	 * eRaty is only available when:
+	 * - Billing country = Poland (PL)
+	 * - Transaction currency = PLN
+	 *
+	 * @param string|null $billingCountryCode The billing country code (ISO 2-letter)
+	 * @param string|null $currency The transaction currency code (ISO 3-letter)
+	 * @return bool True if eRaty is eligible for this transaction
+	 */
+	private function isEratyEligible(?string $billingCountryCode, ?string $currency): bool
+	{
+		if (empty($billingCountryCode) || empty($currency)) {
+			return false;
+		}
+
+		$countryCode = strtoupper($billingCountryCode);
+		$currencyCode = strtoupper($currency);
+
+		return ($countryCode === 'PL' && $currencyCode === 'PLN');
 	}
    /*
 	 * Determines if $billingAddress and $shippingAddress class

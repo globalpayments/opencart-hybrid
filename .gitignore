@@ -1,9 +1,9 @@
 
-**/*
-!/.gitignore
-!/CHANGELOG.md
-!/metadata.xml
-!/README.md
-!/appsec.properties
+# **/*
+# !/.gitignore
+# !/CHANGELOG.md
+# !/metadata.xml
+# !/README.md
+# !/appsec.properties
 
 

@@ -82,7 +82,7 @@ abstract class AbstractRequest implements RequestInterface {
 		if ($this->requestData->paymentTokenResponse){
 			$tokenResponse = json_decode($this->requestData->paymentTokenResponse);
 
-			return $tokenResponse->details->cardholderName;
+			return $tokenResponse->details->cardholderName ?? null;
 		}
 
 		return null;

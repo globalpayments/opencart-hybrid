@@ -120,6 +120,11 @@ $_['entry_hpp_installments_plan_duration_32_month'] = 'Only Show 32 Months plans
 
 // Label
 $_['label_hpp_wallets'] = 'Accepted Wallets and APMs';
+$_['label_hpp_eraty'] = 'HPP: eRaty';
+
+// Help eRaty
+$_['help_hpp_eraty_tooltip'] = 'This payment method must be enabled at the merchant account level.';
+$_['help_hpp_eraty_description'] = 'eRaty (Installment Financing) is available via Hosted Checkout for eligible merchants.';
 
 // Placeholder
 $_['placeholder_title'] = 'Credit or Debit Card';

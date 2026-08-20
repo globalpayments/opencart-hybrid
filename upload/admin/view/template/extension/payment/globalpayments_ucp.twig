@@ -344,6 +344,16 @@
 		  <div class="help-block">{{ help_hpp_wallets_description }}</div>
 	        </div>
 	      </div>
+              {% if base_country == 'PL' and base_currency == 'PLN' %}
+              <div class="form-group hpp-eraty-info" id="hpp-eraty-info-group" style="display: none;">
+                <label class="col-sm-2 control-label">
+                  <span data-toggle="tooltip" title="{{ help_hpp_eraty_tooltip }}">{{ label_hpp_eraty }}</span>
+                </label>
+                <div class="col-sm-10">
+                  <p class="form-control-static text-muted">{{ help_hpp_eraty_description }}</p>
+                </div>
+              </div>
+              {% endif %}
               {% if base_country == 'MX' and base_currency == 'MXN' %}
               <div class="form-group{% if payment_globalpayments_ucp_integration_type != 'dropin_ui' %} hidden{% endif %}">
                 <label class="col-sm-2 control-label" for="input-enable-installments"><span data-toggle="tooltip" title="{{ help_enable_installments }}">{{ label_enable_installments }}</span></label>
@@ -518,6 +528,7 @@
 			this.toggleDCC();
       this.toggleInstallments();
       this.toggleHppWallets();
+      this.toggleEratyInfo();
       this.attachEventHandlers();
 
       $('#button-credentials-check').trigger('click');
@@ -569,6 +580,7 @@
 			this.toggleDCC();
       this.toggleInstallments();
       this.toggleHppWallets();
+      this.toggleEratyInfo();
     },
 
     toggleCheckboxValue: function (event) {
@@ -639,6 +651,12 @@
     toggleHppWallets: function () {
       var integrationType = $('#input-integration_type').val();
       $('#hpp-wallets-group').toggle(integrationType === 'hosted_payment');
+    },
+
+    toggleEratyInfo: function () {
+      var integrationType = $('#input-integration_type').val();
+      var isEratyEligible = this.baseCountry === 'PL' && this.baseCurrency === 'PLN';
+      $('#hpp-eraty-info-group').toggle(integrationType === 'hosted_payment' && isEratyEligible);
     },
 
     updateServiceUrl: function () {

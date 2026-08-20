@@ -1,0 +1,253 @@
+{{ header }}
+<script type="text/javascript">
+  $(document).ready(function() {
+    function toggleModeFields() {
+      if ($('#input-is_production').is(':checked')) {
+        $('.live-toggle').removeClass('hidden');
+        $('.sandbox-toggle').addClass('hidden');
+      } else {
+        $('.live-toggle').addClass('hidden');
+        $('.sandbox-toggle').removeClass('hidden');
+      }
+    }
+
+    $('#input-is_production').on('change', toggleModeFields);
+    toggleModeFields();
+  });
+</script>
+{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary">
+          <i class="fa fa-save"></i>
+        </button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default">
+          <i class="fa fa-reply"></i>
+        </a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+      {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible">
+        <i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <input type="hidden" name="payment_globalpayments_genius_status" value="0" />
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_genius_status" id="input-status" value="1" {% if payment_globalpayments_genius_status %}checked{% endif %} /> {{ entry_status }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-title">{{ entry_title }}</label>
+            <div class="col-sm-10">
+              <input id="input-title" type="text" name="payment_globalpayments_genius_title" value="{{ payment_globalpayments_genius_title }}" placeholder="Credit Card Genius" class="form-control"/>
+              <p class="help-block">{{ help_title }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-is_production">{{ entry_live_mode }}</label>
+            <div class="col-sm-10">
+              <input type="hidden" name="payment_globalpayments_genius_live_mode" value="0" />
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_genius_live_mode" id="input-is_production" value="1" {% if payment_globalpayments_genius_live_mode %}checked{% endif %} /> {{ entry_live_mode }}
+                </label>
+              </div>
+              <p class="help-block">{{ help_live_mode }}</p>
+            </div>
+          </div>
+
+          <div class="form-group required sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_merchant_name">{{ entry_sandbox_merchant_name }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_merchant_name" type="text" name="payment_globalpayments_genius_sandbox_merchant_name" value="{{ payment_globalpayments_genius_sandbox_merchant_name }}" class="form-control"/>
+              {% if error_sandbox_merchant_name %}
+                <div class="text-danger">{{ error_sandbox_merchant_name }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_merchant_site_id">{{ entry_sandbox_merchant_site_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_merchant_site_id" type="text" name="payment_globalpayments_genius_sandbox_merchant_site_id" value="{{ payment_globalpayments_genius_sandbox_merchant_site_id }}" class="form-control"/>
+              {% if error_sandbox_merchant_site_id %}
+                <div class="text-danger">{{ error_sandbox_merchant_site_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_merchant_key">{{ entry_sandbox_merchant_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_merchant_key" type="password" name="payment_globalpayments_genius_sandbox_merchant_key" value="{{ payment_globalpayments_genius_sandbox_merchant_key }}" class="form-control"/>
+              {% if error_sandbox_merchant_key %}
+                <div class="text-danger">{{ error_sandbox_merchant_key }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_web_api_key">{{ entry_sandbox_web_api_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_web_api_key" type="password" name="payment_globalpayments_genius_sandbox_web_api_key" value="{{ payment_globalpayments_genius_sandbox_web_api_key }}" class="form-control"/>
+              {% if error_sandbox_web_api_key %}
+                <div class="text-danger">{{ error_sandbox_web_api_key }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required live-toggle hidden">
+            <label class="col-sm-2 control-label" for="input-live_merchant_name">{{ entry_live_merchant_name }}</label>
+            <div class="col-sm-10">
+              <input id="input-live_merchant_name" type="text" name="payment_globalpayments_genius_live_merchant_name" value="{{ payment_globalpayments_genius_live_merchant_name }}" class="form-control"/>
+              {% if error_live_merchant_name %}
+                <div class="text-danger">{{ error_live_merchant_name }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required live-toggle hidden">
+            <label class="col-sm-2 control-label" for="input-live_merchant_site_id">{{ entry_live_merchant_site_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-live_merchant_site_id" type="text" name="payment_globalpayments_genius_live_merchant_site_id" value="{{ payment_globalpayments_genius_live_merchant_site_id }}" class="form-control"/>
+              {% if error_live_merchant_site_id %}
+                <div class="text-danger">{{ error_live_merchant_site_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required live-toggle hidden">
+            <label class="col-sm-2 control-label" for="input-live_merchant_key">{{ entry_live_merchant_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-live_merchant_key" type="password" name="payment_globalpayments_genius_live_merchant_key" value="{{ payment_globalpayments_genius_live_merchant_key }}" class="form-control"/>
+              {% if error_live_merchant_key %}
+                <div class="text-danger">{{ error_live_merchant_key }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group required live-toggle hidden">
+            <label class="col-sm-2 control-label" for="input-live_web_api_key">{{ entry_live_web_api_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-live_web_api_key" type="password" name="payment_globalpayments_genius_live_web_api_key" value="{{ payment_globalpayments_genius_live_web_api_key }}" class="form-control"/>
+              {% if error_live_web_api_key %}
+                <div class="text-danger">{{ error_live_web_api_key }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-payment_action">{{ entry_payment_action }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_genius_payment_action" id="input-payment_action" class="form-control">
+                <option value="authorize_capture" {% if payment_globalpayments_genius_payment_action == 'authorize_capture' %}selected{% endif %}>{{ text_capture }}</option>
+                <option value="authorize" {% if payment_globalpayments_genius_payment_action == 'authorize' %}selected{% endif %}>{{ text_authorize }}</option>
+              </select>
+              <p class="help-block">{{ help_payment_action }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-allow_card_saving">
+              {{ entry_allow_card_saving }}
+            </label>
+            <div class="col-sm-10">
+              <input type="hidden" name="payment_globalpayments_genius_card" value="0" />
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_genius_card" id="input-allow_card_saving" value="1" {% if payment_globalpayments_genius_card %}checked{% endif %} /> {{ entry_allow_card_saving }}
+                </label>
+              </div>
+              <p class="help-block">{{ help_allow_card_saving }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-order_transaction_descriptor">{{ entry_txn_descriptor }}</label>
+            <div class="col-sm-10">
+              <input id="input-order_transaction_descriptor" type="text" name="payment_globalpayments_genius_order_transaction_descriptor" value="{{ payment_globalpayments_genius_order_transaction_descriptor }}" class="form-control" maxlength="25"/>
+              <p class="help-block">{{ help_txn_descriptor }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-check_avs_cvn">{{ entry_check_avs_cvn }}</label>
+            <div class="col-sm-10">
+              <input type="hidden" name="payment_globalpayments_genius_check_avs_cvn" value="0" />
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_genius_check_avs_cvn" id="input-check_avs_cvn" value="1" {% if payment_globalpayments_genius_check_avs_cvn %}checked{% endif %} /> {{ entry_check_avs_cvn }}
+                </label>
+              </div>
+              <p class="help-block">{{ help_check_avs_cvn }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-avs_reject_conditions">{{ entry_avs_reject_conditions }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_genius_avs_reject_conditions[]" id="input-avs_reject_conditions" class="form-control" multiple>
+                <option value="N" {% if 'N' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>N - Neither address or zip code match</option>
+                <option value="R" {% if 'R' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>R - Retry - system unable to respond</option>
+                <option value="U" {% if 'U' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>U - Visa / Discover card AVS not supported</option>
+                <option value="S" {% if 'S' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>S - Master / Amex card AVS not supported</option>
+                <option value="G" {% if 'G' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>G - Address not verified for International transaction</option>
+                <option value="C" {% if 'C' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>C - Address and zip mismatch</option>
+                <option value="I" {% if 'I' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>I - AVS not verified for International transaction</option>
+                <option value="P" {% if 'P' in payment_globalpayments_genius_avs_reject_conditions %}selected{% endif %}>P - Address and Zip not verified</option>
+              </select>
+              <p class="help-block">{{ help_avs_reject_conditions }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-cvn_reject_conditions">{{ entry_cvn_reject_conditions }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_genius_cvn_reject_conditions[]" id="input-cvn_reject_conditions" class="form-control" multiple>
+                <option value="N" {% if 'N' in payment_globalpayments_genius_cvn_reject_conditions %}selected{% endif %}>N - Not Matching</option>
+                <option value="P" {% if 'P' in payment_globalpayments_genius_cvn_reject_conditions %}selected{% endif %}>P - Not Processed</option>
+                <option value="?" {% if '?' in payment_globalpayments_genius_cvn_reject_conditions %}selected{% endif %}>? - CVV unrecognized</option>
+              </select>
+              <p class="help-block">{{ help_cvn_reject_conditions }}</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-sort_order">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input id="input-sort_order" type="text" name="payment_globalpayments_genius_sort_order" value="{{ payment_globalpayments_genius_sort_order }}" class="form-control" />
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}

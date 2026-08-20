@@ -24,6 +24,7 @@ $_['error_request']                      = '無法執行請求。資料無效。
 $_['error_invalid_request']              = '無效的請求。';
 $_['error_invalid_refund_amount']        = '無效的退款金額。';
 $_['error_invalid_refund_amount_format'] = '無效的金額。請使用「.」作為小數分隔符號，且不要使用千位分隔符號。';
+$_['error_eraty_refund_not_supported']   = 'OpenCart 不支援透過 eRaty 交易進行退款。請依照您的 eRaty／收單機構退款流程處理。';
 
 // Column
 $_['text_column_txn_payment_action'] = '付款操作';

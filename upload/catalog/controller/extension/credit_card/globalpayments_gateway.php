@@ -94,7 +94,10 @@ class ControllerExtensionCreditCardGlobalPaymentsBase extends Controller {
 		}
 
 		$data['back'] = $this->url->link('account/account', '', true);
-		$data['add'] = $this->url->link($this->extensionCreditCard . '/add', '', true);
+		$data['add'] = '';
+		if ($this->gatewayName !== 'transit' && $this->gatewayName !== 'genius') {
+			$data['add'] = $this->url->link($this->extensionCreditCard . '/add', '', true);
+		}
 
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['column_right'] = $this->load->controller('common/column_right');

@@ -296,6 +296,11 @@ class ControllerExtensionPaymentHppRedirect extends Controller
                 $this->logHppTransaction($order, $status, $transactionId, $message);
                 $this->updateOrderStatus($order, $status, $transactionId, 'success', $message, $paymentData, $hasInstallments);
 
+                // Check if payment is eRaty and store in order custom field
+                if ($this->isEratyPayment($paymentData)) {
+                    $this->addEratyFlag($order);
+                }
+
                 // Clear cart and fire events
                 $this->cart->clear();
 
@@ -887,5 +892,46 @@ setTimeout(function() {
                 payment_custom_field = '" . $this->db->escape(json_encode($newPaymentData)) . "' 
                 WHERE order_id = '" . (int) $order['order_id'] . "'"
         );
+    }
+
+    /**
+     * Check if the payment method used is eRaty
+     *
+     * @param array $paymentData Payment data from HPP redirect
+     * @return bool True if eRaty payment method was used
+     */
+    private function isEratyPayment(array $paymentData): bool
+    {
+        // Check if payment_method.apm.provider is ERATY
+        if (!empty($paymentData['payment_method']['apm']['provider']) 
+            && strtoupper($paymentData['payment_method']['apm']['provider']) === 'ERATY') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Add eRaty flag to order custom field
+     *
+     * @param array $order Order data
+     * @return void
+     */
+    private function addEratyFlag(array $order): void
+    {
+        $currentPaymentData = $order['payment_custom_field'] ?? [];
+        if (is_string($currentPaymentData)) {
+            $currentPaymentData = json_decode($currentPaymentData, true) ?? [];
+        }
+        
+        $currentPaymentData['isEraty'] = true;
+
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "order` SET 
+                payment_custom_field = '" . $this->db->escape(json_encode($currentPaymentData)) . "' 
+                WHERE order_id = '" . (int) $order['order_id'] . "'"
+        );
+
+        $this->log('HPP Redirect: eRaty payment detected for order ' . $order['order_id']);
     }
 }

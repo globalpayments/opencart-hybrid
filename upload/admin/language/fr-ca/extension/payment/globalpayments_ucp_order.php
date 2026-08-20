@@ -24,6 +24,7 @@ $_['error_request']                      = 'Impossible d\'exécuter la demande. 
 $_['error_invalid_request']              = 'Demande invalide.';
 $_['error_invalid_refund_amount']        = 'Montant de remboursement invalide.';
 $_['error_invalid_refund_amount_format'] = 'Montant invalide. Veuillez utiliser le `.` comme séparateur décimal et ne pas employer de séparateur de milliers.';
+$_['error_eraty_refund_not_supported']   = 'Les remboursements pour les transactions eRaty ne sont pas pris en charge dans OpenCart. Veuillez suivre le processus de remboursement de votre acquéreur ou d\'eRaty.';
 
 // Column
 $_['text_column_txn_payment_action'] = 'Action de paiement';

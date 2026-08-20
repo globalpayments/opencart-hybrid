@@ -3,6 +3,7 @@
 namespace GlobalPayments\PaymentGatewayProvider\Traits;
 
 use GlobalPayments\PaymentGatewayProvider\Data\OrderData;
+use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
 trait SecurePaymentFieldsTrait {
@@ -61,13 +62,32 @@ SW;
 	 * @return array
 	 */
 	public function getCreditCardFormatFields() {
-		$fieldFormat = $this->securePaymentFieldHtmlFormat();
-		$fields      = $this->securePaymentFieldsConfiguration();
-		$result      = array();
+		if($this->gatewayId == GatewayId::GP_API){
 
-		$result['payment-form'] = sprintf($fieldFormat, $this->gatewayId, 'payment-form', '', '');
+			$field_format = $this->securePaymentFieldHtmlFormat();
+			$fields       = $this->securePaymentFieldsConfiguration();
+			$result       = array();
 
-		return $result;
+			$result['payment-form'] = sprintf($field_format, $this->gatewayId, 'payment-form', '', '');
+
+			return $result;
+		}else{
+			$field_format = $this->securePaymentFieldHtmlFormat();
+			$fields       = $this->securePaymentFieldsConfiguration();
+			$result       = array();
+
+			foreach ( $fields as $key => $field ) {
+				$result[ $key ] = sprintf(
+					$field_format,
+					$this->gatewayId,
+					$field['class'],
+					$field['label'],
+					$field['messages']['validation']
+				);
+			}
+
+			return $result;
+		}
 	}
 
 	/**
@@ -100,11 +120,41 @@ SW;
 	 * @return mixed[]
 	 */
 	public function securePaymentFieldsConfiguration() {
-		return array(
-			'payment-form' => array(
-				'class'       => 'payment-form'
-			)
-		);
+
+		if($this->gatewayId == GatewayId::GP_API){
+			return array(
+				'payment-form' => array(
+					'class'       => 'payment-form'
+				)
+			);
+		}else{
+			return array(
+				'card-number-field' => array(
+					'class'       => 'card-number-field',
+					'label'       => $this->textCardNumberLabel,
+					'placeholder' => $this->textCardNumberPlaceholder ?? '•••• •••• •••• ••••',
+					'messages'    => array(
+						'validation' => $this->errorCardNumber,
+					),
+				),
+				'card-expiry-field' => array(
+					'class'       => 'card-expiry-field',
+					'label'       => $this->textCardExpirationLabel,
+					'placeholder' => $this->textCardExpirationPlaceholder ?? 'MM / YYYY',
+					'messages'    => array(
+						'validation' => $this->errorCardExpiration,
+					),
+				),
+				'card-cvv-field'    => array(
+					'class'       => 'card-cvv-field',
+					'label'       => $this->textCardCvvLabel,
+					'placeholder' => $this->textCardCvvPlaceholder ?? '•••',
+					'messages'    => array(
+						'validation' => $this->errorCardCvv,
+					),
+				),
+			);
+		}
 	}
 
 	/**
@@ -358,7 +408,7 @@ SW;
 	public function securePaymentFieldsThreeDSecureParams(?OrderData $order = null, $jsonEncode = true) {
 
 		if (!$this->supportsThreeDSecure) {
-			return array();
+			return $jsonEncode ? '{}' : array();
 		}
 
 		$params['threedsecure'] = array(
@@ -376,7 +426,7 @@ SW;
 	}
 
 	public function showPaymentForm() {
-		echo $this->getEnvironmentIndicator();
+		$this->getEnvironmentIndicator();
 		$fields = $this->getCreditCardFormatFields();
 		foreach ($fields as $field) {
 			echo $field;

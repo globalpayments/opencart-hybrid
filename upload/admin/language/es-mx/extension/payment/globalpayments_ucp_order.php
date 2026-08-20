@@ -24,6 +24,7 @@ $_['error_request']                      = 'No se puede realizar la solicitud. D
 $_['error_invalid_request']              = 'Solicitud no válida.';
 $_['error_invalid_refund_amount']        = 'Monto de reembolso no válido.';
 $_['error_invalid_refund_amount_format'] = 'Cantidad no válida. Utilice `.` como separador de decimales y no como separador de miles.';
+$_['error_eraty_refund_not_supported']   = 'Los reembolsos de transacciones eRaty no son compatibles a través de OpenCart. Siga el proceso de reembolso de eRaty o de su adquirente.';
 
 // Column
 $_['text_column_txn_payment_action'] = 'Acción de Pago';

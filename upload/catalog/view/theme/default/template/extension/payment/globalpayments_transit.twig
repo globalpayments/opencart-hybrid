@@ -1,0 +1,129 @@
+<form id="globalpayments-payment-form" name="checkout" action="{{ action }}" method="POST" class="form-horizontal">
+  <div class="globalpayments" style="width: 600px; margin: auto">
+      {% if customer_logged and saved_cards|length > 0 %}
+      <div class="form-group">
+        <label class="control-label">{{ text_saved_cards }}</label>
+        <div class="radio">
+          <label>
+            <input type="radio" name="saved_card_token" value="new" {% if default_saved_card_token == 'new' %}checked{% endif %} /> {{ text_use_new_card }}
+          </label>
+        </div>
+        {% for card in saved_cards %}
+        <div class="radio">
+          <label>
+            <input type="radio" name="saved_card_token" value="{{ card.token_id }}" {% if default_saved_card_token == (card.token_id ~ '') %}checked{% endif %} />
+            {{ card.card_type }} {{ text_card_ending }} {{ card.card_last4 }} ({{ text_expires }} {{ card.expiry_month }}/{{ card.expiry_year }})
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <input type="hidden" name="saved_card_token" value="new" />
+      {% endif %}
+
+      <fieldset id="{{ gateway.gatewayId }}-card"{% if payment_tab_option != 'new' %} style="display: none"{% endif %}>
+        <div id="{{ gateway.gatewayId }}-new-card-fields">
+        <!-- Target for the credit card form -->
+        {% for field in secure_payment_fields %}
+          {{ field }}
+        {% endfor %}
+        {% if customer_logged and (allow_card_saving or gateway.allowCardSaving) %}
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" id="{{ gateway.gatewayId }}-save_card" value="1" name="save_card" /> {{ entry_allow_card_saving }}
+          </label>
+        </div>
+        {% endif %}
+        </div>
+        <div class="buttons clearfix">
+        <div class="pull-right">
+          <input type="button" value="{{ button_confirm }}" id="button-confirm" style="width: 300px" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+        </div>
+      </div>
+      </fieldset>
+    </div>
+
+</form>
+<style>
+  .globalpayments iframe {
+    min-height: 5rem;
+    width: 100%;
+  }
+
+  div[id^="GlobalPayments-overlay-"] {
+    z-index: 1001 !important;
+  }
+
+  .globalpayments-validation-error, .globalpayments-sandbox-warning {
+    list-style:none outside;
+  }
+
+  .gp-field-label {
+    display: block;
+    font-weight: 600;
+    margin: 10px 0 6px;
+    color: #555;
+  }
+
+  /* Styles for disabled div during AJAX calls */
+  .disabled-during-ajax {
+    position: relative !important;
+  }
+
+  .disabled-during-ajax * {
+    cursor: not-allowed !important;
+  }
+
+  #ajax-overlay {
+    cursor: wait !important;
+  }
+
+  /* Loading animation for better UX */
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+  }
+
+  .disabled-during-ajax {
+    animation: pulse 1.5s infinite;
+  }
+</style>
+<script type="text/javascript">
+	$('#globalpayments-loading').hide();
+	var globalpayments_secure_payment_fields_params = {{ globalpayments_secure_payment_fields_params }};
+  var globalpayments_secure_payment_threedsecure_params = {};
+
+	$.getScript(
+		'https://js.globalpay.com/v1/globalpayments.js', function () {
+			$.getScript('catalog/view/javascript/globalpayments_transit.js', function() {
+				if (typeof window.initGlobalPaymentsTransIT === 'function') {
+					window.initGlobalPaymentsTransIT(globalpayments_secure_payment_fields_params);
+				} else if (typeof GlobalPaymentsTransIT !== 'undefined') {
+					GlobalPaymentsTransIT.init(globalpayments_secure_payment_fields_params);
+				}
+
+				$(document).ready(function() {
+          $(document).on('change', 'input[name="saved_card_token"]', function() {
+            if (typeof GlobalPaymentsTransIT !== 'undefined' && GlobalPaymentsTransIT.updateCardMode) {
+              GlobalPaymentsTransIT.updateCardMode();
+            }
+          });
+
+					$('#button-confirm').on('click', function(e) {
+						e.preventDefault();
+
+						if (typeof GlobalPaymentsTransIT !== 'undefined' && GlobalPaymentsTransIT.processPayment) {
+							GlobalPaymentsTransIT.processPayment();
+						} else {
+							alert('Payment system not ready. Please refresh the page.');
+						}
+					});
+
+          if (typeof GlobalPaymentsTransIT !== 'undefined' && GlobalPaymentsTransIT.updateCardMode) {
+            GlobalPaymentsTransIT.updateCardMode();
+          }
+				});
+			});
+		});
+</script>

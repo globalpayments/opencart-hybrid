@@ -26,11 +26,11 @@ use GlobalPayments\PaymentGatewayProvider\PaymentMethods\Apm\Paypal;
 use GlobalPayments\PaymentGatewayProvider\PaymentMethods\OpenBanking\OpenBanking;
 use GlobalPayments\PaymentGatewayProvider\Utils\Utils;
 
-class GlobalPayments {
+class GlobalPayments { 
 	/**
 	 * Extension version.
 	 */
-	 const VERSION = '2.1.0';
+	 const VERSION = '2.2.0';
 
 	/**
 	 * GP API regions.
@@ -309,11 +309,9 @@ class GlobalPayments {
 		$this->gateway->sandboxApiSecret         = $this->config->get('payment_globalpayments_txnapi_sandbox_api_secret');
 		$this->gateway->accountCredential        = $this->config->get('payment_globalpayments_txnapi_account_credential');
 		$this->gateway->sandboxAccountCredential = $this->config->get('payment_globalpayments_txnapi_sandbox_account_credential');
-		$this->gateway->integrationType          = $this->config->get('payment_globalpayments_ucp_integration_type');
 		$this->gateway->debug                    = $this->config->get('payment_globalpayments_txnapi_debug');
 		$this->gateway->logDirectory             = DIR_LOGS;
 	}
-
 
 	public function setTransitGateway() {
 		$this->gateway = new TransitGateway([
@@ -330,14 +328,15 @@ class GlobalPayments {
 			'sandbox_tsep_device_id' => $this->config->get('payment_globalpayments_transit_sandbox_tsep_device_id'),
 			'sandbox_transaction_key' => $this->config->get('payment_globalpayments_transit_sandbox_transaction_key'),
 			'is_production' => $this->config->get('payment_globalpayments_transit_is_production'),
-			'debug' => $this->config->get('payment_globalpayments_transit_debug')
+			'debug' => $this->config->get('payment_globalpayments_transit_debug'),
+			'log_directory' => DIR_LOGS
 		]);
 
 		$this->gateway->enabled = $this->config->get('payment_globalpayments_transit_status');
 		$this->gateway->title = $this->config->get('payment_globalpayments_transit_title');
 		$this->gateway->paymentAction = $this->config->get('payment_globalpayments_transit_payment_action');
-		$this->gateway->allowCardSaving = $this->config->get('payment_globalpayments_transit_allow_card_saving');
-		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_transit_txn_descriptor');
+		$this->gateway->allowCardSaving    = $this->config->get('payment_globalpayments_transit_card');
+		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_transit_transaction_descriptor');
 		$this->gateway->baseUrl = $this->url->link('extension/payment/', '', true);
 
 		$this->load->language('extension/payment/globalpayments_transit');
@@ -349,7 +348,6 @@ class GlobalPayments {
 
 	public function setGeniusGateway() {
 		$live_mode = $this->config->get('payment_globalpayments_genius_live_mode');
-
 		$this->gateway = new GeniusGateway([
 			'merchant_name' => $this->config->get('payment_globalpayments_genius_live_merchant_name'),
 			'merchant_site_id' => $this->config->get('payment_globalpayments_genius_live_merchant_site_id'),
@@ -360,13 +358,15 @@ class GlobalPayments {
 			'sandbox_merchant_key' => $this->config->get('payment_globalpayments_genius_sandbox_merchant_key'),
 			'sandbox_web_api_key' => $this->config->get('payment_globalpayments_genius_sandbox_web_api_key'),
 			'is_production' => $live_mode,
+			'debug' => $this->config->get('payment_globalpayments_genius_debug'),
+			'log_directory' => DIR_LOGS,
 		]);
 
 		$this->gateway->enabled = $this->config->get('payment_globalpayments_genius_status');
 		$this->gateway->title = $this->config->get('payment_globalpayments_genius_title');
 		$this->gateway->paymentAction = $this->config->get('payment_globalpayments_genius_payment_action');
-		$this->gateway->allowCardSaving = $this->config->get('payment_globalpayments_genius_allow_card_saving');
-		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_genius_txn_descriptor');
+		$this->gateway->allowCardSaving = $this->config->get('payment_globalpayments_genius_card');
+		$this->gateway->txnDescriptor = $this->config->get('payment_globalpayments_genius_order_transaction_descriptor');
 		$this->gateway->checkAVSCVN = $this->config->get('payment_globalpayments_genius_check_avs_cvn');
 		$this->gateway->avsRejectConditions = $this->config->get('payment_globalpayments_genius_avs_reject_conditions');
 		$this->gateway->cvnRejectConditions = $this->config->get('payment_globalpayments_genius_cvn_reject_conditions');
@@ -377,7 +377,6 @@ class GlobalPayments {
 		$this->gateway->errorGatewayResponse = $this->language->get('error_txn_error');
 	}
 
-	
 	public function setOpenBankingPaymentMethod() {
 		$this->paymentMethod                = new OpenBanking($this->gateway);
 		$this->paymentMethod->enabled       = $this->config->get('payment_globalpayments_openbanking_enabled');

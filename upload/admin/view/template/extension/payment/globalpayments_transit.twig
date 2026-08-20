@@ -1,0 +1,314 @@
+{{ header }}
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('#input-is_production').change(function() {
+			if ($(this).val() == '1') {
+				$('.live-toggle').removeClass('hidden');
+				$('.sandbox-toggle').addClass('hidden');
+			} else {
+				$('.live-toggle').addClass('hidden');
+				$('.sandbox-toggle').removeClass('hidden');
+			}
+		});
+
+		// Initialize on page load
+		if ($('#input-is_production').val() == '1') {
+			$('.live-toggle').removeClass('hidden');
+			$('.sandbox-toggle').addClass('hidden');
+		} else {
+			$('.live-toggle').addClass('hidden');
+			$('.sandbox-toggle').removeClass('hidden');
+		}
+	});
+</script>
+{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary">
+          <i class="fa fa-save"></i>
+        </button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default">
+          <i class="fa fa-reply"></i>
+        </a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+      {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+  {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible">
+      <i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+          
+          <!-- Enable/Disable -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <div class="checkbox">
+                <label>
+                  <input type="hidden" name="payment_globalpayments_transit_status" value="0" />
+                  <input type="checkbox" name="payment_globalpayments_transit_status" id="input-status" value="1" {% if payment_globalpayments_transit_status %}checked{% endif %} /> {{ text_enabled }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-title"><span data-toggle="tooltip" title="{{ help_title }}">{{ entry_title }}</span></label>
+            <div class="col-sm-10">
+              <input id="input-title" type="text" name="payment_globalpayments_transit_title" value="{{ payment_globalpayments_transit_title }}" placeholder="GlobalPayments TransIT" class="form-control"/>
+            </div>
+          </div>
+
+          <!-- Live Mode -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-is_production">{{ entry_is_production }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_transit_is_production" id="input-is_production" class="form-control">
+                {% if payment_globalpayments_transit_is_production %}
+                <option value="1" selected="selected">{{ text_yes }}</option>
+                <option value="0">{{ text_no }}</option>
+                {% else %}
+                <option value="1">{{ text_yes }}</option>
+                <option value="0" selected="selected">{{ text_no }}</option>
+                {% endif %}
+              </select>
+              <br/>
+              <p>{{ help_is_production|raw }}</p>
+            </div>
+          </div>
+
+          <!-- Live Credentials -->
+          <div class="form-group live-toggle required">
+            <label class="col-sm-2 control-label" for="input-merchant_id">{{ entry_merchant_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-merchant_id" type="text" name="payment_globalpayments_transit_merchant_id" value="{{ payment_globalpayments_transit_merchant_id }}" class="form-control"/>
+              {% if error_merchant_id %}
+                <div class="text-danger">{{ error_merchant_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group live-toggle">
+            <label class="col-sm-2 control-label" for="input-user_id">{{ entry_user_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-user_id" type="text" name="payment_globalpayments_transit_user_id" value="{{ payment_globalpayments_transit_user_id }}" class="form-control"/>
+              <small class="help-block">MultiPass User ID - only needed to create transaction key initially</small>
+            </div>
+          </div>
+
+          <div class="form-group live-toggle">
+            <label class="col-sm-2 control-label" for="input-password">{{ entry_password }}</label>
+            <div class="col-sm-10">
+              <input id="input-password" type="password" name="payment_globalpayments_transit_password" value="{{ payment_globalpayments_transit_password }}" class="form-control"/>
+              <small class="help-block">MultiPass Password - only needed to create transaction key initially</small>
+            </div>
+          </div>
+
+          <div class="form-group live-toggle required">
+            <label class="col-sm-2 control-label" for="input-device_id">{{ entry_device_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-device_id" type="text" name="payment_globalpayments_transit_device_id" value="{{ payment_globalpayments_transit_device_id }}" class="form-control"/>
+              {% if error_device_id %}
+                <div class="text-danger">{{ error_device_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group live-toggle">
+            <label class="col-sm-2 control-label" for="input-tsep_device_id">{{ entry_tsep_device_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-tsep_device_id" type="text" name="payment_globalpayments_transit_tsep_device_id" value="{{ payment_globalpayments_transit_tsep_device_id }}" class="form-control"/>
+            </div>
+          </div>
+
+          <div class="form-group live-toggle">
+            <label class="col-sm-2 control-label" for="input-transaction_key">{{ entry_transaction_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-transaction_key" type="password" name="payment_globalpayments_transit_transaction_key" value="{{ payment_globalpayments_transit_transaction_key }}" class="form-control"/>
+            </div>
+          </div>
+
+          <!-- Sandbox Credentials -->
+          <div class="form-group sandbox-toggle required">
+            <label class="col-sm-2 control-label" for="input-sandbox_merchant_id">{{ entry_sandbox_merchant_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_merchant_id" type="text" name="payment_globalpayments_transit_sandbox_merchant_id" value="{{ payment_globalpayments_transit_sandbox_merchant_id }}" class="form-control"/>
+              {% if error_sandbox_merchant_id %}
+                <div class="text-danger">{{ error_sandbox_merchant_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_user_id">{{ entry_sandbox_user_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_user_id" type="text" name="payment_globalpayments_transit_sandbox_user_id" value="{{ payment_globalpayments_transit_sandbox_user_id }}" class="form-control"/>
+              <small class="help-block">MultiPass User ID - only needed to create transaction key initially</small>
+            </div>
+          </div>
+
+          <div class="form-group sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_password">{{ entry_sandbox_password }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_password" type="password" name="payment_globalpayments_transit_sandbox_password" value="{{ payment_globalpayments_transit_sandbox_password }}" class="form-control"/>
+              <small class="help-block">MultiPass Password - only needed to create transaction key initially</small>
+            </div>
+          </div>
+
+          <div class="form-group sandbox-toggle required">
+            <label class="col-sm-2 control-label" for="input-sandbox_device_id">{{ entry_sandbox_device_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_device_id" type="text" name="payment_globalpayments_transit_sandbox_device_id" value="{{ payment_globalpayments_transit_sandbox_device_id }}" class="form-control"/>
+              {% if error_sandbox_device_id %}
+                <div class="text-danger">{{ error_sandbox_device_id }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_tsep_device_id">{{ entry_sandbox_tsep_device_id }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_tsep_device_id" type="text" name="payment_globalpayments_transit_sandbox_tsep_device_id" value="{{ payment_globalpayments_transit_sandbox_tsep_device_id }}" class="form-control"/>
+            </div>
+          </div>
+
+          <div class="form-group sandbox-toggle">
+            <label class="col-sm-2 control-label" for="input-sandbox_transaction_key">{{ entry_sandbox_transaction_key }}</label>
+            <div class="col-sm-10">
+              <input id="input-sandbox_transaction_key" type="password" name="payment_globalpayments_transit_sandbox_transaction_key" value="{{ payment_globalpayments_transit_sandbox_transaction_key }}" class="form-control"/>
+            </div>
+          </div>
+
+          <!-- Payment Action -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-payment_action"><span data-toggle="tooltip" title="{{ help_payment_action }}">{{ entry_payment_action }}</span></label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_transit_payment_action" id="input-payment_action" class="form-control">
+                <option value="charge" {{ payment_globalpayments_transit_payment_action == 'charge' ? 'selected' : '' }}>{{ entry_payment_action_charge }}</option>
+                <option value="authorize" {{ payment_globalpayments_transit_payment_action == 'authorize' ? 'selected' : '' }}>{{ entry_payment_action_authorize }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Transaction Descriptor -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-transaction_descriptor"><span data-toggle="tooltip" title="{{ help_transaction_descriptor }}">{{ entry_transaction_descriptor }}</span></label>
+            <div class="col-sm-10">
+              <input id="input-transaction_descriptor" type="text" name="payment_globalpayments_transit_transaction_descriptor" value="{{ payment_globalpayments_transit_transaction_descriptor }}" placeholder="e.g., WebStore" maxlength="18" class="form-control"/>
+              <small class="help-block">{{ help_transaction_descriptor }}</small>
+            </div>
+          </div>
+
+          <!-- Debug -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-debug">{{ entry_debug }}</label>
+            <div class="col-sm-10">
+              <div class="checkbox">
+                <label>
+                  <input type="hidden" name="payment_globalpayments_transit_debug" value="0" />
+                  <input type="checkbox" name="payment_globalpayments_transit_debug" id="input-debug" value="1" {% if payment_globalpayments_transit_debug %}checked{% endif %} /> {{ text_yes }}
+                </label>
+              </div>
+              <br/>
+              <p>{{ help_debug }}</p>
+            </div>
+          </div>
+
+          <!-- Allow Card Saving -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-allow_card_saving">{{ entry_allow_card_saving }}</label>
+            <div class="col-sm-10">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_transit_card" id="input-allow_card_saving" value="1" {% if payment_globalpayments_transit_card %}checked{% endif %} /> {{ entry_allow_card_saving }}
+                </label>
+              </div>
+              <p>{{ help_allow_card_saving|raw }}</p>
+            </div>
+          </div>
+
+          <!-- Check AVS CVN -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-check_avs_cvn">{{ entry_check_avs_cvn }}</label>
+            <div class="col-sm-10">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="payment_globalpayments_transit_check_avs_cvn" id="input-check_avs_cvn" value="1" {% if payment_globalpayments_transit_check_avs_cvn %}checked{% endif %} /> {{ entry_check_avs_cvn }}
+                </label>
+              </div>
+              <p>{{ help_check_avs_cvn }}</p>
+            </div>
+          </div>
+
+          <!-- AVS Reject Conditions -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-avs_reject_conditions">{{ entry_avs_reject_conditions }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_transit_avs_reject_conditions[]" id="input-avs_reject_conditions" class="form-control" multiple>
+                <option value="A" {% if 'A' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_a }}</option>
+                <option value="B" {% if 'B' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_b }}</option>
+                <option value="C" {% if 'C' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_c }}</option>
+                <option value="D" {% if 'D' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_d }}</option>
+                <option value="G" {% if 'G' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_g }}</option>
+                <option value="I" {% if 'I' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_i }}</option>
+                <option value="M" {% if 'M' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_m }}</option>
+                <option value="N" {% if 'N' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_n }}</option>
+                <option value="P" {% if 'P' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_p }}</option>
+                <option value="R" {% if 'R' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_r }}</option>
+                <option value="S" {% if 'S' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_s }}</option>
+                <option value="U" {% if 'U' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_u }}</option>
+                <option value="W" {% if 'W' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_w }}</option>
+                <option value="X" {% if 'X' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_x }}</option>
+                <option value="Y" {% if 'Y' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_y }}</option>
+                <option value="Z" {% if 'Z' in payment_globalpayments_transit_avs_reject_conditions %}selected{% endif %}>{{ avs_code_z }}</option>
+              </select>
+              <p>{{ help_avs_reject_conditions }}</p>
+            </div>
+          </div>
+
+          <!-- CVN Reject Conditions -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-cvn_reject_conditions">{{ entry_cvn_reject_conditions }}</label>
+            <div class="col-sm-10">
+              <select name="payment_globalpayments_transit_cvn_reject_conditions[]" id="input-cvn_reject_conditions" class="form-control" multiple>
+                <option value="N" {% if 'N' in payment_globalpayments_transit_cvn_reject_conditions %}selected{% endif %}>{{ cvn_code_n }}</option>
+                <option value="P" {% if 'P' in payment_globalpayments_transit_cvn_reject_conditions %}selected{% endif %}>{{ cvn_code_p }}</option>
+                <option value="S" {% if 'S' in payment_globalpayments_transit_cvn_reject_conditions %}selected{% endif %}>{{ cvn_code_s }}</option>
+                <option value="U" {% if 'U' in payment_globalpayments_transit_cvn_reject_conditions %}selected{% endif %}>{{ cvn_code_u }}</option>
+                <option value="?" {% if '?' in payment_globalpayments_transit_cvn_reject_conditions %}selected{% endif %}>{{ cvn_code_question }}</option>
+              </select>
+              <p>{{ help_cvn_reject_conditions }}</p>
+            </div>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-sort_order">{{ entry_sort_order }}</label>
+            <div class="col-sm-10">
+              <input id="input-sort_order" type="text" name="payment_globalpayments_transit_sort_order" value="{{ payment_globalpayments_transit_sort_order }}" placeholder="1" class="form-control"/>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}

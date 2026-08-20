@@ -5,7 +5,6 @@ namespace GlobalPayments\PaymentGatewayProvider\Clients;
 use GlobalPayments\Api\Entities\Enums\GatewayProvider;
 use GlobalPayments\Api\Entities\GpApi\AccessTokenInfo;
 use GlobalPayments\Api\ServiceConfigs\AcceptorConfig;
-use GlobalPayments\Api\ServiceConfigs\Gateways\GeniusConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\PorticoConfig;
 use GlobalPayments\Api\ServiceConfigs\Gateways\TransitConfig;
@@ -13,6 +12,7 @@ use GlobalPayments\Api\ServiceConfigs\Gateways\TransactionApiConfig;
 use GlobalPayments\Api\ServicesContainer;
 use GlobalPayments\Api\Utils\Logging\Logger;
 use GlobalPayments\Api\Utils\Logging\SampleRequestLogger;
+use GlobalPayments\PaymentGatewayProvider\ServiceConfigs\Gateways\GeniusConfig;
 use GlobalPayments\PaymentGatewayProvider\Requests\RequestInterface;
 
 class SdkClient implements ClientInterface {
