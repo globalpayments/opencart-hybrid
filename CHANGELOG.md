@@ -4,7 +4,12 @@
 
 # Changelog
 
-## Latest Version - v2.2.0 (08/20/26)
+## Latest Version - v2.2.1 (08/27/26)
+### Bug Fixes:
+- Fixed Dcc enabled value issue for unified payments.
+
+
+## v2.2.0 (08/20/26)
 ### Enhancements:
 - Added support for eRaty via Hosted Payment Page (HPP)
 - Added support for Transit and Genius gateway 

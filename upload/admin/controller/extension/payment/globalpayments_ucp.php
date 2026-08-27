@@ -56,6 +56,7 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$this->request->post['payment_globalpayments_ucp_enable_visa_installments'] = $this->request->post['payment_globalpayments_ucp_enable_visa_installments'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_blik'] = $this->request->post['payment_globalpayments_ucp_enable_blik'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_enable_openbanking'] = $this->request->post['payment_globalpayments_ucp_enable_openbanking'] ?? 0;
+			$this->request->post['payment_globalpayments_ucp_enable_dcc'] = $this->request->post['payment_globalpayments_ucp_enable_dcc'] ?? 0;
 			$this->request->post['payment_globalpayments_ucp_integration_type'] = $this->request->post['payment_globalpayments_ucp_integration_type'] ?? "dropin_ui";
 
 			$integrationType = $this->request->post['payment_globalpayments_ucp_integration_type'];
