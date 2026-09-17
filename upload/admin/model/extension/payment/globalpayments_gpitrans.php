@@ -45,17 +45,47 @@ class ModelExtensionPaymentGlobalPaymentsGpiTrans extends Model {
 	}
 
 	public function addTransaction($order_id, $gateway_id, $payment_action, $amount, $currency, $gatewayResponse) {
+		$transactionId = $gatewayResponse->transactionReference?->transactionId
+			?? $gatewayResponse->transactionId
+			?? '';
+		$responseCode = $gatewayResponse->responseCode ?? '';
+		$responseMessage = $gatewayResponse->responseMessage ?? '';
+		$reference = $gatewayResponse->transactionReference?->clientTransactionId
+			?? $gatewayResponse->referenceNumber
+			?? '';
+		$timestamp = $gatewayResponse->timestamp ?? '';
+		if (empty($timestamp) || strtotime($timestamp) === false) {
+			$timestamp = date('Y-m-d H:i:s');
+		}
+
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_transaction` 
 		SET `order_id` = '" . (int)$order_id . "', 
 		    `gateway_id` = '" . $this->db->escape( $gateway_id ) . "', 
 		    `payment_action` = '" . $this->db->escape( $payment_action ) . "', 
-		    `gateway_transaction_id` = '" . $this->db->escape( $gatewayResponse->transactionReference->transactionId ) . "',
-		    `response_code` = '" . $this->db->escape( $gatewayResponse->responseCode ) . "',
-		    `response_message` = '" . $this->db->escape( $gatewayResponse->responseMessage ) . "',
-		    `reference` = '" . $this->db->escape( $gatewayResponse->transactionReference->clientTransactionId ) . "',
+		    `gateway_transaction_id` = '" . $this->db->escape( $transactionId ) . "',
+		    `response_code` = '" . $this->db->escape( $responseCode ) . "',
+		    `response_message` = '" . $this->db->escape( $responseMessage ) . "',
+		    `reference` = '" . $this->db->escape( $reference ) . "',
 		    `amount` = '" . (float)$amount . "',
 		    `currency` = '" . $currency . "',
-		    `time_created` = '" . $gatewayResponse->timestamp . "'");
+		    `time_created` = '" . $this->db->escape($timestamp) . "'");
+	}
+
+	/**
+	 * Returns the total refunded amount recorded for an order.
+	 *
+	 * @param int $order_id
+	 *
+	 * @return float
+	 */
+	public function getRefundedAmount($order_id) {
+		$query = $this->db->query(
+			"SELECT SUM(amount) AS total_refunded FROM " . DB_PREFIX . "globalpayments_transaction"
+			. " WHERE order_id = '" . (int)$order_id . "'"
+			. " AND payment_action = 'refund'"
+		);
+
+		return (float)($query->row['total_refunded'] ?? 0);
 	}
 
 	public function fixColumns() {

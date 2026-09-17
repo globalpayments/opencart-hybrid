@@ -153,6 +153,14 @@ SW;
 						'validation' => $this->errorCardCvv,
 					),
 				),
+				'card-holder-field' => array(
+					'class'       => 'card-holder-field',
+					'label'       => $this->textCardHolderLabel,
+					'placeholder' => $this->textCardHolderPlaceholder ?? 'Name on card',
+					'messages'    => array(
+						'validation' => $this->errorCardHolder,
+					),
+				),
 			);
 		}
 	}

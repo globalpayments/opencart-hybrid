@@ -5,6 +5,7 @@
         event.preventDefault();
         if ($(this).attr('id') === 'saved-link') {
             $('#tab-option').val('saved');
+            $('#{{ gateway.gatewayId }}-save_card').prop('checked', false);
             $('#tab-saved').addClass('active');
             $('#tab-new').removeClass('active');
             $('#{{ gateway.gatewayId }}-payment-token').show();
@@ -69,6 +70,13 @@
                  * @type {null}
                  */
                 this.paymentTokenResponse = null;
+                
+                /**
+                 * Prevent duplicate checkout submissions
+                 *
+                 * @type {boolean}
+                 */
+                this.isSubmitting = false;
 
                 this.attachEventHandlers();
             }
@@ -95,6 +103,11 @@
                         $(self.getPlaceOrderButtonSelector()).on('click', function ($e) {
                             $e.preventDefault();
                             $e.stopImmediatePropagation();
+                        
+                            if (self.isSubmitting) {
+                                return false;
+                            }
+                            self.isSubmitting = true;
                             self.blockOnSubmit();
                             self.placeOrder();
                         });
@@ -249,6 +262,11 @@
                  */
                 placeOrder: function () {
 
+                    if (this.isSubmitting) {
+                        $(this.getForm()).submit();
+                        return;
+                    }
+                    this.isSubmitting = true;
                     $(this.getForm()).submit();
                 },
                 mapCardType(txnApiCardType){
@@ -430,6 +448,7 @@
                     if (1 == form_data['blockUI.isBlocked']) {
                         $form.unblock();
                     }
+                    this.isSubmitting = false;
                 },
 
                 /**

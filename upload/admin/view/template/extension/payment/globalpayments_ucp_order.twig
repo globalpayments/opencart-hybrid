@@ -2,10 +2,12 @@
 <div id="table-alert"></div>
 <div id="table-action"></div>
 
+{% set get_transaction_route_value = get_transaction_route|default('extension/payment/globalpayments_ucp/getTransaction') %}
+
 <script type="text/javascript"><!--
 	function getTransaction () {
 		$.ajax({
-			url: 'index.php?route=extension/payment/globalpayments_ucp/getTransaction&user_token={{ user_token }}',
+			url: 'index.php?route={{ get_transaction_route_value }}&user_token={{ user_token }}',
 			dataType: 'html',
 			data: {
 				order_id: "{{ order_id }}",

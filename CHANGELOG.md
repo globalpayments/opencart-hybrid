@@ -4,10 +4,15 @@
 
 # Changelog
 
-## Latest Version - v2.2.1 (08/27/26)
+## Latest Version v2.3.0 (09/17/26)
+### Enhancements:
+- Added Support for Click to Pay
+### Bug Fixes:
+- Fixed an issue where Transaction API payments failed due to deprecated methods
+
+## v2.2.1 (08/27/26)
 ### Bug Fixes:
 - Fixed Dcc enabled value issue for unified payments.
-
 
 ## v2.2.0 (08/20/26)
 ### Enhancements:

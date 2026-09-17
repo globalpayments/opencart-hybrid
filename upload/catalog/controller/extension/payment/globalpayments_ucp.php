@@ -84,7 +84,6 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		$data['environment_indicator'] = $this->globalpayments->gateway->getEnvironmentIndicator('alert alert-danger');
 
 		$data['integration_type'] = $this->config->get('payment_globalpayments_ucp_integration_type');
-
 		if ($data['integration_type'] === 'hosted_payment') {
 			$data['hpp_link'] = $this->buildHPP();
 		} else {
@@ -468,6 +467,9 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 			$hppWalletsConfig = $this->config->get('payment_globalpayments_ucp_hpp_wallets');
 			$enabledWallets = is_string($hppWalletsConfig) ? json_decode($hppWalletsConfig, true)
 			: (is_array($hppWalletsConfig) ? $hppWalletsConfig : []);
+			$enabledWallets = is_array($enabledWallets)
+				? array_values(array_unique(array_map('strtolower', $enabledWallets)))
+				: [];
 
 			// Add digital wallets based on configuration
 			if (!empty($enabledWallets)) {
@@ -477,6 +479,8 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 						$digitalWallets[] = 'applepay';
 					} elseif ($walletLower === 'googlepay' || $walletLower === 'google_pay') {
 						$digitalWallets[] = 'googlepay';
+					} elseif ($walletLower === 'clicktopay' || $walletLower === 'click_to_pay') {
+						$digitalWallets[] = 'CLICK_TO_PAY';
 					} elseif ($walletLower === 'blik') {
 						$paymentMethods[] = 'BLIK';
 						// $paymentMethods[] = HPPAllowedPaymentMethods::BLIK;
@@ -486,6 +490,10 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 					}
 				}
 			}
+
+			$digitalWallets = array_values(array_unique($digitalWallets));
+
+			
 
 			// eRaty is automatically enabled when eligibility conditions are met:
 			// - Billing country must be Poland (PL)

@@ -6,7 +6,11 @@ use GlobalPayments\Api\Entities\{
 	InstallmentData,
 	InstallmentTerms
 };
-use GlobalPayments\Api\Entities\Enums\TransactionModifier;
+use GlobalPayments\Api\Entities\Enums\{
+	TransactionModifier,
+	GatewayProvider,
+	PaymentMethodUsageMode
+};
 use GlobalPayments\Api\PaymentMethods\CreditCardData;
 use GlobalPayments\PaymentGatewayProvider\Gateways\GatewayId;
 use GlobalPayments\PaymentGatewayProvider\Requests\AbstractRequest;
@@ -35,8 +39,26 @@ class AuthorizeRequest extends AbstractRequest {
 		                         ->withClientTransactionId($this->requestData->order->reference ?? '')
 		                         ->withDescription($this->requestData->order->description ?? '')
 		                         ->withOrderId((string) $this->requestData->order->orderReference)
-		                         ->withDynamicDescriptor($this->requestData->dynamicDescriptor)
+		                         // Provide a stable, order-specific invoice to avoid false duplicate checks.
+		                         ->withInvoiceNumber((string) $this->requestData->order->orderReference)
 		                         ->withRequestMultiUseToken($this->requestData->saveCard);
+
+		if (($this->config['gatewayProvider'] ?? null) === GatewayProvider::TRANSACTION_API) {
+			if (method_exists($builder, 'withPaymentMethodUsageMode')) {
+ 				$builder = $builder->withPaymentMethodUsageMode($paymentTokenInfo['usage']);
+ 			}
+
+			// Saved cards can be blocked by gateway duplicate checks when reused quickly.
+			if (($paymentTokenInfo['usage'] ?? null) === PaymentMethodUsageMode::MULTIPLE && 
+				method_exists($builder, 'withAllowDuplicates')) {
+				$builder = $builder->withAllowDuplicates(true);
+			}
+		}
+
+		if (is_string($this->requestData->dynamicDescriptor) && 
+			trim($this->requestData->dynamicDescriptor) !== '') {
+			$builder = $builder->withDynamicDescriptor($this->requestData->dynamicDescriptor);
+		}
 		                         
 
 		// Add installment data if present

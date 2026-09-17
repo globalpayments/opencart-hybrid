@@ -74,12 +74,23 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 				unset($this->request->post['payment_globalpayments_ucp_visa_installments_max_amount']);
 			}
 
-
 			// Handle HPP wallets array - convert to JSON for storage
 			if (isset($this->request->post['payment_globalpayments_ucp_hpp_wallets']) && is_array($this->request->post['payment_globalpayments_ucp_hpp_wallets'])) {
-				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode($this->request->post['payment_globalpayments_ucp_hpp_wallets']);
+				$wallets = array_map('strtolower', $this->request->post['payment_globalpayments_ucp_hpp_wallets']);
+				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode(array_values(array_unique($wallets)));
 			} else {
 				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode([]);
+			}
+
+			$selectedHppWallets = json_decode($this->request->post['payment_globalpayments_ucp_hpp_wallets'], true) ?: [];
+			$this->request->post['payment_globalpayments_ucp_hpp_clicktopay'] = in_array('clicktopay', $selectedHppWallets, true)
+				|| in_array('click_to_pay', $selectedHppWallets, true)
+				? 1
+				: 0;
+
+			if ($integrationType !== 'hosted_payment') {
+				$this->request->post['payment_globalpayments_ucp_hpp_wallets'] = json_encode([]);
+				$this->request->post['payment_globalpayments_ucp_hpp_clicktopay'] = 0;
 			}
 
 			if ($this->validate()) {
@@ -590,6 +601,10 @@ class ControllerExtensionPaymentGlobalPaymentsUcp extends Controller
 		if (isset($this->request->post['payment_globalpayments_ucp_txn_descriptor'])
 		     && strlen($this->request->post['payment_globalpayments_ucp_txn_descriptor']) > 25) {
 			$this->error['error_txn_descriptor'] = $this->language->get('error_txn_descriptor');
+		}
+
+		if (($this->request->post['payment_globalpayments_ucp_integration_type'] ?? 'dropin_ui') !== 'hosted_payment') {
+			$this->request->post['payment_globalpayments_ucp_hpp_clicktopay'] = 0;
 		}
 
 		if ( ! empty($this->request->post['payment_globalpayments_ucp_is_production'])) {

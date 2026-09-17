@@ -164,7 +164,8 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 
 		$data['user_token'] = $this->session->data['user_token'];
 		$data['order_id'] = (int)$this->request->get['order_id'];
-		$data['payment_code'] = 'globalpayments_ucp';
+		$data['payment_code'] = 'globalpayments_txnapi';
+		$data['get_transaction_route'] = 'extension/payment/globalpayments_gpitrans/getTransaction';
 
 		return $this->load->view('extension/payment/globalpayments_gpitrans_order', $data);
 	}
@@ -182,16 +183,29 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 		$data['user_token'] = $this->session->data['user_token'];
 		$data['order_id'] = (int)$this->request->get['order_id'];
 		$data['payment_code'] = $this->request->get['payment_code'];
+		$data['transaction_command_route'] = 'extension/payment/globalpayments_gpitrans/transactionCommand';
 
 		$this->load->model('extension/payment/globalpayments_gpitrans');
 		$transactions = $this->model_extension_payment_globalpayments_gpitrans->getTransactions($data['order_id']);
 
 		$should_refund = true;
+		$totalChargedOrCaptured = 0.0;
+		$totalRefunded = 0.0;
 		foreach ($transactions as $key => $transaction) {
+			if ($transaction['payment_action'] === AbstractGateway::CHARGE || 
+				$transaction['payment_action'] === AbstractGateway::CAPTURE) {
+				$totalChargedOrCaptured += (float)$transaction['amount'];
+			}
+			if ($transaction['payment_action'] === AbstractGateway::REFUND) {
+				$totalRefunded += (float)$transaction['amount'];
+			}
 			if ($transaction['payment_action'] === AbstractGateway::REVERSE) {
 				$should_refund = false;
 				break;
 			}
+		}
+		if ($totalChargedOrCaptured > 0 && $totalRefunded >= $totalChargedOrCaptured) {
+			$should_refund = false;
 		}
 
 		$transactions_count = count($transactions);
@@ -220,7 +234,8 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 			}
 
 			$transactions[$key]['transaction_actions'] = $transaction_actions;
-			$transactions[$key]['time_created'] = date($this->language->get('datetime_format'), strtotime($transaction['time_created']));
+			$createdAt = strtotime($transaction['time_created']);
+			$transactions[$key]['time_created'] = $createdAt ? date($this->language->get('datetime_format'), $createdAt) : '-';
 		}
 
 		$data['transactions'] = $transactions;
@@ -273,6 +288,7 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 	public function transactionCommand()
 	{
 		$response = [];
+		$isFullRefund = false;
 
 		$this->load->language('extension/payment/globalpayments_gpitrans_order');
 
@@ -290,12 +306,27 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 		}
 
 		$this->load->library('globalpayments');
+		$gatewayId = $this->request->post['gateway_id'];
+		$targetGateway = ($gatewayId === GatewayId::TRANSACTION_API)
+			? GatewayId::TRANSACTION_API
+			: GatewayId::GP_API;
 		if (AbstractGateway::REFUND === $this->request->post['transaction_type']) {
 			$amount = (isset($this->request->post['amount']) && strlen($this->request->post['amount']) > 0) ? $this->request->post['amount'] : $this->request->post['transaction_amount'];
 		} else {
 			$amount = $this->request->post['transaction_amount'];
 		}
-		$amount = $this->validateRefundAmount($amount, $this->request->post['transaction_amount']);
+		if (AbstractGateway::REFUND === $this->request->post['transaction_type']) {
+			$this->load->model('extension/payment/globalpayments_gpitrans');
+			$totalRefunded = $this->model_extension_payment_globalpayments_gpitrans->getRefundedAmount((int)$this->request->post['order_id']);
+			$maxRefundable = (float)$this->request->post['transaction_amount'] - $totalRefunded;
+			if ($maxRefundable <= 0) {
+				$this->error['refund_amount'] = $this->language->get('error_invalid_refund_amount');
+			}
+			$amount = $this->validateRefundAmount($amount, $maxRefundable);
+			$isFullRefund = (abs((float)$amount - (float)$maxRefundable) < 0.00001);
+		} else {
+			$amount = $this->validateRefundAmount($amount, $this->request->post['transaction_amount']);
+		}
 		if (isset($this->error['refund_amount'])) {
 			$response['error'] = $this->error['refund_amount'];
 			$this->response->addHeader('Content-Type: application/json');
@@ -303,7 +334,7 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 
 			return;
 		}
-		$this->globalpayments->setGateway(GatewayId::GP_API);
+		$this->globalpayments->setGateway($targetGateway);
 
 		$requestData = new RequestData();
 		$requestData->transactionId = $this->request->post['transaction_id'];
@@ -319,7 +350,9 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 					break;
 				case AbstractGateway::REFUND:
 					$gatewayResponse = $this->globalpayments->gateway->processRefund($requestData);
-					$response['success'] = (empty($requestData->order->amount)) ? $this->language->get('text_success_full_refund') : $this->language->get('text_success_partial_refund');
+					$response['success'] = $isFullRefund
+						? $this->language->get('text_success_full_refund')
+						: $this->language->get('text_success_partial_refund');
 					break;
 				case AbstractGateway::REVERSE:
 					$gatewayResponse = $this->globalpayments->gateway->processReverse($requestData);
@@ -331,6 +364,8 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 				default:
 					throw new Exception($this->language->get('error_invalid_request'));
 			}
+
+			$this->assertValidTransactionResponse($gatewayResponse);
 
 			$this->load->model('extension/payment/globalpayments_gpitrans');
 			$this->model_extension_payment_globalpayments_gpitrans->addTransaction($this->request->post['order_id'], 
@@ -345,6 +380,32 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($response));
+	}
+
+	/**
+	 * Validates that the gateway response contains no error and includes a transaction id.
+	 *
+	 * @param object $gatewayResponse
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	private function assertValidTransactionResponse($gatewayResponse): void
+	{
+		if (isset($gatewayResponse->error)) {
+			$errorMessage = $gatewayResponse->error->message ?? $this->language->get('error_request');
+			throw new Exception($errorMessage);
+		}
+
+		$transactionId = $gatewayResponse->transactionReference?->transactionId
+			?? $gatewayResponse->transactionId
+			?? '';
+		if ($transactionId === '') {
+			$errorMessage = $gatewayResponse->responseMessage
+				?? $gatewayResponse->responseCode
+				?? $this->language->get('error_request');
+			throw new Exception($errorMessage);
+		}
 	}
 
 	private function validateRefundAmount($amount, $authAmount)

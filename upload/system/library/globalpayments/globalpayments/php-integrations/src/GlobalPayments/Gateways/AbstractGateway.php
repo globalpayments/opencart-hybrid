@@ -336,7 +336,10 @@ abstract class AbstractGateway implements GatewayInterface {
 		if (!isset($gatewayResponse->responseCode)) {
 			return $gatewayResponse;
 		}
-		if ('SUCCESS' !== $gatewayResponse->responseCode && '00' !== $gatewayResponse->responseCode) {
+		$responseCode = (string)$gatewayResponse->responseCode;
+		$isApproved = stripos($responseCode, 'approved') === 0;
+
+		if ('SUCCESS' !== $responseCode && '00' !== $responseCode && !$isApproved) {
 			throw new \Exception($this->mapResponseCodeToFriendlyMessage($gatewayResponse->responseCode));
 		}
 

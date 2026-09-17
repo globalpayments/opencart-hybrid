@@ -26,7 +26,7 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 		$data['gateway'] = $this->globalpayments->gateway;
 
 		$data['payment_tab_option'] = 'new';
-		if ($this->customer->isLogged()) {
+		if ($this->customer->isLogged() && $this->globalpayments->gateway->allowCardSaving) {
 			$data['customer_is_logged'] = true;
 			$this->load->model('extension/payment/globalpayments_txnapi');
 			$data['stored_payment_methods'] = $this->model_extension_payment_globalpayments_txnapi->getCards(
@@ -64,6 +64,17 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 
 			$requestData = $this->buildRequestData($postRequestData);
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
+			$transactionId = $gatewayResponse->transactionReference?->transactionId
+				?? $gatewayResponse->transactionId
+				?? '';
+
+			if ($transactionId === '') {
+				$errorMessage = $gatewayResponse->responseMessage
+					?? $gatewayResponse->responseCode
+					?? $this->language->get('error_order_processing');
+				throw new \Exception($errorMessage);
+			}
+
 			$this->addToOrderHistory($gatewayResponse);
 			$this->storeTransaction($gatewayResponse);
 			$this->storePaymentCard($postRequestData, $requestData, $gatewayResponse);
@@ -131,6 +142,8 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 			&& 'saved' === $postRequestData->paymentType
 			&& isset($postRequestData->paymentTokenId)
 			&& 'new' !== $postRequestData->paymentTokenId) {
+			// Existing tokenized card is already stored; must not request a new token.
+			$requestData->saveCard = false;
 			$requestData->paymentToken = $this->model_extension_payment_globalpayments_txnapi->getCard($postRequestData->paymentTokenId);
 		}
 		return $requestData;
@@ -143,13 +156,29 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 	private function addToOrderHistory($gatewayResponse): void
 	{
 		$this->load->model('checkout/order');
+		$transactionId = $gatewayResponse->transactionReference?->transactionId
+			?? $gatewayResponse->transactionId
+			?? '';
+		$responseCode = $gatewayResponse->responseCode
+			?? $gatewayResponse->status
+			?? '';
+		$responseStatus = $gatewayResponse->responseMessage
+			?? $gatewayResponse->status
+			?? $responseCode;
+		$cardType = $gatewayResponse->cardType ?? '';
+		$cardLast4 = $gatewayResponse->cardLast4 ?? '';
+
+		if ($cardLast4 === '' && !empty($gatewayResponse->maskedCardNumber)) {
+			$cardLast4 = substr((string)$gatewayResponse->maskedCardNumber, -4);
+		}
+
 		$comment = [
-			$this->language->get('text_comment_txn_id') . ' ' . $gatewayResponse->transactionReference->transactionId,
-			$this->language->get('text_comment_response_code') . ' ' . $gatewayResponse->responseCode,
-			$this->language->get('text_comment_response_status') . ' ' . $gatewayResponse->responseMessage,
+			$this->language->get('text_comment_txn_id') . ' ' . $transactionId,
+			$this->language->get('text_comment_response_code') . ' ' . $responseCode,
+			$this->language->get('text_comment_response_status') . ' ' . $responseStatus,
 			$this->language->get('text_comment_amount') . ' ' . $this->order->amount,
 			$this->language->get('text_comment_currency') . ' ' . $this->order->currency,
-			$this->language->get('text_comment_pmt_method') . ' ' . $gatewayResponse->cardType . ' ' . $gatewayResponse->cardLast4,
+			$this->language->get('text_comment_pmt_method') . ' ' . trim($cardType . ' ' . $cardLast4),
 		];
 		$comment = implode('<br/>', $comment);
 		$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], 2, $comment);
@@ -181,12 +210,24 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 	{
 		if (isset($postRequestData->paymentType) && 'new' === $postRequestData->paymentType && $requestData->saveCard) {
 			$payment_token = json_decode($requestData->paymentTokenResponse);
+			$token = $gatewayResponse->token ?? '';
+			$cardType = $payment_token->details->cardType ?? ($gatewayResponse->cardType ?? '');
+			$cardLast4 = $payment_token->details->cardLast4 ?? '';
+
+			if ($cardLast4 === '' && !empty($gatewayResponse->maskedCardNumber)) {
+				$cardLast4 = substr((string)$gatewayResponse->maskedCardNumber, -4);
+			}
+
+			if ($token === '') {
+				return;
+			}
+
 			$this->model_extension_payment_globalpayments_txnapi->addCard(
 				$this->globalpayments->gateway->gatewayId,
 				$this->customer->getId(),
-				$gatewayResponse->token,
-				strtoupper($payment_token->details->cardType),
-				$payment_token->details->cardLast4,
+				$token,
+				strtoupper((string)$cardType),
+				$cardLast4,
 				$payment_token->details->expiryYear,
 				$payment_token->details->expiryMonth
 			);

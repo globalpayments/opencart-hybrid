@@ -3,6 +3,7 @@
   <i class="fa fa-exclamation-triangle"></i> {{ eraty_refund_message }}
 </div>
 {% endif %}
+{% set transaction_command_route_value = transaction_command_route|default('extension/payment/globalpayments_ucp/transactionCommand') %}
 {% if dw_billing_address %}
 <table class="table table-bordered">
   <thead>
@@ -136,7 +137,7 @@
 		if( refund_alert == false) {
 			if (confirm(confirm_text)) {
 				$.ajax({
-					url: 'index.php?route=extension/payment/globalpayments_ucp/transactionCommand&user_token={{ user_token }}',
+          url: 'index.php?route={{ transaction_command_route_value }}&user_token={{ user_token }}',
 					type: 'post',
 					data: {
 						order_id: "{{ order_id }}",

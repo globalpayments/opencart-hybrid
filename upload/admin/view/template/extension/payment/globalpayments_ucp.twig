@@ -330,6 +330,11 @@
 		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="googlepay" {% if 'googlepay' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> Google Pay
 		      </label>
 		    </div>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="clicktopay" {% if 'clicktopay' in payment_globalpayments_ucp_hpp_wallets or 'click_to_pay' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> Click to Pay
+          </label>
+        </div>
 		    <div class="checkbox">
 		      <label>
 		        <input type="checkbox" name="payment_globalpayments_ucp_hpp_wallets[]" value="payu" {% if 'payu' in payment_globalpayments_ucp_hpp_wallets %} checked{% endif %} /> PayU
