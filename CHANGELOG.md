@@ -4,7 +4,11 @@
 
 # Changelog
 
-## Latest Version v2.3.0 (09/17/26)
+## Latest Version v2.3.1 (10/01/26)
+### Enhancements:
+- Added support for creating orders for declined, failed payment attempts.
+
+## v2.3.0 (09/17/26)
 ### Enhancements:
 - Added Support for Click to Pay
 ### Bug Fixes:

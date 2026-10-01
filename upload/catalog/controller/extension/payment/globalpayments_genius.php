@@ -12,6 +12,7 @@ use GlobalPayments\Api\PaymentMethods\CreditCardData;
 class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 	private $gateway_id = 'globalpayments_genius';
 	private $lastReusableToken = '';
+	private $orderStatusRecorded = false;
 
 	public function __construct( $registry ) {
 		parent::__construct( $registry );
@@ -188,10 +189,7 @@ class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 					throw new Exception($avsCvnCheck['reason']);
 				}
 
-				$order_status_id = (int) $this->config->get('payment_globalpayments_genius_order_status_id');
-				if (!$order_status_id) {
-					$order_status_id = 2;
-				}
+				$order_status_id = $this->getSuccessOrderStatusId();
 
 				$comment = sprintf(
 					'Genius %s Successful - Transaction ID: %s, Auth Code: %s, Response: %s',
@@ -207,6 +205,8 @@ class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 					$comment,
 					true
 				);
+
+				$this->orderStatusRecorded = true;
 
 				// Optional: Store transaction details
 				try {
@@ -303,6 +303,15 @@ class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 					(isset($response->responseMessage) ? $response->responseMessage : 'Unknown error') . 
 					' (Code: ' . (isset($response->responseCode) ? $response->responseCode : 'N/A') . ')';
 
+				$this->recordFailedPayment(
+					(int)$order_info['order_id'],
+					$error_message,
+					$paymentAction,
+					$amount,
+					$currency,
+					$response
+				);
+
 				// Check if this is an AJAX request
 				if (isset($this->request->post['ajax']) || 
 					isset($this->request->server['HTTP_X_REQUESTED_WITH']) && 
@@ -346,7 +355,10 @@ class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 					}
 				}
 			}
-			
+
+			$failedOrderId = isset($this->session->data['order_id']) ? (int)$this->session->data['order_id'] : 0;
+			$this->recordFailedPayment($failedOrderId, $error_message);
+
 			// Check if this is an AJAX request
 			if (isset($this->request->post['ajax']) || 
 				isset($this->request->server['HTTP_X_REQUESTED_WITH']) && 
@@ -364,6 +376,77 @@ class ControllerExtensionPaymentGlobalPaymentsGenius extends Controller {
 				$this->response->redirect($this->url->link('checkout/checkout', '', true));
 			}
 		}
+	}
+
+	private function getSuccessOrderStatusId() {
+		return 2; // Processing
+	}
+
+	private function getFailedOrderStatusId() {
+		return 10; // Failed
+	}
+
+	/**
+	 * Keeps the declined/failed attempt visible in the admin Orders list instead of leaving it as a missing order.
+	 */
+	private function recordFailedPayment($orderId, $errorMessage, $paymentAction = null, $amount = null, $currency = null, $response = null) {
+		$orderId = (int)$orderId;
+		if ($orderId <= 0 || $this->orderStatusRecorded) {
+			return;
+		}
+
+		$this->load->model('checkout/order');
+		$order_info = $this->model_checkout_order->getOrder($orderId);
+		if (!$order_info) {
+			return;
+		}
+
+		$this->orderStatusRecorded = true;
+
+		$comment = sprintf(
+			'Genius %s Failed - %s',
+			$paymentAction !== null ? $this->getPaymentActionLabel($paymentAction) : 'Payment',
+			$this->sanitizeGatewayMessage($errorMessage)
+		);
+
+		if ($response !== null) {
+			$comment .= sprintf(
+				' | Transaction ID: %s | Response Code: %s | Response: %s',
+				isset($response->transactionReference->transactionId) ? $this->sanitizeGatewayMessage($response->transactionReference->transactionId) : 'N/A',
+				isset($response->responseCode) ? $this->sanitizeGatewayMessage($response->responseCode) : 'N/A',
+				isset($response->responseMessage) ? $this->sanitizeGatewayMessage($response->responseMessage) : 'N/A'
+			);
+		}
+
+		try {
+			$this->model_checkout_order->addOrderHistory($orderId, $this->getFailedOrderStatusId(), $comment, false);
+		} catch (Exception $e) {
+			return;
+		}
+
+		if ($response === null) {
+			return;
+		}
+
+		try {
+			$this->load->model('extension/payment/globalpayments_genius');
+			$this->model_extension_payment_globalpayments_genius->addTransaction(
+				$orderId,
+				$paymentAction !== null ? $paymentAction : 'failed',
+				$amount !== null ? $amount : $order_info['total'],
+				$currency !== null ? $currency : $order_info['currency_code'],
+				$response
+			);
+		} catch (Exception $e) {
+			// Continue if custom transaction table doesn't exist
+		}
+	}
+
+	private function sanitizeGatewayMessage($message) {
+		$message = preg_replace('/\s+/', ' ', (string)$message);
+		$message = str_replace(array('<', '>'), '', $message);
+
+		return substr(trim($message), 0, 255);
 	}
 
 	private function hasSuccessfulExistingTransaction($orderId) {

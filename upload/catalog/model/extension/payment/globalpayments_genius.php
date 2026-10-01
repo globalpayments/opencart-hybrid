@@ -88,13 +88,17 @@ class ModelExtensionPaymentGlobalPaymentsGenius extends Model {
 			$reference = $gatewayResponse->transactionReference->transactionId;
 		}
 
+		$transaction_id = isset($gatewayResponse->transactionReference->transactionId) ? $gatewayResponse->transactionReference->transactionId : '';
+		$response_code = isset($gatewayResponse->responseCode) ? $gatewayResponse->responseCode : '';
+		$response_message = isset($gatewayResponse->responseMessage) ? $gatewayResponse->responseMessage : '';
+
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "globalpayments_genius_transaction` 
 		SET `order_id` = '" . (int)$order_id . "', 
 		    `payment_action` = '" . $this->db->escape($payment_action) . "', 
-		    `gateway_transaction_id` = '" . $this->db->escape($gatewayResponse->transactionReference->transactionId) . "',
-		    `response_code` = '" . $this->db->escape($gatewayResponse->responseCode) . "',
-		    `response_message` = '" . $this->db->escape($gatewayResponse->responseMessage) . "',
-		    `reference` = '" . $this->db->escape($reference) . "',
+		    `gateway_transaction_id` = '" . $this->db->escape((string)$transaction_id) . "',
+		    `response_code` = '" . $this->db->escape((string)$response_code) . "',
+		    `response_message` = '" . $this->db->escape((string)$response_message) . "',
+		    `reference` = '" . $this->db->escape((string)$reference) . "',
 		    `amount` = '" . (float)$amount . "',
 		    `currency` = '" . $this->db->escape((string)$currency) . "',
 		    `time_created` = NOW()");
