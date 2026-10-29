@@ -4,7 +4,13 @@
 
 # Changelog
 
-## Latest Version v2.3.1 (10/01/26)
+## Latest Version v2.3.2 (10/29/26)
+### Bug Fixes:
+- Fixed an issue affecting refund order status updates.
+- Fixed an issue with the saved card functionality.
+- Fixed an issue related to mandatory card detail validation.
+
+## v2.3.1 (10/01/26)
 ### Enhancements:
 - Added support for creating orders for declined, failed payment attempts.
 

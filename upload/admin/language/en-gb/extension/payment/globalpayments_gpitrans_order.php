@@ -24,6 +24,9 @@ $_['error_request']                      = 'Unable to perform request. Invalid d
 $_['error_invalid_request']              = 'Invalid request.';
 $_['error_invalid_refund_amount']        = 'Invalid refund amount.';
 $_['error_invalid_refund_amount_format'] = 'Invalid amount. Please use `.` as decimals separator and no thousands separator.';
+$_['error_duplicate_partial_refund']     = 'A refund for the same amount was recently submitted. '
+	. 'To help prevent duplicate transactions, additional refunds of the same amount may be temporarily blocked. '
+	. 'Please wait a few moments before trying again.';
 
 // Column
 $_['text_column_txn_payment_action'] = 'Payment Action';

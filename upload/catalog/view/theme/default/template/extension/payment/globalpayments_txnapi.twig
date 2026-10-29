@@ -79,6 +79,13 @@
                 this.isSubmitting = false;
 
                 this.attachEventHandlers();
+
+                /**
+                 * Cached secure field values captured from pass-data events.
+                 *
+                 * @type {object}
+                 */
+                this.collectedFieldValues = {};
             }
 
             GlobalPaymentsGatewayProvider.prototype = {
@@ -147,7 +154,7 @@
                             styles: this.getStyleConfiguration()
                         }
                     );
-                    this.cardForm.on('submit', 'click', this.blockOnSubmit.bind(this));
+                    this.cardForm.on('submit', 'click', this.handleSecureSubmit.bind(this));
                     this.cardForm.on('token-success', this.handleResponse.bind(this));
                     this.cardForm.on('token-error', this.handleErrors.bind(this));
                     this.cardForm.on('error', this.handleErrors.bind(this));
@@ -176,11 +183,8 @@
                         },
                         'card-cvv': {
                             placeholder: this.fieldOptions['card-cvv-field'].placeholder,
-                            target: '#' + this.id + '-' + this.fieldOptions['card-cvv-field'].class
-                        },
-                        'card-holder-name': {
-                            placeholder: this.fieldOptions['card-holder-field'].placeholder,
-                            target: '#' + this.id + '-' + this.fieldOptions['card-holder-field'].class
+                            target: '#' + this.id + '-' + this.fieldOptions['card-cvv-field'].class,
+                            required: true
                         },
                         'submit': {
                             text: this.getSubmitButtonText(),
@@ -283,6 +287,31 @@
                 },
 
                 /**
+                 * Keep secure field values in sync for frontend/server-side required validation.
+                 *
+                 * @param {object} fieldData
+                 */
+                captureFieldData: function (fieldData) {
+                    if (!fieldData) {
+                        return;
+                    }
+
+                    var fieldType = fieldData.type || fieldData.field || fieldData.name || '';
+                    var fieldValue = fieldData.value !== undefined ? fieldData.value : (fieldData.data !== undefined ? fieldData.data : '');
+
+                    if (!fieldType) {
+                        return;
+                    }
+
+                    this.collectedFieldValues[fieldType] = String(fieldValue || '');
+
+                    if (fieldType === 'card-cvv') {
+                        var hasCvv = !!String(fieldValue || '').trim();
+                        this.createInputElement('cardSecurityCodePresent', hasCvv ? '1' : '0');
+                    }
+                },
+
+                /**
                  * Handles the tokenization response
                  *
                  * On valid payment fields, the tokenization response is added to the current
@@ -293,15 +322,28 @@
                  * @returns
                  */
                 handleResponse: function (response) {
+                    this.resetValidationErrors();
+
+                    var responseDetails = response && response.details ? response.details : {};
+                    var cardCvvPresent = !!response.cvv_present || !!String(this.collectedFieldValues['card-cvv'] || '').trim();
+
+                    if (!cardCvvPresent) {
+                        this.showValidationError('card-cvv-field');
+                        return;
+                    }
+
                     const normalizedResponse = {
                         paymentReference: response.temporary_token,
+                        cvvPresent: cardCvvPresent,
                         details: {
                             cardNumber: response.card.masked_card_number,
                             cardBin: response.card.masked_card_number.substring(0, 6),
                             cardLast4: response.card.masked_card_number.substring(response.card.masked_card_number.length - 4),
                             cardType: this.mapCardType(response.card.type),
                             expiryMonth: response.card.expiry_month,
-                            expiryYear: (parseInt(response.card.expiry_year) + 2000).toString()
+                            expiryYear: (parseInt(response.card.expiry_year) + 2000).toString(),
+                            cardSecurityCode: cardCvvPresent,
+                            cardholderName: String(responseDetails.cardholderName || '').trim()
                         }
                     }
                     this.paymentTokenResponse = JSON.stringify(normalizedResponse);
@@ -327,8 +369,8 @@
                  * @returns
                  */
                 showValidationError: function (fieldType) {
-                    $('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').addClass('alert alert-danger');
-                    $('.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').show();
+                    $('.globalpayments.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').addClass('alert alert-danger');
+                    $('.globalpayments.' + this.id + '.' + fieldType + ' .globalpayments-validation-error').show();
                     this.unblockOnError();
                 },
 
@@ -364,7 +406,7 @@
 
                     var error = errorObject.error;
                     if (error.code === 'invalid_card'){
-                        this.showValidationError('card-number');
+                        this.showValidationError('card-number-field');
                         return;
                     }
                     if (error.code !== 'invalid_input'){
@@ -373,21 +415,29 @@
                     }
                     for ( var i = 0; i < error.detail.length; i++ ) {
                         var data_path = error.detail[i].data_path;
+                        var description = error.detail[i].description ? error.detail[i].description.toLowerCase() : '';
                         switch (data_path) {
                             case '/card/card_number':
-                                this.showValidationError('card-number');
+                                this.showValidationError('card-number-field');
                                 break;
                             case '/card/card_security_code':
-                                this.showValidationError( 'card-cvv' );
+                            case '/card/cvv':
+                                this.showValidationError( 'card-cvv-field' );
+                                break;
+                            case '/card/card_holder_name':
                                 break;
                             case '/card':
-                                if (error.detail[i].description.includes('expiry')){
-                                    this.showValidationError( 'card-expiration' );
+                                if (description.includes('expiry')){
+                                    this.showValidationError( 'card-expiry-field' );
+                                    } else if (description.includes('security code') || description.includes('cvv')) {
+                                    this.showValidationError( 'card-cvv-field' );
+                                } else {
+                                    this.showPaymentError(error.message);
                                 }
                                 break;
                             case '/card/expiry_year':
                             case '/card/expiry_month':
-                                this.showValidationError( 'card-expiration' );
+                                this.showValidationError( 'card-expiry-field' );
                                 break;
                             default:
                                 this.showPaymentError(error.message);
@@ -423,6 +473,10 @@
                     }
                 },
 
+                handleSecureSubmit: function () {
+                    this.resetValidationErrors();
+                    this.blockOnSubmit();
+                },
                 createInputElement: function (name, value) {
                     var inputElement = (document.getElementById(this.id + '-' + name));
 

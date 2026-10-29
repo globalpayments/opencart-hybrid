@@ -97,4 +97,37 @@ class ModelExtensionPaymentGlobalPaymentsGpiTrans extends Model {
 			$this->db->query("ALTER TABLE " . DB_PREFIX . "globalpayments_transaction MODIFY COLUMN payment_action " . $insertEnumValues . " NOT NULL");
 		}
 	}
+
+	/**
+	 * Adds an entry to the order history.
+	 *
+	 * @param int $orderId The order ID
+	 * @param int $orderStatusId The status ID
+	 * @param string $comment The history comment
+	 * @param int $notify Whether to notify customer (default 1)
+	 * @return void
+	 */
+	public function addOrderHistory(int $orderId, int $orderStatusId, string $comment, int $notify = 1): void
+	{
+		$this->db->query(
+			"INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$orderId . "', " .
+			"order_status_id = '" . (int)$orderStatusId . "', notify = '" . (int)$notify . "', " .
+			"comment = '" . $this->db->escape($comment) . "', date_added = NOW()"
+		);
+	}
+
+	/**
+	 * Updates the order status in the database.
+	 *
+	 * @param int $orderId The order ID
+	 * @param int $orderStatusId The new status ID
+	 * @return void
+	 */
+	public function updateOrderStatus(int $orderId, int $orderStatusId): void
+	{
+		$this->db->query(
+			"UPDATE `" . DB_PREFIX . "order` SET order_status_id = '" . (int)$orderStatusId . "', " .
+			"date_modified = NOW() WHERE order_id = '" . (int)$orderId . "'"
+		);
+	}
 }

@@ -62,6 +62,7 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 			$this->load->model('extension/payment/globalpayments_txnapi');
 			$postRequestData = (object)$this->request->post[$this->globalpayments->gateway->gatewayId];
 
+			$this->validateRequiredCardFields($postRequestData);
 			$requestData = $this->buildRequestData($postRequestData);
 			$gatewayResponse = $this->globalpayments->gateway->processPayment($requestData);
 			$transactionId = $gatewayResponse->transactionReference?->transactionId
@@ -82,6 +83,31 @@ class ControllerExtensionPaymentGlobalPaymentsTxnApi extends Controller
 		} catch (\Exception $e) {
 			$this->session->data['error'] = $e->getMessage();
 			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+	}
+
+	/**
+	 * Enforce required secure fields for new-card Transaction API payments.
+	 *
+	 * CVV validation must be enforced by the gateway/processor using trusted token metadata
+	 * and backend configuration, not by trusting any browser-supplied presence flag.
+	 *
+	 * @param object $postRequestData
+	 * @return void
+	 */
+	private function validateRequiredCardFields($postRequestData): void
+	{
+		if (isset($postRequestData->paymentType) && 'saved' === $postRequestData->paymentType) {
+			return;
+		}
+
+		if (empty($postRequestData->paymentTokenResponse)) {
+			throw new \Exception($this->language->get('error_order_processing'));
+		}
+
+		$tokenResponse = json_decode(htmlspecialchars_decode($postRequestData->paymentTokenResponse));
+		if (!is_object($tokenResponse)) {
+			throw new \Exception($this->language->get('error_order_processing'));
 		}
 	}
 

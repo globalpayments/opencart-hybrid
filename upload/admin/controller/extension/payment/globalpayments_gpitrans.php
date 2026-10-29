@@ -278,7 +278,7 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 			}
 		} catch (Exception $e) {
 			unset($response['success']);
-			$response['error'] = $this->language->get('error_request') . ' ' . $e->getMessage();
+			$response['error'] = $e->getMessage();
 		}
 
 		$this->response->addHeader('Content-Type: application/json');
@@ -371,11 +371,28 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 			$this->model_extension_payment_globalpayments_gpitrans->addTransaction($this->request->post['order_id'], 
 				$this->request->post['gateway_id'], $this->request->post['transaction_type'], 
 				$requestData->order->amount, $requestData->order->currency, $gatewayResponse);
-				
+			
 			unset($response['error']);
+			
+			// Update order status for refunds only after full validation and success confirmation
+			if (AbstractGateway::REFUND === $this->request->post['transaction_type']) {
+				if ($isFullRefund) {
+					$this->completeStatusUpdate((int)$this->request->post['order_id']);
+				} else {
+					$this->orderHistoryUpdate((int)$this->request->post['order_id']);
+				}
+			}
 		} catch (Exception $e) {
 			unset($response['success']);
-			$response['error'] = $this->language->get('error_request') . ' ' . $e->getMessage();
+			if (
+				AbstractGateway::REFUND === $this->request->post['transaction_type']
+				&& !$isFullRefund
+				&& $e->getMessage() === 'An error occurred while processing the card.'
+			) {
+				$response['error'] = $this->language->get('error_duplicate_partial_refund');
+			} else {
+				$response['error'] = $this->language->get('error_request');
+			}
 		}
 
 		$this->response->addHeader('Content-Type: application/json');
@@ -403,7 +420,7 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 		if ($transactionId === '') {
 			$errorMessage = $gatewayResponse->responseMessage
 				?? $gatewayResponse->responseCode
-				?? $this->language->get('error_request');
+				?? $this->language->get('error_duplicate_partial_refund');
 			throw new Exception($errorMessage);
 		}
 	}
@@ -509,5 +526,39 @@ class ControllerExtensionPaymentGlobalPaymentsGpiTrans extends Controller
 		}
 
 		return $transaction_actions;
+	}
+
+	/**
+	 * Records partial refund in order history.
+	 *
+	 * @param int $orderId The order ID to update
+	 * @return void
+	 */
+	private function orderHistoryUpdate(int $orderId): void
+	{
+		$orderStatusId = 2; // processing
+		$comment = "Partially refund done";
+		$notify = 1; // true
+
+		// Add order history entry
+		$this->model_extension_payment_globalpayments_gpitrans->addOrderHistory($orderId, $orderStatusId, $comment, $notify);
+	}
+
+	/**
+	 * Updates order status to "Refunded" for full refunds and records history.
+	 *
+	 * @param int $orderId The order ID to update
+	 * @return void
+	 */
+	private function completeStatusUpdate(int $orderId): void
+	{
+		$orderStatusId = 11; // Refunded status
+		$comment = "Order has been fully refunded.";
+		$notify = 1; // true
+
+		// Update order status
+		$this->model_extension_payment_globalpayments_gpitrans->updateOrderStatus($orderId, $orderStatusId);
+		// Add order history entry to record the refund status change
+		$this->model_extension_payment_globalpayments_gpitrans->addOrderHistory($orderId, $orderStatusId, $comment, $notify);
 	}
 }
